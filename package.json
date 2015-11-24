@@ -1,0 +1,23 @@
+{
+  "name":        "ep_print_preview_pdf",
+  "version":     "0.0.1",
+  "description": "Print Preview a PDF",
+  "contributors": [
+    {
+      "name": "John McLear",
+      "email": "john@mclear.co.uk",
+      "url": "http://mclear.co.uk"
+    }
+  ],
+
+  "repository" : {
+    "type": "git",
+    "url":  "git://github.com/ether/ep_print_preview_pdf.git"
+  },
+
+  "dependencies": {},
+
+  "engines": {
+    "node": "*"
+  }
+}
