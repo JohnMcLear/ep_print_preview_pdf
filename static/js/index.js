@@ -12,7 +12,13 @@ exports.postAceInit = function(hook, context){
   $.getScript("/static/plugins/ep_print_preview_pdf/static/js/pdf.worker.js", function(data, textStatus, jqxhr){});
   $.getScript("/static/plugins/ep_print_preview_pdf/static/js/pdf.js", function(data, textStatus, jqxhr){});
 
-  $('body').append("<div id='pdfpreview'></div>");
+  $('body').append("<div id='pdfpreview' style='display:none'></div>");
+
+  // Hide the preview window on clicking elsewhere
+  $('body').on('click', function(e){
+    $('#pdfpreview').hide();
+  });
+
   $('#pdfpreview').html('<canvas id="the-canvas" style="border-right:1px solid black;width:50%;height:100%;position:absolute;top:0; left:0;bottom:0;z-index:999999999999"/></canvas>');
 
   $('#previewpdf').on('click', function(e) {
@@ -47,6 +53,7 @@ function previewPdf(url){
         viewport: viewport
       };
       page.render(renderContext);
+      $('#pdfpreview').show();
     });
   });
 }
