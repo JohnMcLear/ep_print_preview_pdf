@@ -8,8 +8,8 @@ exports.postAceInit = function(hook, context){
   var $innerIframe = $outerIframeContents.find('iframe');
   var $innerdocbody = $innerIframe.contents().find("#innerdocbody");
   var pdfURL = $("#exportpdfa").attr("href");
-
-  $('body').append("<div id='pdfpreview' style='display:none;position:absolute;top:0;left:0;width:100%;height:500px;z-index:999999'></div>");
+  $('body').append("<div id='pdfWrapper' style='display:none;text-align:center;position:fixed;top:40px;left:0;right:0;bottom:0;z-index:999999'></div>")
+  $('#pdfWrapper').append("<div id='pdfpreview' style='position:relative;width:80%;height:100%;margin:auto;'></div>");
 
   // Hide the preview window on clicking elsewhere
   $('body').on('click', function(e){
@@ -27,7 +27,8 @@ var container = document.getElementById('pdfpreview');
 
 function previewPdf(url){
   // console.log("Getting", url);
-  $('#pdfpreview').html('<iframe src="/static/plugins/ep_print_preview_pdf/static/pdfjs/web/viewer.html?file='+url+'" style="width:100%;height:100%;border:none"></iframe>');
-  $('#pdfpreview').show();
+  $('#pdfpreview').html('<iframe src="/static/plugins/ep_print_preview_pdf/static/pdfjs/web/viewer.html?file='+url+'" style="width:100%;height:100%;border:none;position:relative"></iframe>');
+  $('#pdfWrapper').show();
+  $('#editbar, #editorcontainerbox').css("opacity", "0.4");
 }
 
