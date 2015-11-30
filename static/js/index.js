@@ -13,8 +13,10 @@ exports.postAceInit = function(hook, context){
 
   // Hide the preview window on clicking elsewhere
   $('body').on('click', function(e){
-console.log("hiding - - commented out for now");
-//    $('#pdfpreview').hide();
+    if(e.target && e.target.id && e.target.id === "previewpdf") return;
+    if($("#pdfWrapper").is(":visible")){
+      $('#pdfWrapper').hide();
+    }
   });
 
   $('#previewpdf').on('click', function(e) {
@@ -26,9 +28,8 @@ console.log("hiding - - commented out for now");
 var container = document.getElementById('pdfpreview');
 
 function previewPdf(url){
-  // console.log("Getting", url);
   $('#pdfpreview').html('<iframe src="/static/plugins/ep_print_preview_pdf/static/compiled_pdfjs/web/viewer.html?file='+url+'" style="width:100%;height:100%;border:none;position:relative"></iframe>');
-  $('#pdfWrapper').show();
   $('#editbar, #editorcontainerbox').css("opacity", "0.4");
+  $('#pdfWrapper').show();
 }
 
