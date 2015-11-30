@@ -15,7 +15,9 @@ exports.postAceInit = function(hook, context){
   $('body').on('click', function(e){
     if(e.target && e.target.id && e.target.id === "previewpdf") return;
     if($("#pdfWrapper").is(":visible")){
+      // Hide PDF and reshow editor
       $('#pdfWrapper').hide();
+      $('#editbar, #editorcontainerbox').css("opacity", "1");
     }
   });
 
