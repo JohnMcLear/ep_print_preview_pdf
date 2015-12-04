@@ -1,5 +1,3 @@
-Preview PDF before printing..
-
 # My PDF contains no CSS!
 Use ``ep_better_pdf_export`` to get better PDF exports.
 
