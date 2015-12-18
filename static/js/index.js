@@ -3,10 +3,6 @@ var $ = require('ep_etherpad-lite/static/js/rjquery').$;
 var _ = require('ep_etherpad-lite/static/js/underscore');
 var padcookie = require('ep_etherpad-lite/static/js/pad_cookie').padcookie;
 
-exports.aceEditorCSS = function (hook, cb) {
-  return ["/ep_print_preview_pdf/static/css/preview.css"];
-};
-
 exports.postAceInit = function(hook, context){
   var $outerIframeContents = $('iframe[name="ace_outer"]').contents();
   var $innerIframe = $outerIframeContents.find('iframe');
