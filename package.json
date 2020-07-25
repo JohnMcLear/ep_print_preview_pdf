@@ -1,6 +1,6 @@
 {
-  "name":        "ep_print_preview_pdf",
-  "version":     "0.0.2",
+  "name": "ep_print_preview_pdf",
+  "version": "0.0.3",
   "description": "Print Preview a PDF",
   "contributors": [
     {
@@ -9,14 +9,11 @@
       "url": "http://mclear.co.uk"
     }
   ],
-
-  "repository" : {
+  "repository": {
     "type": "git",
-    "url":  "git://github.com/ether/ep_print_preview_pdf.git"
+    "url": "git://github.com/ether/ep_print_preview_pdf.git"
   },
-
   "dependencies": {},
-
   "engines": {
     "node": "*"
   }
