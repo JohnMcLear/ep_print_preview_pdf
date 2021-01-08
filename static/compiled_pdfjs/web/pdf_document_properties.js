@@ -26,7 +26,7 @@
 /**
  * @class
  */
-var PDFDocumentProperties = (function PDFDocumentPropertiesClosure() {
+const PDFDocumentProperties = (function PDFDocumentPropertiesClosure() {
   /**
    * @constructs PDFDocumentProperties
    * @param {PDFDocumentPropertiesOptions} options
@@ -44,9 +44,9 @@ var PDFDocumentProperties = (function PDFDocumentPropertiesClosure() {
       options.closeButton.addEventListener('click', this.close.bind(this));
     }
 
-    this.dataAvailablePromise = new Promise(function (resolve) {
+    this.dataAvailablePromise = new Promise((resolve) => {
       this.resolveDataAvailable = resolve;
-    }.bind(this));
+    });
 
     OverlayManager.register(this.overlayName, this.close.bind(this));
   }
@@ -57,9 +57,9 @@ var PDFDocumentProperties = (function PDFDocumentPropertiesClosure() {
      */
     open: function PDFDocumentProperties_open() {
       Promise.all([OverlayManager.open(this.overlayName),
-                   this.dataAvailablePromise]).then(function () {
+        this.dataAvailablePromise]).then(() => {
         this._getProperties();
-      }.bind(this));
+      });
     },
 
     /**
@@ -93,10 +93,10 @@ var PDFDocumentProperties = (function PDFDocumentPropertiesClosure() {
      */
     setDocumentAndUrl:
         function PDFDocumentProperties_setDocumentAndUrl(pdfDocument, url) {
-      this.pdfDocument = pdfDocument;
-      this.url = url;
-      this.resolveDataAvailable();
-    },
+          this.pdfDocument = pdfDocument;
+          this.url = url;
+          this.resolveDataAvailable();
+        },
 
     /**
      * @private
@@ -108,36 +108,36 @@ var PDFDocumentProperties = (function PDFDocumentPropertiesClosure() {
         return;
       }
       // Get the file size (if it hasn't already been set).
-      this.pdfDocument.getDownloadInfo().then(function(data) {
+      this.pdfDocument.getDownloadInfo().then((data) => {
         if (data.length === this.rawFileSize) {
           return;
         }
         this.setFileSize(data.length);
-        this._updateUI(this.fields['fileSize'], this._parseFileSize());
-      }.bind(this));
+        this._updateUI(this.fields.fileSize, this._parseFileSize());
+      });
 
       // Get the document properties.
-      this.pdfDocument.getMetadata().then(function(data) {
-        var content = {
-          'fileName': getPDFFileNameFromURL(this.url),
-          'fileSize': this._parseFileSize(),
-          'title': data.info.Title,
-          'author': data.info.Author,
-          'subject': data.info.Subject,
-          'keywords': data.info.Keywords,
-          'creationDate': this._parseDate(data.info.CreationDate),
-          'modificationDate': this._parseDate(data.info.ModDate),
-          'creator': data.info.Creator,
-          'producer': data.info.Producer,
-          'version': data.info.PDFFormatVersion,
-          'pageCount': this.pdfDocument.numPages
+      this.pdfDocument.getMetadata().then((data) => {
+        const content = {
+          fileName: getPDFFileNameFromURL(this.url),
+          fileSize: this._parseFileSize(),
+          title: data.info.Title,
+          author: data.info.Author,
+          subject: data.info.Subject,
+          keywords: data.info.Keywords,
+          creationDate: this._parseDate(data.info.CreationDate),
+          modificationDate: this._parseDate(data.info.ModDate),
+          creator: data.info.Creator,
+          producer: data.info.Producer,
+          version: data.info.PDFFormatVersion,
+          pageCount: this.pdfDocument.numPages,
         };
 
         // Show the properties in the dialog.
-        for (var identifier in content) {
+        for (const identifier in content) {
           this._updateUI(this.fields[identifier], content[identifier]);
         }
-      }.bind(this));
+      });
     },
 
     /**
@@ -153,18 +153,19 @@ var PDFDocumentProperties = (function PDFDocumentPropertiesClosure() {
      * @private
      */
     _parseFileSize: function PDFDocumentProperties_parseFileSize() {
-      var fileSize = this.rawFileSize, kb = fileSize / 1024;
+      const fileSize = this.rawFileSize; const
+        kb = fileSize / 1024;
       if (!kb) {
         return;
       } else if (kb < 1024) {
         return mozL10n.get('document_properties_kb', {
           size_kb: (+kb.toPrecision(3)).toLocaleString(),
-          size_b: fileSize.toLocaleString()
+          size_b: fileSize.toLocaleString(),
         }, '{{size_kb}} KB ({{size_b}} bytes)');
       } else {
         return mozL10n.get('document_properties_mb', {
           size_mb: (+(kb / 1024).toPrecision(3)).toLocaleString(),
-          size_b: fileSize.toLocaleString()
+          size_b: fileSize.toLocaleString(),
         }, '{{size_mb}} MB ({{size_b}} bytes)');
       }
     },
@@ -177,28 +178,28 @@ var PDFDocumentProperties = (function PDFDocumentPropertiesClosure() {
       // Adobe Reader doesn't handle changing the date to universal time
       // and doesn't use the user's time zone (they're effectively ignoring
       // the HH' and mm' parts of the date string).
-      var dateToParse = inputDate;
+      let dateToParse = inputDate;
       if (dateToParse === undefined) {
         return '';
       }
 
       // Remove the D: prefix if it is available.
-      if (dateToParse.substring(0,2) === 'D:') {
+      if (dateToParse.substring(0, 2) === 'D:') {
         dateToParse = dateToParse.substring(2);
       }
 
       // Get all elements from the PDF date string.
       // JavaScript's Date object expects the month to be between
       // 0 and 11 instead of 1 and 12, so we're correcting for this.
-      var year = parseInt(dateToParse.substring(0,4), 10);
-      var month = parseInt(dateToParse.substring(4,6), 10) - 1;
-      var day = parseInt(dateToParse.substring(6,8), 10);
-      var hours = parseInt(dateToParse.substring(8,10), 10);
-      var minutes = parseInt(dateToParse.substring(10,12), 10);
-      var seconds = parseInt(dateToParse.substring(12,14), 10);
-      var utRel = dateToParse.substring(14,15);
-      var offsetHours = parseInt(dateToParse.substring(15,17), 10);
-      var offsetMinutes = parseInt(dateToParse.substring(18,20), 10);
+      const year = parseInt(dateToParse.substring(0, 4), 10);
+      const month = parseInt(dateToParse.substring(4, 6), 10) - 1;
+      const day = parseInt(dateToParse.substring(6, 8), 10);
+      let hours = parseInt(dateToParse.substring(8, 10), 10);
+      let minutes = parseInt(dateToParse.substring(10, 12), 10);
+      const seconds = parseInt(dateToParse.substring(12, 14), 10);
+      const utRel = dateToParse.substring(14, 15);
+      const offsetHours = parseInt(dateToParse.substring(15, 17), 10);
+      const offsetMinutes = parseInt(dateToParse.substring(18, 20), 10);
 
       // As per spec, utRel = 'Z' means equal to universal time.
       // The other cases ('-' and '+') have to be handled here.
@@ -211,13 +212,13 @@ var PDFDocumentProperties = (function PDFDocumentPropertiesClosure() {
       }
 
       // Return the new date format from the user's locale.
-      var date = new Date(Date.UTC(year, month, day, hours, minutes, seconds));
-      var dateString = date.toLocaleDateString();
-      var timeString = date.toLocaleTimeString();
+      const date = new Date(Date.UTC(year, month, day, hours, minutes, seconds));
+      const dateString = date.toLocaleDateString();
+      const timeString = date.toLocaleTimeString();
       return mozL10n.get('document_properties_date_string',
-                         {date: dateString, time: timeString},
-                         '{{date}}, {{time}}');
-    }
+          {date: dateString, time: timeString},
+          '{{date}}, {{time}}');
+    },
   };
 
   return PDFDocumentProperties;

@@ -15,10 +15,10 @@
 
 'use strict';
 
-//#if CHROME
-////Note: Keep in sync with extensions/chromium/preferences_schema.json !
-//#endif
-var DEFAULT_PREFERENCES = {
+// #if CHROME
+// //Note: Keep in sync with extensions/chromium/preferences_schema.json !
+// #endif
+const DEFAULT_PREFERENCES = {
   showPreviousViewOnLoad: true,
   defaultZoomValue: '',
   sidebarViewOnLoad: 0,

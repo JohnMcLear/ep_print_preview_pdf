@@ -1,16 +1,15 @@
-
 //
 // Basic AcroForms input controls rendering
 //
 
 'use strict';
 
-var formFields = {};
+const formFields = {};
 
 function setupForm(div, content, viewport) {
   function bindInputItem(input, item) {
     if (input.name in formFields) {
-      var value = formFields[input.name];
+      const value = formFields[input.name];
       if (input.type == 'checkbox') {
         input.checked = value;
       } else if (!input.type || input.type == 'text') {
@@ -26,20 +25,20 @@ function setupForm(div, content, viewport) {
     };
   }
   function createElementWithStyle(tagName, item) {
-    var element = document.createElement(tagName);
-    var rect = PDFJS.Util.normalizeRect(
-      viewport.convertToViewportRectangle(item.rect));
-    element.style.left = Math.floor(rect[0]) + 'px';
-    element.style.top = Math.floor(rect[1]) + 'px';
-    element.style.width = Math.ceil(rect[2] - rect[0]) + 'px';
-    element.style.height = Math.ceil(rect[3] - rect[1]) + 'px';
+    const element = document.createElement(tagName);
+    const rect = PDFJS.Util.normalizeRect(
+        viewport.convertToViewportRectangle(item.rect));
+    element.style.left = `${Math.floor(rect[0])}px`;
+    element.style.top = `${Math.floor(rect[1])}px`;
+    element.style.width = `${Math.ceil(rect[2] - rect[0])}px`;
+    element.style.height = `${Math.ceil(rect[3] - rect[1])}px`;
     return element;
   }
   function assignFontStyle(element, item) {
-    var fontStyles = '';
+    let fontStyles = '';
     if ('fontSize' in item) {
-      fontStyles += 'font-size: ' + Math.round(item.fontSize *
-                                               viewport.fontScale) + 'px;';
+      fontStyles += `font-size: ${Math.round(item.fontSize *
+                                               viewport.fontScale)}px;`;
     }
     switch (item.textAlignment) {
       case 0:
@@ -55,9 +54,9 @@ function setupForm(div, content, viewport) {
     element.setAttribute('style', element.getAttribute('style') + fontStyles);
   }
 
-  content.getAnnotations().then(function(items) {
-    for (var i = 0; i < items.length; i++) {
-      var item = items[i];
+  content.getAnnotations().then((items) => {
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
       switch (item.subtype) {
         case 'Widget':
           if (item.fieldType != 'Tx' && item.fieldType != 'Btn' &&
@@ -75,7 +74,7 @@ function setupForm(div, content, viewport) {
             input = createElementWithStyle('input', item);
             if (item.flags & 32768) {
               input.type = 'radio';
-               // radio button is not supported
+              // radio button is not supported
             } else if (item.flags & 65536) {
               input.type = 'button';
               // pushbutton is not supported
@@ -100,35 +99,35 @@ function setupForm(div, content, viewport) {
 }
 
 function renderPage(div, pdf, pageNumber, callback) {
-  pdf.getPage(pageNumber).then(function(page) {
-    var scale = 1.5;
-    var viewport = page.getViewport(scale);
+  pdf.getPage(pageNumber).then((page) => {
+    const scale = 1.5;
+    const viewport = page.getViewport(scale);
 
-    var pageDisplayWidth = viewport.width;
-    var pageDisplayHeight = viewport.height;
+    const pageDisplayWidth = viewport.width;
+    const pageDisplayHeight = viewport.height;
 
-    var pageDivHolder = document.createElement('div');
+    const pageDivHolder = document.createElement('div');
     pageDivHolder.className = 'pdfpage';
-    pageDivHolder.style.width = pageDisplayWidth + 'px';
-    pageDivHolder.style.height = pageDisplayHeight + 'px';
+    pageDivHolder.style.width = `${pageDisplayWidth}px`;
+    pageDivHolder.style.height = `${pageDisplayHeight}px`;
     div.appendChild(pageDivHolder);
 
     // Prepare canvas using PDF page dimensions
-    var canvas = document.createElement('canvas');
-    var context = canvas.getContext('2d');
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
     canvas.width = pageDisplayWidth;
     canvas.height = pageDisplayHeight;
     pageDivHolder.appendChild(canvas);
 
     // Render PDF page into canvas context
-    var renderContext = {
+    const renderContext = {
       canvasContext: context,
-      viewport: viewport
+      viewport,
     };
     page.render(renderContext).promise.then(callback);
 
     // Prepare and populate form elements layer
-    var formDiv = document.createElement('div');
+    const formDiv = document.createElement('div');
     pageDivHolder.appendChild(formDiv);
 
     setupForm(formDiv, page, viewport);
@@ -136,10 +135,10 @@ function renderPage(div, pdf, pageNumber, callback) {
 }
 
 // Fetch the PDF document from the URL using promices
-PDFJS.getDocument(pdfWithFormsPath).then(function getPdfForm(pdf) {
+PDFJS.getDocument(pdfWithFormsPath).then((pdf) => {
   // Rendering all pages starting from first
-  var viewer = document.getElementById('viewer');
-  var pageNumber = 1;
+  const viewer = document.getElementById('viewer');
+  let pageNumber = 1;
   renderPage(viewer, pdf, pageNumber++, function pageRenderingComplete() {
     if (pageNumber > pdf.numPages) {
       return; // All pages rendered

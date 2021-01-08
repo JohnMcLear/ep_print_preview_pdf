@@ -15,26 +15,26 @@
 
 'use strict';
 
-var CSS_UNITS = 96.0 / 72.0;
-var DEFAULT_SCALE_VALUE = 'auto';
-var DEFAULT_SCALE = 1.0;
-var UNKNOWN_SCALE = 0;
-var MAX_AUTO_SCALE = 1.25;
-var SCROLLBAR_PADDING = 40;
-var VERTICAL_PADDING = 5;
+const CSS_UNITS = 96.0 / 72.0;
+const DEFAULT_SCALE_VALUE = 'auto';
+const DEFAULT_SCALE = 1.0;
+const UNKNOWN_SCALE = 0;
+const MAX_AUTO_SCALE = 1.25;
+const SCROLLBAR_PADDING = 40;
+const VERTICAL_PADDING = 5;
 
-var NullCharactersRegExp = /\x00/g;
+const NullCharactersRegExp = /\x00/g;
 
 function removeNullCharacters(str) {
   return str.replace(NullCharactersRegExp, '');
 }
 
 function getFileName(url) {
-  var anchor = url.indexOf('#');
-  var query = url.indexOf('?');
-  var end = Math.min(
-    anchor > 0 ? anchor : url.length,
-    query > 0 ? query : url.length);
+  const anchor = url.indexOf('#');
+  const query = url.indexOf('?');
+  const end = Math.min(
+      anchor > 0 ? anchor : url.length,
+      query > 0 ? query : url.length);
   return url.substring(url.lastIndexOf('/', end) + 1, end);
 }
 
@@ -45,17 +45,17 @@ function getFileName(url) {
                     not required, true otherwise.
  */
 function getOutputScale(ctx) {
-  var devicePixelRatio = window.devicePixelRatio || 1;
-  var backingStoreRatio = ctx.webkitBackingStorePixelRatio ||
+  const devicePixelRatio = window.devicePixelRatio || 1;
+  const backingStoreRatio = ctx.webkitBackingStorePixelRatio ||
                           ctx.mozBackingStorePixelRatio ||
                           ctx.msBackingStorePixelRatio ||
                           ctx.oBackingStorePixelRatio ||
                           ctx.backingStorePixelRatio || 1;
-  var pixelRatio = devicePixelRatio / backingStoreRatio;
+  const pixelRatio = devicePixelRatio / backingStoreRatio;
   return {
     sx: pixelRatio,
     sy: pixelRatio,
-    scaled: pixelRatio !== 1
+    scaled: pixelRatio !== 1,
   };
 }
 
@@ -71,14 +71,14 @@ function scrollIntoView(element, spot, skipOverflowHiddenElements) {
   // Assuming offsetParent is available (it's not available when viewer is in
   // hidden iframe or object). We have to scroll: if the offsetParent is not set
   // producing the error. See also animationStartedClosure.
-  var parent = element.offsetParent;
+  let parent = element.offsetParent;
   if (!parent) {
     console.error('offsetParent is not set -- cannot scroll');
     return;
   }
-  var checkOverflow = skipOverflowHiddenElements || false;
-  var offsetY = element.offsetTop + element.clientTop;
-  var offsetX = element.offsetLeft + element.clientLeft;
+  const checkOverflow = skipOverflowHiddenElements || false;
+  let offsetY = element.offsetTop + element.clientTop;
+  let offsetX = element.offsetLeft + element.clientLeft;
   while (parent.clientHeight === parent.scrollHeight ||
          (checkOverflow && getComputedStyle(parent).overflow === 'hidden')) {
     if (parent.dataset._scaleY) {
@@ -109,16 +109,16 @@ function scrollIntoView(element, spot, skipOverflowHiddenElements) {
  * PDF.js friendly one: with scroll debounce and scroll direction.
  */
 function watchScroll(viewAreaElement, callback) {
-  var debounceScroll = function debounceScroll(evt) {
+  const debounceScroll = function debounceScroll(evt) {
     if (rAF) {
       return;
     }
     // schedule an invocation of scroll for next animation frame.
-    rAF = window.requestAnimationFrame(function viewAreaElementScrolled() {
+    rAF = window.requestAnimationFrame(() => {
       rAF = null;
 
-      var currentY = viewAreaElement.scrollTop;
-      var lastY = state.lastY;
+      const currentY = viewAreaElement.scrollTop;
+      const lastY = state.lastY;
       if (currentY !== lastY) {
         state.down = currentY > lastY;
       }
@@ -130,7 +130,7 @@ function watchScroll(viewAreaElement, callback) {
   var state = {
     down: true,
     lastY: viewAreaElement.scrollTop,
-    _eventHandler: debounceScroll
+    _eventHandler: debounceScroll,
   };
 
   var rAF = null;
@@ -142,12 +142,12 @@ function watchScroll(viewAreaElement, callback) {
  * Helper function to parse query string (e.g. ?param1=value&parm2=...).
  */
 function parseQueryString(query) {
-  var parts = query.split('&');
-  var params = {};
-  for (var i = 0, ii = parts.length; i < ii; ++i) {
-    var param = parts[i].split('=');
-    var key = param[0].toLowerCase();
-    var value = param.length > 1 ? param[1] : null;
+  const parts = query.split('&');
+  const params = {};
+  for (let i = 0, ii = parts.length; i < ii; ++i) {
+    const param = parts[i].split('=');
+    const key = param[0].toLowerCase();
+    const value = param.length > 1 ? param[1] : null;
     params[decodeURIComponent(key)] = decodeURIComponent(value);
   }
   return params;
@@ -163,8 +163,8 @@ function parseQueryString(query) {
  *                   or |items.length| if no such element exists.
  */
 function binarySearchFirstItem(items, condition) {
-  var minIndex = 0;
-  var maxIndex = items.length - 1;
+  let minIndex = 0;
+  let maxIndex = items.length - 1;
 
   if (items.length === 0 || !condition(items[maxIndex])) {
     return items.length;
@@ -174,8 +174,8 @@ function binarySearchFirstItem(items, condition) {
   }
 
   while (minIndex < maxIndex) {
-    var currentIndex = (minIndex + maxIndex) >> 1;
-    var currentItem = items[currentIndex];
+    const currentIndex = (minIndex + maxIndex) >> 1;
+    const currentItem = items[currentIndex];
     if (condition(currentItem)) {
       maxIndex = currentIndex;
     } else {
@@ -197,21 +197,23 @@ function approximateFraction(x) {
   if (Math.floor(x) === x) {
     return [x, 1];
   }
-  var xinv = 1 / x;
-  var limit = 8;
+  const xinv = 1 / x;
+  const limit = 8;
   if (xinv > limit) {
     return [1, limit];
-  } else  if (Math.floor(xinv) === xinv) {
+  } else if (Math.floor(xinv) === xinv) {
     return [1, xinv];
   }
 
-  var x_ = x > 1 ? xinv : x;
+  const x_ = x > 1 ? xinv : x;
   // a/b and c/d are neighbours in Farey sequence.
-  var a = 0, b = 1, c = 1, d = 1;
+  let a = 0; let b = 1; let c = 1; let
+    d = 1;
   // Limiting search to order 8.
   while (true) {
     // Generating next term in sequence (order of q).
-    var p = a + c, q = b + d;
+    const p = a + c; const
+      q = b + d;
     if (q > limit) {
       break;
     }
@@ -230,7 +232,7 @@ function approximateFraction(x) {
 }
 
 function roundToDivide(x, div) {
-  var r = x % div;
+  const r = x % div;
   return r === 0 ? x : Math.round(x - r + div);
 }
 
@@ -238,23 +240,25 @@ function roundToDivide(x, div) {
  * Generic helper to find out what elements are visible within a scroll pane.
  */
 function getVisibleElements(scrollEl, views, sortByVisibility) {
-  var top = scrollEl.scrollTop, bottom = top + scrollEl.clientHeight;
-  var left = scrollEl.scrollLeft, right = left + scrollEl.clientWidth;
+  const top = scrollEl.scrollTop; const
+    bottom = top + scrollEl.clientHeight;
+  const left = scrollEl.scrollLeft; const
+    right = left + scrollEl.clientWidth;
 
   function isElementBottomBelowViewTop(view) {
-    var element = view.div;
-    var elementBottom =
+    const element = view.div;
+    const elementBottom =
       element.offsetTop + element.clientTop + element.clientHeight;
     return elementBottom > top;
   }
 
-  var visible = [], view, element;
-  var currentHeight, viewHeight, hiddenHeight, percentHeight;
-  var currentWidth, viewWidth;
-  var firstVisibleElementInd = (views.length === 0) ? 0 :
-    binarySearchFirstItem(views, isElementBottomBelowViewTop);
+  const visible = []; let view; let element;
+  let currentHeight, viewHeight, hiddenHeight, percentHeight;
+  let currentWidth, viewWidth;
+  const firstVisibleElementInd = (views.length === 0) ? 0
+    : binarySearchFirstItem(views, isElementBottomBelowViewTop);
 
-  for (var i = firstVisibleElementInd, ii = views.length; i < ii; i++) {
+  for (let i = firstVisibleElementInd, ii = views.length; i < ii; i++) {
     view = views[i];
     element = view.div;
     currentHeight = element.offsetTop + element.clientTop;
@@ -277,24 +281,24 @@ function getVisibleElements(scrollEl, views, sortByVisibility) {
       id: view.id,
       x: currentWidth,
       y: currentHeight,
-      view: view,
-      percent: percentHeight
+      view,
+      percent: percentHeight,
     });
   }
 
-  var first = visible[0];
-  var last = visible[visible.length - 1];
+  const first = visible[0];
+  const last = visible[visible.length - 1];
 
   if (sortByVisibility) {
-    visible.sort(function(a, b) {
-      var pc = a.percent - b.percent;
+    visible.sort((a, b) => {
+      const pc = a.percent - b.percent;
       if (Math.abs(pc) > 0.001) {
         return -pc;
       }
       return a.id - b.id; // ensure stability
     });
   }
-  return {first: first, last: last, views: visible};
+  return {first, last, views: visible};
 }
 
 /**
@@ -310,12 +314,12 @@ function noContextMenuHandler(e) {
  * @return {String} Guessed PDF file name.
  */
 function getPDFFileNameFromURL(url) {
-  var reURI = /^(?:([^:]+:)?\/\/[^\/]+)?([^?#]*)(\?[^#]*)?(#.*)?$/;
+  const reURI = /^(?:([^:]+:)?\/\/[^\/]+)?([^?#]*)(\?[^#]*)?(#.*)?$/;
   //            SCHEME      HOST         1.PATH  2.QUERY   3.REF
   // Pattern to get last matching NAME.pdf
-  var reFilename = /[^\/?#=]+\.pdf\b(?!.*\.pdf\b)/i;
-  var splitURI = reURI.exec(url);
-  var suggestedFilename = reFilename.exec(splitURI[1]) ||
+  const reFilename = /[^\/?#=]+\.pdf\b(?!.*\.pdf\b)/i;
+  const splitURI = reURI.exec(url);
+  let suggestedFilename = reFilename.exec(splitURI[1]) ||
                            reFilename.exec(splitURI[2]) ||
                            reFilename.exec(splitURI[3]);
   if (suggestedFilename) {
@@ -325,7 +329,7 @@ function getPDFFileNameFromURL(url) {
       try {
         suggestedFilename =
           reFilename.exec(decodeURIComponent(suggestedFilename))[0];
-      } catch(e) { // Possible (extremely rare) errors:
+      } catch (e) { // Possible (extremely rare) errors:
         // URIError "Malformed URI", e.g. for "%AA.pdf"
         // TypeError "null has no properties", e.g. for "%2F.pdf"
       }
@@ -334,8 +338,7 @@ function getPDFFileNameFromURL(url) {
   return suggestedFilename || 'document.pdf';
 }
 
-var ProgressBar = (function ProgressBarClosure() {
-
+const ProgressBar = (function ProgressBarClosure() {
   function clamp(v, min, max) {
     return Math.min(Math.max(v, min), max);
   }
@@ -344,7 +347,7 @@ var ProgressBar = (function ProgressBarClosure() {
     this.visible = true;
 
     // Fetch the sub-elements for later.
-    this.div = document.querySelector(id + ' .progress');
+    this.div = document.querySelector(`${id} .progress`);
 
     // Get the loading bar element, so it can be resized to fit the viewer.
     this.bar = this.div.parentNode;
@@ -369,7 +372,7 @@ var ProgressBar = (function ProgressBarClosure() {
       }
 
       this.div.classList.remove('indeterminate');
-      var progressSize = this.width * this._percent / 100;
+      const progressSize = this.width * this._percent / 100;
       this.div.style.width = progressSize + this.units;
     },
 
@@ -385,11 +388,11 @@ var ProgressBar = (function ProgressBarClosure() {
 
     setWidth: function ProgressBar_setWidth(viewer) {
       if (viewer) {
-        var container = viewer.parentNode;
-        var scrollbarWidth = container.offsetWidth - viewer.offsetWidth;
+        const container = viewer.parentNode;
+        const scrollbarWidth = container.offsetWidth - viewer.offsetWidth;
         if (scrollbarWidth > 0) {
-          this.bar.setAttribute('style', 'width: calc(100% - ' +
-                                         scrollbarWidth + 'px);');
+          this.bar.setAttribute('style', `width: calc(100% - ${
+            scrollbarWidth}px);`);
         }
       }
     },
@@ -410,7 +413,7 @@ var ProgressBar = (function ProgressBarClosure() {
       this.visible = true;
       document.body.classList.add('loadingInProgress');
       this.bar.classList.remove('hidden');
-    }
+    },
   };
 
   return ProgressBar;

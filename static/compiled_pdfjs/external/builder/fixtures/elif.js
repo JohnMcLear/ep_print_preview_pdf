@@ -1,4 +1,4 @@
 'use strict';
-//#elif TRUE
-var a;
-//#endif
+// #elif TRUE
+let a;
+// #endif

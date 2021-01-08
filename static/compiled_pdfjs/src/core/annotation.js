@@ -20,7 +20,7 @@
 
 'use strict';
 
-var DEFAULT_ICON_SIZE = 22; // px
+const DEFAULT_ICON_SIZE = 22; // px
 
 /**
  * @class
@@ -34,19 +34,19 @@ AnnotationFactory.prototype = /** @lends AnnotationFactory.prototype */ {
    * @returns {Annotation}
    */
   create: function AnnotationFactory_create(xref, ref) {
-    var dict = xref.fetchIfRef(ref);
+    const dict = xref.fetchIfRef(ref);
     if (!isDict(dict)) {
       return;
     }
 
     // Determine the annotation's subtype.
-    var subtype = dict.get('Subtype');
+    let subtype = dict.get('Subtype');
     subtype = isName(subtype) ? subtype.name : '';
 
     // Return the right annotation object based on the subtype and field type.
-    var parameters = {
-      dict: dict,
-      ref: ref
+    const parameters = {
+      dict,
+      ref,
     };
 
     switch (subtype) {
@@ -64,21 +64,21 @@ AnnotationFactory.prototype = /** @lends AnnotationFactory.prototype */ {
         return new WidgetAnnotation(parameters);
 
       default:
-        warn('Unimplemented annotation type "' + subtype + '", ' +
+        warn(`Unimplemented annotation type "${subtype}", ` +
              'falling back to base annotation');
         return new Annotation(parameters);
     }
-  }
+  },
 };
 
 var Annotation = (function AnnotationClosure() {
   // 12.5.5: Algorithm: Appearance streams
   function getTransformMatrix(rect, bbox, matrix) {
-    var bounds = Util.getAxialAlignedBoundingBox(bbox, matrix);
-    var minX = bounds[0];
-    var minY = bounds[1];
-    var maxX = bounds[2];
-    var maxY = bounds[3];
+    const bounds = Util.getAxialAlignedBoundingBox(bbox, matrix);
+    const minX = bounds[0];
+    const minY = bounds[1];
+    const maxX = bounds[2];
+    const maxY = bounds[3];
 
     if (minX === maxX || minY === maxY) {
       // From real-life file, bbox was [0, 0, 0, 0]. In this case,
@@ -86,28 +86,28 @@ var Annotation = (function AnnotationClosure() {
       return [1, 0, 0, 1, rect[0], rect[1]];
     }
 
-    var xRatio = (rect[2] - rect[0]) / (maxX - minX);
-    var yRatio = (rect[3] - rect[1]) / (maxY - minY);
+    const xRatio = (rect[2] - rect[0]) / (maxX - minX);
+    const yRatio = (rect[3] - rect[1]) / (maxY - minY);
     return [
       xRatio,
       0,
       0,
       yRatio,
       rect[0] - minX * xRatio,
-      rect[1] - minY * yRatio
+      rect[1] - minY * yRatio,
     ];
   }
 
   function getDefaultAppearance(dict) {
-    var appearanceState = dict.get('AP');
+    const appearanceState = dict.get('AP');
     if (!isDict(appearanceState)) {
       return;
     }
 
-    var appearance;
-    var appearances = appearanceState.get('N');
+    let appearance;
+    const appearances = appearanceState.get('N');
     if (isDict(appearances)) {
-      var as = dict.get('AS');
+      const as = dict.get('AS');
       if (as && appearances.has(as.name)) {
         appearance = appearances.get(as.name);
       }
@@ -118,8 +118,8 @@ var Annotation = (function AnnotationClosure() {
   }
 
   function Annotation(params) {
-    var dict = params.dict;
-    var data = this.data = {};
+    const dict = params.dict;
+    const data = this.data = {};
 
     data.subtype = dict.get('Subtype').name;
 
@@ -224,7 +224,7 @@ var Annotation = (function AnnotationClosure() {
      *                        4 (CMYK) elements
      */
     setColor: function Annotation_setColor(color) {
-      var rgbColor = new Uint8Array(3); // Black in RGB color space (default)
+      const rgbColor = new Uint8Array(3); // Black in RGB color space (default)
       if (!isArray(color)) {
         this.color = rgbColor;
         return;
@@ -268,8 +268,8 @@ var Annotation = (function AnnotationClosure() {
         return;
       }
       if (borderStyle.has('BS')) {
-        var dict = borderStyle.get('BS');
-        var dictType;
+        const dict = borderStyle.get('BS');
+        let dictType;
 
         if (!dict.has('Type') || (isName(dictType = dict.get('Type')) &&
                                   dictType.name === 'Border')) {
@@ -278,7 +278,7 @@ var Annotation = (function AnnotationClosure() {
           this.borderStyle.setDashArray(dict.get('D'));
         }
       } else if (borderStyle.has('Border')) {
-        var array = borderStyle.get('Border');
+        const array = borderStyle.get('Border');
         if (isArray(array) && array.length >= 3) {
           this.borderStyle.setHorizontalCornerRadius(array[0]);
           this.borderStyle.setVerticalCornerRadius(array[1]);
@@ -299,81 +299,79 @@ var Annotation = (function AnnotationClosure() {
     },
 
     loadResources: function Annotation_loadResources(keys) {
-      return new Promise(function (resolve, reject) {
-        this.appearance.dict.getAsync('Resources').then(function (resources) {
+      return new Promise((resolve, reject) => {
+        this.appearance.dict.getAsync('Resources').then((resources) => {
           if (!resources) {
             resolve();
             return;
           }
-          var objectLoader = new ObjectLoader(resources.map,
-                                              keys,
-                                              resources.xref);
-          objectLoader.load().then(function() {
+          const objectLoader = new ObjectLoader(resources.map,
+              keys,
+              resources.xref);
+          objectLoader.load().then(() => {
             resolve(resources);
           }, reject);
         }, reject);
-      }.bind(this));
+      });
     },
 
     getOperatorList: function Annotation_getOperatorList(evaluator, task) {
-
       if (!this.appearance) {
         return Promise.resolve(new OperatorList());
       }
 
-      var data = this.data;
+      const data = this.data;
 
-      var appearanceDict = this.appearance.dict;
-      var resourcesPromise = this.loadResources([
+      const appearanceDict = this.appearance.dict;
+      const resourcesPromise = this.loadResources([
         'ExtGState',
         'ColorSpace',
         'Pattern',
         'Shading',
         'XObject',
-        'Font'
+        'Font',
         // ProcSet
         // Properties
       ]);
-      var bbox = appearanceDict.get('BBox') || [0, 0, 1, 1];
-      var matrix = appearanceDict.get('Matrix') || [1, 0, 0, 1, 0 ,0];
-      var transform = getTransformMatrix(data.rect, bbox, matrix);
-      var self = this;
+      const bbox = appearanceDict.get('BBox') || [0, 0, 1, 1];
+      const matrix = appearanceDict.get('Matrix') || [1, 0, 0, 1, 0, 0];
+      const transform = getTransformMatrix(data.rect, bbox, matrix);
+      const self = this;
 
-      return resourcesPromise.then(function(resources) {
-          var opList = new OperatorList();
-          opList.addOp(OPS.beginAnnotation, [data.rect, transform, matrix]);
-          return evaluator.getOperatorList(self.appearance, task,
-                                           resources, opList).
-            then(function () {
+      return resourcesPromise.then((resources) => {
+        const opList = new OperatorList();
+        opList.addOp(OPS.beginAnnotation, [data.rect, transform, matrix]);
+        return evaluator.getOperatorList(self.appearance, task,
+            resources, opList)
+            .then(() => {
               opList.addOp(OPS.endAnnotation, []);
               self.appearance.reset();
               return opList;
             });
-        });
-    }
+      });
+    },
   };
 
   Annotation.appendToOperatorList = function Annotation_appendToOperatorList(
       annotations, opList, pdfManager, partialEvaluator, task, intent) {
-
     function reject(e) {
       annotationsReadyCapability.reject(e);
     }
 
     var annotationsReadyCapability = createPromiseCapability();
 
-    var annotationPromises = [];
-    for (var i = 0, n = annotations.length; i < n; ++i) {
+    const annotationPromises = [];
+    for (let i = 0, n = annotations.length; i < n; ++i) {
       if (intent === 'display' && annotations[i].viewable ||
           intent === 'print' && annotations[i].printable) {
         annotationPromises.push(
-          annotations[i].getOperatorList(partialEvaluator, task));
+            annotations[i].getOperatorList(partialEvaluator, task));
       }
     }
-    Promise.all(annotationPromises).then(function(datas) {
+    Promise.all(annotationPromises).then((datas) => {
       opList.addOp(OPS.beginAnnotations, []);
-      for (var i = 0, n = datas.length; i < n; ++i) {
-        var annotOpList = datas[i];
+      for (let i = 0, n = datas.length; i < n; ++i) {
+        const annotOpList = datas[i];
         opList.addOpList(annotOpList);
       }
       opList.addOp(OPS.endAnnotations, []);
@@ -470,11 +468,11 @@ var AnnotationBorderStyle = (function AnnotationBorderStyleClosure() {
       if (isArray(dashArray) && dashArray.length > 0) {
         // According to the PDF specification: the elements in a dashArray
         // shall be numbers that are nonnegative and not all equal to zero.
-        var isValid = true;
-        var allZeros = true;
-        for (var i = 0, len = dashArray.length; i < len; i++) {
-          var element = dashArray[i];
-          var validNumber = (+element >= 0);
+        let isValid = true;
+        let allZeros = true;
+        for (let i = 0, len = dashArray.length; i < len; i++) {
+          const element = dashArray[i];
+          const validNumber = (+element >= 0);
           if (!validNumber) {
             isValid = false;
             break;
@@ -501,10 +499,10 @@ var AnnotationBorderStyle = (function AnnotationBorderStyleClosure() {
      */
     setHorizontalCornerRadius:
         function AnnotationBorderStyle_setHorizontalCornerRadius(radius) {
-      if (radius === (radius | 0)) {
-        this.horizontalCornerRadius = radius;
-      }
-    },
+          if (radius === (radius | 0)) {
+            this.horizontalCornerRadius = radius;
+          }
+        },
 
     /**
      * Set the vertical corner radius (from a Border dictionary).
@@ -515,28 +513,27 @@ var AnnotationBorderStyle = (function AnnotationBorderStyleClosure() {
      */
     setVerticalCornerRadius:
         function AnnotationBorderStyle_setVerticalCornerRadius(radius) {
-      if (radius === (radius | 0)) {
-        this.verticalCornerRadius = radius;
-      }
-    }
+          if (radius === (radius | 0)) {
+            this.verticalCornerRadius = radius;
+          }
+        },
   };
 
   return AnnotationBorderStyle;
 })();
 
 var WidgetAnnotation = (function WidgetAnnotationClosure() {
-
   function WidgetAnnotation(params) {
     Annotation.call(this, params);
 
-    var dict = params.dict;
-    var data = this.data;
+    const dict = params.dict;
+    const data = this.data;
 
     data.fieldValue = stringToPDFString(
-      Util.getInheritableProperty(dict, 'V') || '');
+        Util.getInheritableProperty(dict, 'V') || '');
     data.alternativeText = stringToPDFString(dict.get('TU') || '');
     data.defaultAppearance = Util.getInheritableProperty(dict, 'DA') || '';
-    var fieldType = Util.getInheritableProperty(dict, 'FT');
+    const fieldType = Util.getInheritableProperty(dict, 'FT');
     data.fieldType = isName(fieldType) ? fieldType.name : '';
     data.fieldFlags = Util.getInheritableProperty(dict, 'Ff') || 0;
     this.fieldResources = Util.getInheritableProperty(dict, 'DR') || Dict.empty;
@@ -549,13 +546,13 @@ var WidgetAnnotation = (function WidgetAnnotationClosure() {
 
     // Building the full field name by collecting the field and
     // its ancestors 'T' data and joining them using '.'.
-    var fieldName = [];
-    var namedItem = dict;
-    var ref = params.ref;
+    const fieldName = [];
+    let namedItem = dict;
+    let ref = params.ref;
     while (namedItem) {
-      var parent = namedItem.get('Parent');
-      var parentRef = namedItem.getRaw('Parent');
-      var name = namedItem.get('T');
+      const parent = namedItem.get('Parent');
+      const parentRef = namedItem.getRaw('Parent');
+      const name = namedItem.get('T');
       if (name) {
         fieldName.unshift(stringToPDFString(name));
       } else if (parent && ref) {
@@ -564,15 +561,15 @@ var WidgetAnnotation = (function WidgetAnnotationClosure() {
         // with the '`' plus index in the parent's 'Kids' array.
         // This is not in the PDF spec but necessary to id the
         // the input controls.
-        var kids = parent.get('Kids');
+        const kids = parent.get('Kids');
         var j, jj;
         for (j = 0, jj = kids.length; j < jj; j++) {
-          var kidRef = kids[j];
+          const kidRef = kids[j];
           if (kidRef.num === ref.num && kidRef.gen === ref.gen) {
             break;
           }
         }
-        fieldName.unshift('`' + j);
+        fieldName.unshift(`\`${j}`);
       }
       namedItem = parent;
       ref = parentRef;
@@ -596,13 +593,13 @@ var TextWidgetAnnotation = (function TextWidgetAnnotationClosure() {
 
   Util.inherit(TextWidgetAnnotation, WidgetAnnotation, {
     getOperatorList: function TextWidgetAnnotation_getOperatorList(evaluator,
-                                                                   task) {
+        task) {
       if (this.appearance) {
         return Annotation.prototype.getOperatorList.call(this, evaluator, task);
       }
 
-      var opList = new OperatorList();
-      var data = this.data;
+      const opList = new OperatorList();
+      const data = this.data;
 
       // Even if there is an appearance stream, ignore it. This is the
       // behaviour used by Adobe Reader.
@@ -610,13 +607,11 @@ var TextWidgetAnnotation = (function TextWidgetAnnotationClosure() {
         return Promise.resolve(opList);
       }
 
-      var stream = new Stream(stringToBytes(data.defaultAppearance));
+      const stream = new Stream(stringToBytes(data.defaultAppearance));
       return evaluator.getOperatorList(stream, task,
-                                       this.fieldResources, opList).
-        then(function () {
-          return opList;
-        });
-    }
+          this.fieldResources, opList)
+          .then(() => opList);
+    },
   });
 
   return TextWidgetAnnotation;
@@ -626,11 +621,11 @@ var TextAnnotation = (function TextAnnotationClosure() {
   function TextAnnotation(params) {
     Annotation.call(this, params);
 
-    var dict = params.dict;
-    var data = this.data;
+    const dict = params.dict;
+    const data = this.data;
 
-    var content = dict.get('Contents');
-    var title = dict.get('T');
+    const content = dict.get('Contents');
+    const title = dict.get('T');
     data.annotationType = AnnotationType.TEXT;
     data.content = stringToPDFString(content || '');
     data.title = stringToPDFString(title || '');
@@ -658,19 +653,19 @@ var LinkAnnotation = (function LinkAnnotationClosure() {
   function LinkAnnotation(params) {
     Annotation.call(this, params);
 
-    var dict = params.dict;
-    var data = this.data;
+    const dict = params.dict;
+    const data = this.data;
     data.annotationType = AnnotationType.LINK;
     data.hasHtml = true;
 
-    var action = dict.get('A');
+    const action = dict.get('A');
     if (action && isDict(action)) {
-      var linkType = action.get('S').name;
+      const linkType = action.get('S').name;
       if (linkType === 'URI') {
         var url = action.get('URI');
         if (isName(url)) {
           // Some bad PDFs do not put parentheses around relative URLs.
-          url = '/' + url.name;
+          url = `/${url.name}`;
         } else if (url) {
           url = addDefaultProtocolToUrl(url);
         }
@@ -691,7 +686,7 @@ var LinkAnnotation = (function LinkAnnotationClosure() {
       } else if (linkType === 'GoTo') {
         data.dest = action.get('D');
       } else if (linkType === 'GoToR') {
-        var urlDict = action.get('F');
+        const urlDict = action.get('F');
         if (isDict(urlDict)) {
           // We assume that the 'url' is a Filspec dictionary
           // and fetch the url without checking any further
@@ -708,11 +703,11 @@ var LinkAnnotation = (function LinkAnnotationClosure() {
       } else if (linkType === 'Named') {
         data.action = action.get('N').name;
       } else {
-        warn('unrecognized link type: ' + linkType);
+        warn(`unrecognized link type: ${linkType}`);
       }
     } else if (dict.has('Dest')) {
       // simple destination link
-      var dest = dict.get('Dest');
+      const dest = dict.get('Dest');
       data.dest = isName(dest) ? dest.name : dest;
     }
   }
@@ -720,7 +715,7 @@ var LinkAnnotation = (function LinkAnnotationClosure() {
   // Lets URLs beginning with 'www.' default to using the 'http://' protocol.
   function addDefaultProtocolToUrl(url) {
     if (url && url.indexOf('www.') === 0) {
-      return ('http://' + url);
+      return (`http://${url}`);
     }
     return url;
   }

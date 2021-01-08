@@ -12,17 +12,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- /* globals PDFJS, Util */
+/* globals PDFJS, Util */
 
 'use strict';
 
 // List of shared files to include;
-var sharedFiles = [
-  'shared/util.js'
+const sharedFiles = [
+  'shared/util.js',
 ];
 
 // List of other files to include;
-var otherFiles = [
+const otherFiles = [
   'core/network.js',
   'core/chunked_stream.js',
   'core/pdf_manager.js',
@@ -50,7 +50,7 @@ var otherFiles = [
   'core/jpx.js',
   'core/jbig2.js',
   'core/bidi.js',
-  'core/murmurhash3.js'
+  'core/murmurhash3.js',
 ];
 
 function loadInOrder(index, path, files) {
@@ -59,21 +59,21 @@ function loadInOrder(index, path, files) {
     return;
   }
   PDFJS.Util.loadScript(path + files[index],
-                  loadInOrder.bind(null, ++index, path, files));
+      loadInOrder.bind(null, ++index, path, files));
 }
 
 // Load all the files.
 if (typeof PDFJS === 'undefined' || !PDFJS.fakeWorkerFilesLoadedCapability) {
   var files = sharedFiles.concat(otherFiles);
-  for (var i = 0; i < files.length; i++) {
+  for (let i = 0; i < files.length; i++) {
     importScripts(files[i]);
   }
 } else {
-  var src = PDFJS.workerSrc;
-  var path = src.substr(0, src.indexOf('worker_loader.js'));
+  const src = PDFJS.workerSrc;
+  const path = src.substr(0, src.indexOf('worker_loader.js'));
   // If Util is available, we assume that shared files are already loaded. Can
   // happen that they are not if PDF.js is bundled inside a special namespace.
-  var skipShared = typeof Util !== 'undefined';
+  const skipShared = typeof Util !== 'undefined';
   var files = skipShared ? otherFiles : sharedFiles.concat(otherFiles);
   loadInOrder(0, path, files);
 }

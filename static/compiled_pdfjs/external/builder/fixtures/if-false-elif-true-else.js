@@ -1,8 +1,8 @@
 'use strict';
-//#if FALSE
-var a;
-//#elif TRUE
-var b;
-//#else
-var c;
-//#endif
+// #if FALSE
+let a;
+// #elif TRUE
+let b;
+// #else
+let c;
+// #endif

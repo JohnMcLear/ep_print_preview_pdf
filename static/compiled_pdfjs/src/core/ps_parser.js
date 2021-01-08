@@ -16,7 +16,7 @@
 
 'use strict';
 
-var PostScriptParser = (function PostScriptParserClosure() {
+const PostScriptParser = (function PostScriptParserClosure() {
   function PostScriptParser(lexer) {
     this.lexer = lexer;
     this.operators = [];
@@ -39,8 +39,8 @@ var PostScriptParser = (function PostScriptParserClosure() {
       if (this.accept(type)) {
         return true;
       }
-      error('Unexpected symbol: found ' + this.token.type + ' expected ' +
-        type + '.');
+      error(`Unexpected symbol: found ${this.token.type} expected ${
+        type}.`);
     },
     parse: function PostScriptParser_parse() {
       this.nextToken();
@@ -64,7 +64,7 @@ var PostScriptParser = (function PostScriptParserClosure() {
     },
     parseCondition: function PostScriptParser_parseCondition() {
       // Add two place holders that will be updated later
-      var conditionLocation = this.operators.length;
+      const conditionLocation = this.operators.length;
       this.operators.push(null, null);
 
       this.parseBlock();
@@ -75,9 +75,9 @@ var PostScriptParser = (function PostScriptParserClosure() {
         this.operators[conditionLocation] = this.operators.length;
         this.operators[conditionLocation + 1] = 'jz';
       } else if (this.accept(PostScriptTokenTypes.LBRACE)) {
-        var jumpLocation = this.operators.length;
+        const jumpLocation = this.operators.length;
         this.operators.push(null, null);
-        var endOfTrue = this.operators.length;
+        const endOfTrue = this.operators.length;
         this.parseBlock();
         this.expect(PostScriptTokenTypes.RBRACE);
         this.expect(PostScriptTokenTypes.IFELSE);
@@ -91,7 +91,7 @@ var PostScriptParser = (function PostScriptParserClosure() {
       } else {
         error('PS Function: error parsing conditional.');
       }
-    }
+    },
   };
   return PostScriptParser;
 })();
@@ -102,19 +102,19 @@ var PostScriptTokenTypes = {
   NUMBER: 2,
   OPERATOR: 3,
   IF: 4,
-  IFELSE: 5
+  IFELSE: 5,
 };
 
-var PostScriptToken = (function PostScriptTokenClosure() {
+const PostScriptToken = (function PostScriptTokenClosure() {
   function PostScriptToken(type, value) {
     this.type = type;
     this.value = value;
   }
 
-  var opCache = {};
+  const opCache = {};
 
   PostScriptToken.getOperator = function PostScriptToken_getOperator(op) {
-    var opValue = opCache[op];
+    const opValue = opCache[op];
     if (opValue) {
       return opValue;
     }
@@ -122,16 +122,16 @@ var PostScriptToken = (function PostScriptTokenClosure() {
   };
 
   PostScriptToken.LBRACE = new PostScriptToken(PostScriptTokenTypes.LBRACE,
-    '{');
+      '{');
   PostScriptToken.RBRACE = new PostScriptToken(PostScriptTokenTypes.RBRACE,
-    '}');
+      '}');
   PostScriptToken.IF = new PostScriptToken(PostScriptTokenTypes.IF, 'IF');
   PostScriptToken.IFELSE = new PostScriptToken(PostScriptTokenTypes.IFELSE,
-    'IFELSE');
+      'IFELSE');
   return PostScriptToken;
 })();
 
-var PostScriptLexer = (function PostScriptLexerClosure() {
+const PostScriptLexer = (function PostScriptLexerClosure() {
   function PostScriptLexer(stream) {
     this.stream = stream;
     this.nextChar();
@@ -143,8 +143,8 @@ var PostScriptLexer = (function PostScriptLexerClosure() {
       return (this.currentChar = this.stream.getByte());
     },
     getToken: function PostScriptLexer_getToken() {
-      var comment = false;
-      var ch = this.currentChar;
+      let comment = false;
+      let ch = this.currentChar;
 
       // skip comments
       while (true) {
@@ -168,7 +168,7 @@ var PostScriptLexer = (function PostScriptLexerClosure() {
         case 0x35: case 0x36: case 0x37: case 0x38: case 0x39: // '5'-'9'
         case 0x2B: case 0x2D: case 0x2E: // '+', '-', '.'
           return new PostScriptToken(PostScriptTokenTypes.NUMBER,
-                                     this.getNumber());
+              this.getNumber());
         case 0x7B: // '{'
           this.nextChar();
           return PostScriptToken.LBRACE;
@@ -177,7 +177,7 @@ var PostScriptLexer = (function PostScriptLexerClosure() {
           return PostScriptToken.RBRACE;
       }
       // operator
-      var strBuf = this.strBuf;
+      const strBuf = this.strBuf;
       strBuf.length = 0;
       strBuf[0] = String.fromCharCode(ch);
 
@@ -185,7 +185,7 @@ var PostScriptLexer = (function PostScriptLexerClosure() {
              ((ch >= 0x41 && ch <= 0x5A) || (ch >= 0x61 && ch <= 0x7A))) {
         strBuf.push(String.fromCharCode(ch));
       }
-      var str = strBuf.join('');
+      const str = strBuf.join('');
       switch (str.toLowerCase()) {
         case 'if':
           return PostScriptToken.IF;
@@ -196,8 +196,8 @@ var PostScriptLexer = (function PostScriptLexerClosure() {
       }
     },
     getNumber: function PostScriptLexer_getNumber() {
-      var ch = this.currentChar;
-      var strBuf = this.strBuf;
+      let ch = this.currentChar;
+      const strBuf = this.strBuf;
       strBuf.length = 0;
       strBuf[0] = String.fromCharCode(ch);
 
@@ -209,12 +209,12 @@ var PostScriptLexer = (function PostScriptLexerClosure() {
           break;
         }
       }
-      var value = parseFloat(strBuf.join(''));
+      const value = parseFloat(strBuf.join(''));
       if (isNaN(value)) {
-        error('Invalid floating point number: ' + value);
+        error(`Invalid floating point number: ${value}`);
       }
       return value;
-    }
+    },
   };
   return PostScriptLexer;
 })();

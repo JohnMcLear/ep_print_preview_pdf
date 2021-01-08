@@ -18,29 +18,29 @@
 'use strict';
 
 var PDFFunction = (function PDFFunctionClosure() {
-  var CONSTRUCT_SAMPLED = 0;
-  var CONSTRUCT_INTERPOLATED = 2;
-  var CONSTRUCT_STICHED = 3;
-  var CONSTRUCT_POSTSCRIPT = 4;
+  const CONSTRUCT_SAMPLED = 0;
+  const CONSTRUCT_INTERPOLATED = 2;
+  const CONSTRUCT_STICHED = 3;
+  const CONSTRUCT_POSTSCRIPT = 4;
 
   return {
     getSampleArray: function PDFFunction_getSampleArray(size, outputSize, bps,
-                                                       str) {
-      var i, ii;
-      var length = 1;
+        str) {
+      let i, ii;
+      let length = 1;
       for (i = 0, ii = size.length; i < ii; i++) {
         length *= size[i];
       }
       length *= outputSize;
 
-      var array = new Array(length);
-      var codeSize = 0;
-      var codeBuf = 0;
+      const array = new Array(length);
+      let codeSize = 0;
+      let codeBuf = 0;
       // 32 is a valid bps so shifting won't work
-      var sampleMul = 1.0 / (Math.pow(2.0, bps) - 1);
+      const sampleMul = 1.0 / (2.0 ** bps - 1);
 
-      var strBytes = str.getBytes((length * bps + 7) / 8);
-      var strIdx = 0;
+      const strBytes = str.getBytes((length * bps + 7) / 8);
+      let strIdx = 0;
       for (i = 0; i < length; i++) {
         while (codeSize < bps) {
           codeBuf <<= 8;
@@ -55,19 +55,19 @@ var PDFFunction = (function PDFFunctionClosure() {
     },
 
     getIR: function PDFFunction_getIR(xref, fn) {
-      var dict = fn.dict;
+      let dict = fn.dict;
       if (!dict) {
         dict = fn;
       }
 
-      var types = [this.constructSampled,
-                   null,
-                   this.constructInterpolated,
-                   this.constructStiched,
-                   this.constructPostScript];
+      const types = [this.constructSampled,
+        null,
+        this.constructInterpolated,
+        this.constructStiched,
+        this.constructPostScript];
 
-      var typeNum = dict.get('FunctionType');
-      var typeFn = types[typeNum];
+      const typeNum = dict.get('FunctionType');
+      const typeFn = types[typeNum];
       if (!typeFn) {
         error('Unknown type of function');
       }
@@ -76,7 +76,7 @@ var PDFFunction = (function PDFFunctionClosure() {
     },
 
     fromIR: function PDFFunction_fromIR(IR) {
-      var type = IR[0];
+      const type = IR[0];
       switch (type) {
         case CONSTRUCT_SAMPLED:
           return this.constructSampledFromIR(IR);
@@ -84,14 +84,14 @@ var PDFFunction = (function PDFFunctionClosure() {
           return this.constructInterpolatedFromIR(IR);
         case CONSTRUCT_STICHED:
           return this.constructStichedFromIR(IR);
-        //case CONSTRUCT_POSTSCRIPT:
+        // case CONSTRUCT_POSTSCRIPT:
         default:
           return this.constructPostScriptFromIR(IR);
       }
     },
 
     parse: function PDFFunction_parse(xref, fn) {
-      var IR = this.getIR(xref, fn);
+      const IR = this.getIR(xref, fn);
       return this.fromIR(IR);
     },
 
@@ -101,13 +101,13 @@ var PDFFunction = (function PDFFunctionClosure() {
         return this.parse(xref, fnObj);
       }
 
-      var fnArray = [];
-      for (var j = 0, jj = fnObj.length; j < jj; j++) {
-        var obj = xref.fetchIfRef(fnObj[j]);
+      const fnArray = [];
+      for (let j = 0, jj = fnObj.length; j < jj; j++) {
+        const obj = xref.fetchIfRef(fnObj[j]);
         fnArray.push(PDFFunction.parse(xref, obj));
       }
       return function (src, srcOffset, dest, destOffset) {
-        for (var i = 0, ii = fnArray.length; i < ii; i++) {
+        for (let i = 0, ii = fnArray.length; i < ii; i++) {
           fnArray[i](src, srcOffset, dest, destOffset + i);
         }
       };
@@ -115,59 +115,67 @@ var PDFFunction = (function PDFFunctionClosure() {
 
     constructSampled: function PDFFunction_constructSampled(str, dict) {
       function toMultiArray(arr) {
-        var inputLength = arr.length;
-        var out = [];
-        var index = 0;
-        for (var i = 0; i < inputLength; i += 2) {
+        const inputLength = arr.length;
+        const out = [];
+        let index = 0;
+        for (let i = 0; i < inputLength; i += 2) {
           out[index] = [arr[i], arr[i + 1]];
           ++index;
         }
         return out;
       }
-      var domain = dict.get('Domain');
-      var range = dict.get('Range');
+      let domain = dict.get('Domain');
+      let range = dict.get('Range');
 
       if (!domain || !range) {
         error('No domain or range');
       }
 
-      var inputSize = domain.length / 2;
-      var outputSize = range.length / 2;
+      const inputSize = domain.length / 2;
+      const outputSize = range.length / 2;
 
       domain = toMultiArray(domain);
       range = toMultiArray(range);
 
-      var size = dict.get('Size');
-      var bps = dict.get('BitsPerSample');
-      var order = dict.get('Order') || 1;
+      const size = dict.get('Size');
+      const bps = dict.get('BitsPerSample');
+      const order = dict.get('Order') || 1;
       if (order !== 1) {
         // No description how cubic spline interpolation works in PDF32000:2008
         // As in poppler, ignoring order, linear interpolation may work as good
-        info('No support for cubic spline interpolation: ' + order);
+        info(`No support for cubic spline interpolation: ${order}`);
       }
 
-      var encode = dict.get('Encode');
+      let encode = dict.get('Encode');
       if (!encode) {
         encode = [];
-        for (var i = 0; i < inputSize; ++i) {
+        for (let i = 0; i < inputSize; ++i) {
           encode.push(0);
           encode.push(size[i] - 1);
         }
       }
       encode = toMultiArray(encode);
 
-      var decode = dict.get('Decode');
+      let decode = dict.get('Decode');
       if (!decode) {
         decode = range;
       } else {
         decode = toMultiArray(decode);
       }
 
-      var samples = this.getSampleArray(size, outputSize, bps, str);
+      const samples = this.getSampleArray(size, outputSize, bps, str);
 
       return [
-        CONSTRUCT_SAMPLED, inputSize, domain, encode, decode, samples, size,
-        outputSize, Math.pow(2, bps) - 1, range
+        CONSTRUCT_SAMPLED,
+        inputSize,
+        domain,
+        encode,
+        decode,
+        samples,
+        size,
+        outputSize,
+        2 ** bps - 1,
+        range,
       ];
     },
 
@@ -178,52 +186,53 @@ var PDFFunction = (function PDFFunctionClosure() {
       }
 
       return function constructSampledFromIRResult(src, srcOffset,
-                                                   dest, destOffset) {
+          dest, destOffset) {
         // See chapter 3, page 110 of the PDF reference.
-        var m = IR[1];
-        var domain = IR[2];
-        var encode = IR[3];
-        var decode = IR[4];
-        var samples = IR[5];
-        var size = IR[6];
-        var n = IR[7];
-        //var mask = IR[8];
-        var range = IR[9];
+        const m = IR[1];
+        const domain = IR[2];
+        const encode = IR[3];
+        const decode = IR[4];
+        const samples = IR[5];
+        const size = IR[6];
+        const n = IR[7];
+        // var mask = IR[8];
+        const range = IR[9];
 
         // Building the cube vertices: its part and sample index
         // http://rjwagner49.com/Mathematics/Interpolation.pdf
-        var cubeVertices = 1 << m;
-        var cubeN = new Float64Array(cubeVertices);
-        var cubeVertex = new Uint32Array(cubeVertices);
-        var i, j;
+        const cubeVertices = 1 << m;
+        const cubeN = new Float64Array(cubeVertices);
+        const cubeVertex = new Uint32Array(cubeVertices);
+        let i, j;
         for (j = 0; j < cubeVertices; j++) {
           cubeN[j] = 1;
         }
 
-        var k = n, pos = 1;
+        let k = n; let
+          pos = 1;
         // Map x_i to y_j for 0 <= i < m using the sampled function.
         for (i = 0; i < m; ++i) {
           // x_i' = min(max(x_i, Domain_2i), Domain_2i+1)
-          var domain_2i = domain[i][0];
-          var domain_2i_1 = domain[i][1];
-          var xi = Math.min(Math.max(src[srcOffset +i], domain_2i),
-                            domain_2i_1);
+          const domain_2i = domain[i][0];
+          const domain_2i_1 = domain[i][1];
+          const xi = Math.min(Math.max(src[srcOffset + i], domain_2i),
+              domain_2i_1);
 
           // e_i = Interpolate(x_i', Domain_2i, Domain_2i+1,
           //                   Encode_2i, Encode_2i+1)
-          var e = interpolate(xi, domain_2i, domain_2i_1,
-                              encode[i][0], encode[i][1]);
+          let e = interpolate(xi, domain_2i, domain_2i_1,
+              encode[i][0], encode[i][1]);
 
           // e_i' = min(max(e_i, 0), Size_i - 1)
-          var size_i = size[i];
+          const size_i = size[i];
           e = Math.min(Math.max(e, 0), size_i - 1);
 
           // Adjusting the cube: N and vertex sample index
-          var e0 = e < size_i - 1 ? Math.floor(e) : e - 1; // e1 = e0 + 1;
-          var n0 = e0 + 1 - e; // (e1 - e) / (e1 - e0);
-          var n1 = e - e0; // (e - e0) / (e1 - e0);
-          var offset0 = e0 * k;
-          var offset1 = offset0 + k; // e1 * k
+          const e0 = e < size_i - 1 ? Math.floor(e) : e - 1; // e1 = e0 + 1;
+          const n0 = e0 + 1 - e; // (e1 - e) / (e1 - e0);
+          const n1 = e - e0; // (e - e0) / (e1 - e0);
+          const offset0 = e0 * k;
+          const offset1 = offset0 + k; // e1 * k
           for (j = 0; j < cubeVertices; j++) {
             if (j & pos) {
               cubeN[j] *= n1;
@@ -240,7 +249,7 @@ var PDFFunction = (function PDFFunctionClosure() {
 
         for (j = 0; j < n; ++j) {
           // Sum all cube vertices' samples portions
-          var rj = 0;
+          let rj = 0;
           for (i = 0; i < cubeVertices; i++) {
             rj += samples[cubeVertex[i] + j] * cubeN[i];
           }
@@ -251,24 +260,24 @@ var PDFFunction = (function PDFFunctionClosure() {
 
           // y_j = min(max(r_j, range_2j), range_2j+1)
           dest[destOffset + j] = Math.min(Math.max(rj, range[j][0]),
-                                          range[j][1]);
+              range[j][1]);
         }
       };
     },
 
     constructInterpolated: function PDFFunction_constructInterpolated(str,
-                                                                      dict) {
-      var c0 = dict.get('C0') || [0];
-      var c1 = dict.get('C1') || [1];
-      var n = dict.get('N');
+        dict) {
+      const c0 = dict.get('C0') || [0];
+      const c1 = dict.get('C1') || [1];
+      const n = dict.get('N');
 
       if (!isArray(c0) || !isArray(c1)) {
         error('Illegal dictionary for interpolated function');
       }
 
-      var length = c0.length;
-      var diff = [];
-      for (var i = 0; i < length; ++i) {
+      const length = c0.length;
+      const diff = [];
+      for (let i = 0; i < length; ++i) {
         diff.push(c1[i] - c0[i]);
       }
 
@@ -277,61 +286,61 @@ var PDFFunction = (function PDFFunctionClosure() {
 
     constructInterpolatedFromIR:
       function PDFFunction_constructInterpolatedFromIR(IR) {
-      var c0 = IR[1];
-      var diff = IR[2];
-      var n = IR[3];
+        const c0 = IR[1];
+        const diff = IR[2];
+        const n = IR[3];
 
-      var length = diff.length;
+        const length = diff.length;
 
-      return function constructInterpolatedFromIRResult(src, srcOffset,
-                                                        dest, destOffset) {
-        var x = n === 1 ? src[srcOffset] : Math.pow(src[srcOffset], n);
+        return function constructInterpolatedFromIRResult(src, srcOffset,
+            dest, destOffset) {
+          const x = n === 1 ? src[srcOffset] : src[srcOffset] ** n;
 
-        for (var j = 0; j < length; ++j) {
-          dest[destOffset + j] = c0[j] + (x * diff[j]);
-        }
-      };
-    },
+          for (let j = 0; j < length; ++j) {
+            dest[destOffset + j] = c0[j] + (x * diff[j]);
+          }
+        };
+      },
 
     constructStiched: function PDFFunction_constructStiched(fn, dict, xref) {
-      var domain = dict.get('Domain');
+      const domain = dict.get('Domain');
 
       if (!domain) {
         error('No domain');
       }
 
-      var inputSize = domain.length / 2;
+      const inputSize = domain.length / 2;
       if (inputSize !== 1) {
         error('Bad domain for stiched function');
       }
 
-      var fnRefs = dict.get('Functions');
-      var fns = [];
-      for (var i = 0, ii = fnRefs.length; i < ii; ++i) {
+      const fnRefs = dict.get('Functions');
+      const fns = [];
+      for (let i = 0, ii = fnRefs.length; i < ii; ++i) {
         fns.push(PDFFunction.getIR(xref, xref.fetchIfRef(fnRefs[i])));
       }
 
-      var bounds = dict.get('Bounds');
-      var encode = dict.get('Encode');
+      const bounds = dict.get('Bounds');
+      const encode = dict.get('Encode');
 
       return [CONSTRUCT_STICHED, domain, bounds, encode, fns];
     },
 
     constructStichedFromIR: function PDFFunction_constructStichedFromIR(IR) {
-      var domain = IR[1];
-      var bounds = IR[2];
-      var encode = IR[3];
-      var fnsIR = IR[4];
-      var fns = [];
-      var tmpBuf = new Float32Array(1);
+      const domain = IR[1];
+      const bounds = IR[2];
+      const encode = IR[3];
+      const fnsIR = IR[4];
+      const fns = [];
+      const tmpBuf = new Float32Array(1);
 
-      for (var i = 0, ii = fnsIR.length; i < ii; i++) {
+      for (let i = 0, ii = fnsIR.length; i < ii; i++) {
         fns.push(PDFFunction.fromIR(fnsIR[i]));
       }
 
       return function constructStichedFromIRResult(src, srcOffset,
-                                                   dest, destOffset) {
-        var clip = function constructStichedFromIRClip(v, min, max) {
+          dest, destOffset) {
+        const clip = function constructStichedFromIRClip(v, min, max) {
           if (v > max) {
             v = max;
           } else if (v < min) {
@@ -341,7 +350,7 @@ var PDFFunction = (function PDFFunctionClosure() {
         };
 
         // clip to domain
-        var v = clip(src[srcOffset], domain[0], domain[1]);
+        const v = clip(src[srcOffset], domain[0], domain[1]);
         // calulate which bound the value is in
         for (var i = 0, ii = bounds.length; i < ii; ++i) {
           if (v < bounds[i]) {
@@ -350,22 +359,22 @@ var PDFFunction = (function PDFFunctionClosure() {
         }
 
         // encode value into domain of function
-        var dmin = domain[0];
+        let dmin = domain[0];
         if (i > 0) {
           dmin = bounds[i - 1];
         }
-        var dmax = domain[1];
+        let dmax = domain[1];
         if (i < bounds.length) {
           dmax = bounds[i];
         }
 
-        var rmin = encode[2 * i];
-        var rmax = encode[2 * i + 1];
+        const rmin = encode[2 * i];
+        const rmax = encode[2 * i + 1];
 
         // Prevent the value from becoming NaN as a result
         // of division by zero (fixes issue6113.pdf).
-        tmpBuf[0] = dmin === dmax ? rmin :
-                    rmin + (v - dmin) * (rmax - rmin) / (dmax - dmin);
+        tmpBuf[0] = dmin === dmax ? rmin
+          : rmin + (v - dmin) * (rmax - rmin) / (dmax - dmin);
 
         // call the appropriate function
         fns[i](tmpBuf, 0, dest, destOffset);
@@ -373,9 +382,9 @@ var PDFFunction = (function PDFFunctionClosure() {
     },
 
     constructPostScript: function PDFFunction_constructPostScript(fn, dict,
-                                                                  xref) {
-      var domain = dict.get('Domain');
-      var range = dict.get('Range');
+        xref) {
+      const domain = dict.get('Domain');
+      const range = dict.get('Range');
 
       if (!domain) {
         error('No domain.');
@@ -385,69 +394,69 @@ var PDFFunction = (function PDFFunctionClosure() {
         error('No range.');
       }
 
-      var lexer = new PostScriptLexer(fn);
-      var parser = new PostScriptParser(lexer);
-      var code = parser.parse();
+      const lexer = new PostScriptLexer(fn);
+      const parser = new PostScriptParser(lexer);
+      const code = parser.parse();
 
       return [CONSTRUCT_POSTSCRIPT, domain, range, code];
     },
 
     constructPostScriptFromIR: function PDFFunction_constructPostScriptFromIR(
-                                          IR) {
-      var domain = IR[1];
-      var range = IR[2];
-      var code = IR[3];
+        IR) {
+      const domain = IR[1];
+      const range = IR[2];
+      const code = IR[3];
 
-      var compiled = (new PostScriptCompiler()).compile(code, domain, range);
+      const compiled = (new PostScriptCompiler()).compile(code, domain, range);
       if (compiled) {
         // Compiled function consists of simple expressions such as addition,
         // subtraction, Math.max, and also contains 'var' and 'return'
         // statements. See the generation in the PostScriptCompiler below.
-        /*jshint -W054 */
+        /* jshint -W054 */
         return new Function('src', 'srcOffset', 'dest', 'destOffset', compiled);
       }
 
       info('Unable to compile PS function');
 
-      var numOutputs = range.length >> 1;
-      var numInputs = domain.length >> 1;
-      var evaluator = new PostScriptEvaluator(code);
+      const numOutputs = range.length >> 1;
+      const numInputs = domain.length >> 1;
+      const evaluator = new PostScriptEvaluator(code);
       // Cache the values for a big speed up, the cache size is limited though
       // since the number of possible values can be huge from a PS function.
-      var cache = {};
+      const cache = {};
       // The MAX_CACHE_SIZE is set to ~4x the maximum number of distinct values
       // seen in our tests.
-      var MAX_CACHE_SIZE = 2048 * 4;
-      var cache_available = MAX_CACHE_SIZE;
-      var tmpBuf = new Float32Array(numInputs);
+      const MAX_CACHE_SIZE = 2048 * 4;
+      let cache_available = MAX_CACHE_SIZE;
+      const tmpBuf = new Float32Array(numInputs);
 
       return function constructPostScriptFromIRResult(src, srcOffset,
-                                                      dest, destOffset) {
-        var i, value;
-        var key = '';
-        var input = tmpBuf;
+          dest, destOffset) {
+        let i, value;
+        let key = '';
+        const input = tmpBuf;
         for (i = 0; i < numInputs; i++) {
           value = src[srcOffset + i];
           input[i] = value;
-          key += value + '_';
+          key += `${value}_`;
         }
 
-        var cachedValue = cache[key];
+        const cachedValue = cache[key];
         if (cachedValue !== undefined) {
           dest.set(cachedValue, destOffset);
           return;
         }
 
-        var output = new Float32Array(numOutputs);
-        var stack = evaluator.execute(input);
-        var stackIndex = stack.length - numOutputs;
+        const output = new Float32Array(numOutputs);
+        const stack = evaluator.execute(input);
+        const stackIndex = stack.length - numOutputs;
         for (i = 0; i < numOutputs; i++) {
           value = stack[stackIndex + i];
-          var bound = range[i * 2];
+          let bound = range[i * 2];
           if (value < bound) {
             value = bound;
           } else {
-            bound = range[i * 2 +1];
+            bound = range[i * 2 + 1];
             if (value > bound) {
               value = bound;
             }
@@ -460,12 +469,12 @@ var PDFFunction = (function PDFFunctionClosure() {
         }
         dest.set(output, destOffset);
       };
-    }
+    },
   };
 })();
 
 function isPDFFunction(v) {
-  var fnDict;
+  let fnDict;
   if (typeof v !== 'object') {
     return false;
   } else if (isDict(v)) {
@@ -478,11 +487,11 @@ function isPDFFunction(v) {
   return fnDict.has('FunctionType');
 }
 
-var PostScriptStack = (function PostScriptStackClosure() {
-  var MAX_STACK_SIZE = 100;
+const PostScriptStack = (function PostScriptStackClosure() {
+  const MAX_STACK_SIZE = 100;
   function PostScriptStack(initialStack) {
-    this.stack = !initialStack ? [] :
-                 Array.prototype.slice.call(initialStack, 0);
+    this.stack = !initialStack ? []
+      : Array.prototype.slice.call(initialStack, 0);
   }
 
   PostScriptStack.prototype = {
@@ -502,8 +511,8 @@ var PostScriptStack = (function PostScriptStackClosure() {
       if (this.stack.length + n >= MAX_STACK_SIZE) {
         error('PostScript function stack overflow.');
       }
-      var stack = this.stack;
-      for (var i = stack.length - n, j = n - 1; j >= 0; j--, i++) {
+      const stack = this.stack;
+      for (let i = stack.length - n, j = n - 1; j >= 0; j--, i++) {
         stack.push(stack[i]);
       }
     },
@@ -512,9 +521,9 @@ var PostScriptStack = (function PostScriptStackClosure() {
     },
     // rotate the last n stack elements p times
     roll: function PostScriptStack_roll(n, p) {
-      var stack = this.stack;
-      var l = stack.length - n;
-      var r = stack.length - 1, c = l + (p - Math.floor(p / n) * n), i, j, t;
+      const stack = this.stack;
+      const l = stack.length - n;
+      const r = stack.length - 1; const c = l + (p - Math.floor(p / n) * n); let i; let j; let t;
       for (i = l, j = r; i < j; i++, j--) {
         t = stack[i]; stack[i] = stack[j]; stack[j] = t;
       }
@@ -524,7 +533,7 @@ var PostScriptStack = (function PostScriptStackClosure() {
       for (i = c, j = r; i < j; i++, j--) {
         t = stack[i]; stack[i] = stack[j]; stack[j] = t;
       }
-    }
+    },
   };
   return PostScriptStack;
 })();
@@ -534,11 +543,11 @@ var PostScriptEvaluator = (function PostScriptEvaluatorClosure() {
   }
   PostScriptEvaluator.prototype = {
     execute: function PostScriptEvaluator_execute(initialStack) {
-      var stack = new PostScriptStack(initialStack);
-      var counter = 0;
-      var operators = this.operators;
-      var length = operators.length;
-      var operator, a, b;
+      const stack = new PostScriptStack(initialStack);
+      let counter = 0;
+      const operators = this.operators;
+      const length = operators.length;
+      let operator, a, b;
       while (counter < length) {
         operator = operators[counter++];
         if (typeof operator === 'number') {
@@ -630,7 +639,7 @@ var PostScriptEvaluator = (function PostScriptEvaluatorClosure() {
           case 'exp':
             b = stack.pop();
             a = stack.pop();
-            stack.push(Math.pow(a, b));
+            stack.push(a ** b);
             break;
           case 'false':
             stack.push(false);
@@ -755,12 +764,12 @@ var PostScriptEvaluator = (function PostScriptEvaluatorClosure() {
             }
             break;
           default:
-            error('Unknown operator ' + operator);
+            error(`Unknown operator ${operator}`);
             break;
         }
       }
       return stack.stack;
-    }
+    },
   };
   return PostScriptEvaluator;
 })();
@@ -850,38 +859,38 @@ var PostScriptCompiler = (function PostScriptCompilerClosure() {
     this.parts = [];
   }
   ExpressionBuilderVisitor.prototype = {
-    visitArgument: function (arg) {
+    visitArgument(arg) {
       this.parts.push('Math.max(', arg.min, ', Math.min(',
-                      arg.max, ', src[srcOffset + ', arg.index, ']))');
+          arg.max, ', src[srcOffset + ', arg.index, ']))');
     },
-    visitVariable: function (variable) {
+    visitVariable(variable) {
       this.parts.push('v', variable.index);
     },
-    visitLiteral: function (literal) {
+    visitLiteral(literal) {
       this.parts.push(literal.number);
     },
-    visitBinaryOperation: function (operation) {
+    visitBinaryOperation(operation) {
       this.parts.push('(');
       operation.arg1.visit(this);
       this.parts.push(' ', operation.op, ' ');
       operation.arg2.visit(this);
       this.parts.push(')');
     },
-    visitVariableDefinition: function (definition) {
+    visitVariableDefinition(definition) {
       this.parts.push('var ');
       definition.variable.visit(this);
       this.parts.push(' = ');
       definition.arg.visit(this);
       this.parts.push(';');
     },
-    visitMin: function (max) {
+    visitMin(max) {
       this.parts.push('Math.min(');
       max.arg.visit(this);
       this.parts.push(', ', max.max, ')');
     },
-    toString: function () {
+    toString() {
       return this.parts.join('');
-    }
+    },
   };
 
   function buildAddOperation(num1, num2) {
@@ -898,7 +907,7 @@ var PostScriptCompiler = (function PostScriptCompilerClosure() {
       return new AstLiteral(num1.number + num2.number);
     }
     return new AstBinaryOperation('+', num1, num2,
-                                  num1.min + num2.min, num1.max + num2.max);
+        num1.min + num2.min, num1.max + num2.max);
   }
 
   function buildMulOperation(num1, num2) {
@@ -921,10 +930,10 @@ var PostScriptCompiler = (function PostScriptCompilerClosure() {
         return num2; // and it's 1
       }
     }
-    var min = Math.min(num1.min * num2.min, num1.min * num2.max,
-                       num1.max * num2.min, num1.max * num2.max);
-    var max = Math.max(num1.min * num2.min, num1.min * num2.max,
-                       num1.max * num2.min, num1.max * num2.max);
+    const min = Math.min(num1.min * num2.min, num1.min * num2.max,
+        num1.max * num2.min, num1.max * num2.max);
+    const max = Math.max(num1.min * num2.min, num1.min * num2.max,
+        num1.max * num2.min, num1.max * num2.max);
     return new AstBinaryOperation('*', num1, num2, min, max);
   }
 
@@ -945,7 +954,7 @@ var PostScriptCompiler = (function PostScriptCompilerClosure() {
       return num2.arg2;
     }
     return new AstBinaryOperation('-', num1, num2,
-                                  num1.min - num2.max, num1.max - num2.min);
+        num1.min - num2.max, num1.max - num2.min);
   }
 
   function buildMinOperation(num1, max) {
@@ -962,13 +971,14 @@ var PostScriptCompiler = (function PostScriptCompilerClosure() {
   function PostScriptCompiler() {}
   PostScriptCompiler.prototype = {
     compile: function PostScriptCompiler_compile(code, domain, range) {
-      var stack = [];
-      var i, ii;
-      var instructions = [];
-      var inputSize = domain.length >> 1, outputSize = range.length >> 1;
-      var lastRegister = 0;
-      var n, j, min, max;
-      var num1, num2, ast1, ast2, tmpVar, item;
+      const stack = [];
+      let i, ii;
+      const instructions = [];
+      const inputSize = domain.length >> 1; const
+        outputSize = range.length >> 1;
+      let lastRegister = 0;
+      let n, j, min, max;
+      let num1, num2, ast1, ast2, tmpVar, item;
       for (i = 0; i < inputSize; i++) {
         stack.push(new AstArgument(i, domain[i * 2], domain[i * 2 + 1]));
       }
@@ -1032,7 +1042,7 @@ var PostScriptCompiler = (function PostScriptCompilerClosure() {
               return null;
             }
             n = num1.number;
-            if (n < 0 || (n|0) !== n || stack.length < n) {
+            if (n < 0 || (n | 0) !== n || stack.length < n) {
               return null;
             }
             ast1 = stack[stack.length - n - 1];
@@ -1082,7 +1092,7 @@ var PostScriptCompiler = (function PostScriptCompilerClosure() {
             }
             j = num2.number;
             n = num1.number;
-            if (n <= 0 || (n|0) !== n || (j|0) !== j || stack.length < n) {
+            if (n <= 0 || (n | 0) !== n || (j | 0) !== j || stack.length < n) {
               // ... and integers
               return null;
             }
@@ -1091,7 +1101,7 @@ var PostScriptCompiler = (function PostScriptCompilerClosure() {
               break; // just skipping -- there are nothing to rotate
             }
             Array.prototype.push.apply(stack,
-                                       stack.splice(stack.length - n, n - j));
+                stack.splice(stack.length - n, n - j));
             break;
           default:
             return null; // unsupported operator
@@ -1102,17 +1112,18 @@ var PostScriptCompiler = (function PostScriptCompilerClosure() {
         return null;
       }
 
-      var result = [];
-      instructions.forEach(function (instruction) {
-        var statementBuilder = new ExpressionBuilderVisitor();
+      const result = [];
+      instructions.forEach((instruction) => {
+        const statementBuilder = new ExpressionBuilderVisitor();
         instruction.visit(statementBuilder);
         result.push(statementBuilder.toString());
       });
-      stack.forEach(function (expr, i) {
-        var statementBuilder = new ExpressionBuilderVisitor();
+      stack.forEach((expr, i) => {
+        const statementBuilder = new ExpressionBuilderVisitor();
         expr.visit(statementBuilder);
-        var min = range[i * 2], max = range[i * 2 + 1];
-        var out = [statementBuilder.toString()];
+        const min = range[i * 2]; const
+          max = range[i * 2 + 1];
+        const out = [statementBuilder.toString()];
         if (min > expr.min) {
           out.unshift('Math.max(', min, ', ');
           out.push(')');
@@ -1126,7 +1137,7 @@ var PostScriptCompiler = (function PostScriptCompilerClosure() {
         result.push(out.join(''));
       });
       return result.join('\n');
-    }
+    },
   };
 
   return PostScriptCompiler;

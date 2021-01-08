@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*jslint node: true */
+/* jslint node: true */
 
 'use strict';
 
-var os = require('os');
-var fs = require('fs');
-var path = require('path');
-var spawn = require('child_process').spawn;
-var testUtils = require('./testutils.js');
-var shelljs = require('shelljs');
-var crypto = require('crypto');
+const os = require('os');
+const fs = require('fs');
+const path = require('path');
+const spawn = require('child_process').spawn;
+const testUtils = require('./testutils.js');
+const shelljs = require('shelljs');
+const crypto = require('crypto');
 
-var tempDirPrefix = 'pdfjs_';
+const tempDirPrefix = 'pdfjs_';
 
 function WebBrowser(name, path) {
   this.name = name;
@@ -38,19 +38,19 @@ function WebBrowser(name, path) {
   this.callback = null;
   // Used to identify processes whose pid is lost. This string is directly used
   // as a command-line argument, so it only consists of letters.
-  this.uniqStringId = 'webbrowser' + crypto.randomBytes(32).toString('hex');
+  this.uniqStringId = `webbrowser${crypto.randomBytes(32).toString('hex')}`;
 }
 WebBrowser.prototype = {
-  start: function (url) {
+  start(url) {
     this.tmpDir = path.join(os.tmpdir(), tempDirPrefix + this.name);
     if (!fs.existsSync(this.tmpDir)) {
       fs.mkdirSync(this.tmpDir);
     }
     this.startProcess(url);
   },
-  getProfileDir: function () {
+  getProfileDir() {
     if (!this.profileDir) {
-      var profileDir = path.join(this.tmpDir, 'profile');
+      const profileDir = path.join(this.tmpDir, 'profile');
       if (fs.existsSync(profileDir)) {
         testUtils.removeDirSync(profileDir);
       }
@@ -60,32 +60,32 @@ WebBrowser.prototype = {
     }
     return this.profileDir;
   },
-  buildArguments: function (url) {
+  buildArguments(url) {
     return [url];
   },
-  setupProfileDir: function (dir) {
+  setupProfileDir(dir) {
   },
-  startProcess: function (url) {
+  startProcess(url) {
     console.assert(!this.process, 'startProcess may be called only once');
 
-    var args = this.buildArguments(url);
-    args = args.concat('--' + this.uniqStringId);
+    let args = this.buildArguments(url);
+    args = args.concat(`--${this.uniqStringId}`);
     this.process = spawn(this.path, args);
-    this.process.on('exit', function (code, signal) {
+    this.process.on('exit', (code, signal) => {
       this.process = null;
-      var exitInfo = code !== null ? ' with status ' + code :
-        ' in response to signal ' + signal;
+      const exitInfo = code !== null ? ` with status ${code}`
+        : ` in response to signal ${signal}`;
       if (this.requestedExit) {
-        this.log('Browser process exited' + exitInfo);
+        this.log(`Browser process exited${exitInfo}`);
       } else {
         // This was observed on Windows bots with Firefox. Apparently the
         // Firefox Maintenance Service restarts Firefox shortly after starting
         // up. When this happens, we no longer know the pid of the process.
-        this.log('Browser process unexpectedly exited' + exitInfo);
+        this.log(`Browser process unexpectedly exited${exitInfo}`);
       }
-    }.bind(this));
+    });
   },
-  cleanup: function () {
+  cleanup() {
     console.assert(this.requestedExit,
         'cleanup should only be called after an explicit stop() request');
 
@@ -93,7 +93,7 @@ WebBrowser.prototype = {
       testUtils.removeDirSync(this.tmpDir);
     } catch (e) {
       if (e.code !== 'ENOENT') {
-        this.log('Failed to remove profile directory: ' + e);
+        this.log(`Failed to remove profile directory: ${e}`);
         if (!this.cleanupFailStart) {
           this.cleanupFailStart = Date.now();
         } else if (Date.now() - this.cleanupFailStart > 10000) {
@@ -107,13 +107,13 @@ WebBrowser.prototype = {
       // because the post-condition of cleanup is that the profile directory is
       // gone. If the directory does not exists, then this post-condition is
       // satisfied.
-      this.log('Cannot remove non-existent directory: ' + e);
+      this.log(`Cannot remove non-existent directory: ${e}`);
     }
     this.finished = true;
     this.log('Clean-up finished. Going to call callback...');
     this.callback();
   },
-  stop: function (callback) {
+  stop(callback) {
     console.assert(this.tmpDir, '.start() must be called before stop()');
     // Require the callback to ensure that callers do not make any assumptions
     // on the state of this browser instance until the callback is called.
@@ -135,76 +135,76 @@ WebBrowser.prototype = {
       this.killProcessUnknownPid(this.cleanup.bind(this));
     }
   },
-  killProcessUnknownPid: function(callback) {
-    this.log('pid unknown, killing processes matching ' + this.uniqStringId);
+  killProcessUnknownPid(callback) {
+    this.log(`pid unknown, killing processes matching ${this.uniqStringId}`);
 
-    var cmdKillAll, cmdCheckAllKilled, isAllKilled;
+    let cmdKillAll, cmdCheckAllKilled, isAllKilled;
 
     if (process.platform === 'win32') {
-      var wmicPrefix = 'wmic process where "not Name = \'cmd.exe\' ' +
+      const wmicPrefix = `${'wmic process where "not Name = \'cmd.exe\' ' +
         'and not Name like \'%wmic%\' ' +
-        'and CommandLine like \'%' + this.uniqStringId + '%\'" ';
-      cmdKillAll = wmicPrefix + 'call terminate';
-      cmdCheckAllKilled = wmicPrefix + 'get CommandLine';
-      isAllKilled = function(exitCode, stdout) {
+        'and CommandLine like \'%'}${this.uniqStringId}%'" `;
+      cmdKillAll = `${wmicPrefix}call terminate`;
+      cmdCheckAllKilled = `${wmicPrefix}get CommandLine`;
+      isAllKilled = function (exitCode, stdout) {
         return stdout.indexOf(this.uniqStringId) === -1;
       }.bind(this);
     } else {
-      cmdKillAll = 'pkill -f ' + this.uniqStringId;
-      cmdCheckAllKilled = 'pgrep -f ' + this.uniqStringId;
-      isAllKilled = function(pgrepStatus) {
+      cmdKillAll = `pkill -f ${this.uniqStringId}`;
+      cmdCheckAllKilled = `pgrep -f ${this.uniqStringId}`;
+      isAllKilled = function (pgrepStatus) {
         return pgrepStatus === 1; // "No process matched.", per man pgrep.
       };
     }
     function execAsyncNoStdin(cmd, onExit) {
-      var proc = shelljs.exec(cmd, {
+      const proc = shelljs.exec(cmd, {
         async: true,
         silent: true,
       }, onExit);
       // Close stdin, otherwise wmic won't run.
       proc.stdin.end();
     }
-    var killDateStart = Date.now();
+    const killDateStart = Date.now();
     // Note: First process' output it shown, the later outputs are suppressed.
     execAsyncNoStdin(cmdKillAll, function checkAlive(exitCode, firstStdout) {
-      execAsyncNoStdin(cmdCheckAllKilled, function(exitCode, stdout) {
+      execAsyncNoStdin(cmdCheckAllKilled, (exitCode, stdout) => {
         if (isAllKilled(exitCode, stdout)) {
           callback();
         } else if (Date.now() - killDateStart > 10000) {
           // Should finish termination within 10 (generous) seconds.
           if (firstStdout) {
-            this.log('Output of first command:\n' + firstStdout);
+            this.log(`Output of first command:\n${firstStdout}`);
           }
           if (stdout) {
-            this.log('Output of last command:\n' + stdout);
+            this.log(`Output of last command:\n${stdout}`);
           }
-          throw new Error('Failed to kill process of ' + this.name);
+          throw new Error(`Failed to kill process of ${this.name}`);
         } else {
           setTimeout(checkAlive.bind(this), 500);
         }
-      }.bind(this));
+      });
     }.bind(this));
   },
-  log: function(msg) {
-    console.log('[' + this.name + '] ' + msg);
+  log(msg) {
+    console.log(`[${this.name}] ${msg}`);
   },
 };
 
-var firefoxResourceDir = path.join(__dirname, 'resources', 'firefox');
+const firefoxResourceDir = path.join(__dirname, 'resources', 'firefox');
 
 function FirefoxBrowser(name, path) {
   if (os.platform() === 'darwin') {
-    var m = /([^.\/]+)\.app(\/?)$/.exec(path);
+    const m = /([^.\/]+)\.app(\/?)$/.exec(path);
     if (m) {
-      path += (m[2] ? '' : '/') + 'Contents/MacOS/firefox';
+      path += `${m[2] ? '' : '/'}Contents/MacOS/firefox`;
     }
   }
   WebBrowser.call(this, name, path);
 }
 FirefoxBrowser.prototype = Object.create(WebBrowser.prototype);
 FirefoxBrowser.prototype.buildArguments = function (url) {
-  var profileDir = this.getProfileDir();
-  var args = [];
+  const profileDir = this.getProfileDir();
+  const args = [];
   if (os.platform() === 'darwin') {
     args.push('-foreground');
   }
@@ -217,9 +217,9 @@ FirefoxBrowser.prototype.setupProfileDir = function (dir) {
 
 function ChromiumBrowser(name, path) {
   if (os.platform() === 'darwin') {
-    var m = /([^.\/]+)\.app(\/?)$/.exec(path);
+    const m = /([^.\/]+)\.app(\/?)$/.exec(path);
     if (m) {
-      path += (m[2] ? '' : '/') + 'Contents/MacOS/' + m[1];
+      path += `${m[2] ? '' : '/'}Contents/MacOS/${m[1]}`;
       console.log(path);
     }
   }
@@ -227,16 +227,18 @@ function ChromiumBrowser(name, path) {
 }
 ChromiumBrowser.prototype = Object.create(WebBrowser.prototype);
 ChromiumBrowser.prototype.buildArguments = function (url) {
-  var profileDir = this.getProfileDir();
-  return ['--user-data-dir=' + profileDir,
-    '--no-first-run', '--disable-sync', url];
+  const profileDir = this.getProfileDir();
+  return [`--user-data-dir=${profileDir}`,
+    '--no-first-run',
+    '--disable-sync',
+    url];
 };
 
 WebBrowser.create = function (desc) {
-  var name = desc.name;
-  var path = shelljs.which(desc.path);
+  const name = desc.name;
+  const path = shelljs.which(desc.path);
   if (!path) {
-    throw new Error('Browser executable not found: ' + desc.path);
+    throw new Error(`Browser executable not found: ${desc.path}`);
   }
 
   if (/firefox/i.test(name)) {

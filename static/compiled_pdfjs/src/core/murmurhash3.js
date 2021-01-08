@@ -1,4 +1,3 @@
-
 /* Copyright 2014 Opera Software ASA
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,40 +20,39 @@
 
 'use strict';
 
-var MurmurHash3_64 = (function MurmurHash3_64Closure (seed) {
+const MurmurHash3_64 = (function MurmurHash3_64Closure(seed) {
   // Workaround for missing math precison in JS.
-  var MASK_HIGH = 0xffff0000;
-  var MASK_LOW = 0xffff;
+  const MASK_HIGH = 0xffff0000;
+  const MASK_LOW = 0xffff;
 
-  function MurmurHash3_64 (seed) {
-    var SEED = 0xc3d2e1f0;
+  function MurmurHash3_64(seed) {
+    const SEED = 0xc3d2e1f0;
     this.h1 = seed ? seed & 0xffffffff : SEED;
     this.h2 = seed ? seed & 0xffffffff : SEED;
   }
 
-  var alwaysUseUint32ArrayView = false;
-//#if !(FIREFOX || MOZCENTRAL || CHROME)
+  let alwaysUseUint32ArrayView = false;
+  // #if !(FIREFOX || MOZCENTRAL || CHROME)
   // old webkits have issues with non-aligned arrays
   try {
     new Uint32Array(new Uint8Array(5).buffer, 0, 1);
   } catch (e) {
     alwaysUseUint32ArrayView = true;
   }
-//#endif
+  // #endif
 
   MurmurHash3_64.prototype = {
     update: function MurmurHash3_64_update(input) {
-      var useUint32ArrayView = alwaysUseUint32ArrayView;
-      var i;
+      let useUint32ArrayView = alwaysUseUint32ArrayView;
+      let i;
       if (typeof input === 'string') {
         var data = new Uint8Array(input.length * 2);
         var length = 0;
         for (i = 0; i < input.length; i++) {
-          var code = input.charCodeAt(i);
+          const code = input.charCodeAt(i);
           if (code <= 0xff) {
             data[length++] = code;
-          }
-          else {
+          } else {
             data[length++] = code >>> 8;
             data[length++] = code & 0xff;
           }
@@ -72,20 +70,20 @@ var MurmurHash3_64 = (function MurmurHash3_64Closure (seed) {
                         'Input must be a string or array.');
       }
 
-      var blockCounts = length >> 2;
-      var tailLength = length - blockCounts * 4;
+      const blockCounts = length >> 2;
+      const tailLength = length - blockCounts * 4;
       // we don't care about endianness here
-      var dataUint32 = useUint32ArrayView ?
-        new Uint32ArrayView(data, blockCounts) :
-        new Uint32Array(data.buffer, 0, blockCounts);
-      var k1 = 0;
-      var k2 = 0;
-      var h1 = this.h1;
-      var h2 = this.h2;
-      var C1 = 0xcc9e2d51;
-      var C2 = 0x1b873593;
-      var C1_LOW = C1 & MASK_LOW;
-      var C2_LOW = C2 & MASK_LOW;
+      const dataUint32 = useUint32ArrayView
+        ? new Uint32ArrayView(data, blockCounts)
+        : new Uint32Array(data.buffer, 0, blockCounts);
+      let k1 = 0;
+      let k2 = 0;
+      let h1 = this.h1;
+      let h2 = this.h2;
+      const C1 = 0xcc9e2d51;
+      const C2 = 0x1b873593;
+      const C1_LOW = C1 & MASK_LOW;
+      const C2_LOW = C2 & MASK_LOW;
 
       for (i = 0; i < blockCounts; i++) {
         if (i & 1) {
@@ -119,14 +117,14 @@ var MurmurHash3_64 = (function MurmurHash3_64Closure (seed) {
         case 1:
           k1 ^= data[blockCounts * 4];
           /* falls through */
-        k1 = (k1 * C1 & MASK_HIGH) | (k1 * C1_LOW & MASK_LOW);
-        k1 = k1 << 15 | k1 >>> 17;
-        k1 = (k1 * C2 & MASK_HIGH) | (k1 * C2_LOW & MASK_LOW);
-        if (blockCounts & 1) {
-          h1 ^= k1;
-        } else {
-          h2 ^= k1;
-        }
+          k1 = (k1 * C1 & MASK_HIGH) | (k1 * C1_LOW & MASK_LOW);
+          k1 = k1 << 15 | k1 >>> 17;
+          k1 = (k1 * C2 & MASK_HIGH) | (k1 * C2_LOW & MASK_LOW);
+          if (blockCounts & 1) {
+            h1 ^= k1;
+          } else {
+            h2 ^= k1;
+          }
       }
 
       this.h1 = h1;
@@ -134,9 +132,9 @@ var MurmurHash3_64 = (function MurmurHash3_64Closure (seed) {
       return this;
     },
 
-    hexdigest: function MurmurHash3_64_hexdigest () {
-      var h1 = this.h1;
-      var h2 = this.h2;
+    hexdigest: function MurmurHash3_64_hexdigest() {
+      let h1 = this.h1;
+      let h2 = this.h2;
 
       h1 ^= h2 >>> 1;
       h1 = (h1 * 0xed558ccd & MASK_HIGH) | (h1 * 0x8ccd & MASK_LOW);
@@ -149,15 +147,15 @@ var MurmurHash3_64 = (function MurmurHash3_64Closure (seed) {
       h1 ^= h2 >>> 1;
 
       for (var i = 0, arr = [h1, h2], str = ''; i < arr.length; i++) {
-        var hex = (arr[i] >>> 0).toString(16);
+        let hex = (arr[i] >>> 0).toString(16);
         while (hex.length < 8) {
-          hex = '0' + hex;
+          hex = `0${hex}`;
         }
         str += hex;
       }
 
       return str;
-    }
+    },
   };
 
   return MurmurHash3_64;

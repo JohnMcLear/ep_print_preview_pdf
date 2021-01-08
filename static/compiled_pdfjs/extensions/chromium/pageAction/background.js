@@ -25,20 +25,20 @@ limitations under the License.
   function showPageAction(tabId, displayUrl) {
     // rewriteUrlClosure in viewer.js ensures that the URL looks like
     // chrome-extension://[extensionid]/http://example.com/file.pdf
-    var url = /^chrome-extension:\/\/[a-p]{32}\/([^#]+)/.exec(displayUrl);
+    let url = /^chrome-extension:\/\/[a-p]{32}\/([^#]+)/.exec(displayUrl);
     if (url) {
       url = url[1];
       chrome.pageAction.setPopup({
-        tabId: tabId,
-        popup: '/pageAction/popup.html?file=' + encodeURIComponent(url)
+        tabId,
+        popup: `/pageAction/popup.html?file=${encodeURIComponent(url)}`,
       });
       chrome.pageAction.show(tabId);
     } else {
-      console.log('Unable to get PDF url from ' + displayUrl);
+      console.log(`Unable to get PDF url from ${displayUrl}`);
     }
   }
 
-  chrome.runtime.onMessage.addListener(function(message, sender) {
+  chrome.runtime.onMessage.addListener((message, sender) => {
     if (message === 'showPageAction' && sender.tab) {
       showPageAction(sender.tab.id, sender.tab.url);
     }

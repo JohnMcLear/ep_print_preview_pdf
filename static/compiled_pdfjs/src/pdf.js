@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*jshint globalstrict: false */
+/* jshint globalstrict: false */
 /* globals PDFJS */
 
 // Initializing PDFJS global object (if still undefined)
@@ -20,28 +20,27 @@ if (typeof PDFJS === 'undefined') {
   (typeof window !== 'undefined' ? window : this).PDFJS = {};
 }
 
-//#if BUNDLE_VERSION
-//#expand PDFJS.version = '__BUNDLE_VERSION__';
-//#endif
-//#if BUNDLE_BUILD
-//#expand PDFJS.build = '__BUNDLE_BUILD__';
-//#endif
+// #if BUNDLE_VERSION
+// #expand PDFJS.version = '__BUNDLE_VERSION__';
+// #endif
+// #if BUNDLE_BUILD
+// #expand PDFJS.build = '__BUNDLE_BUILD__';
+// #endif
 
 (function pdfjsWrapper() {
   // Use strict in our context only - users might not want it
   'use strict';
 
-//#expand __BUNDLE__
-
+  // #expand __BUNDLE__
 }).call((typeof window === 'undefined') ? this : window);
 
-//#if !(MOZCENTRAL || FIREFOX)
+// #if !(MOZCENTRAL || FIREFOX)
 if (!PDFJS.workerSrc && typeof document !== 'undefined') {
   // workerSrc is not set -- using last script url to define default location
   PDFJS.workerSrc = (function () {
     'use strict';
-    var pdfJsSrc = document.currentScript.src;
+    const pdfJsSrc = document.currentScript.src;
     return pdfJsSrc && pdfJsSrc.replace(/\.js$/i, '.worker.js');
   })();
 }
-//#endif
+// #endif

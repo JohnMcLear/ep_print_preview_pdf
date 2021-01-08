@@ -1,6 +1,6 @@
 'use strict';
-//#if FALSE
-var a;
-//#else
-var b;
-//#endif
+// #if FALSE
+let a;
+// #else
+let b;
+// #endif

@@ -16,7 +16,7 @@
 
 'use strict';
 
-var SecondaryToolbar = {
+const SecondaryToolbar = {
   opened: false,
   previousContainerHeight: null,
   newContainerHeight: null,
@@ -39,27 +39,27 @@ var SecondaryToolbar = {
     this.documentPropertiesButton = options.documentPropertiesButton;
 
     // Attach the event listeners.
-    var elements = [
+    const elements = [
       // Button to toggle the visibility of the secondary toolbar:
-      { element: this.toggleButton, handler: this.toggle },
+      {element: this.toggleButton, handler: this.toggle},
       // All items within the secondary toolbar
       // (except for toggleHandTool, hand_tool.js is responsible for it):
-      { element: this.presentationModeButton,
-        handler: this.presentationModeClick },
-      { element: this.openFile, handler: this.openFileClick },
-      { element: this.print, handler: this.printClick },
-      { element: this.download, handler: this.downloadClick },
-      { element: this.viewBookmark, handler: this.viewBookmarkClick },
-      { element: this.firstPage, handler: this.firstPageClick },
-      { element: this.lastPage, handler: this.lastPageClick },
-      { element: this.pageRotateCw, handler: this.pageRotateCwClick },
-      { element: this.pageRotateCcw, handler: this.pageRotateCcwClick },
-      { element: this.documentPropertiesButton,
-        handler: this.documentPropertiesClick }
+      {element: this.presentationModeButton,
+        handler: this.presentationModeClick},
+      {element: this.openFile, handler: this.openFileClick},
+      {element: this.print, handler: this.printClick},
+      {element: this.download, handler: this.downloadClick},
+      {element: this.viewBookmark, handler: this.viewBookmarkClick},
+      {element: this.firstPage, handler: this.firstPageClick},
+      {element: this.lastPage, handler: this.lastPageClick},
+      {element: this.pageRotateCw, handler: this.pageRotateCwClick},
+      {element: this.pageRotateCcw, handler: this.pageRotateCcwClick},
+      {element: this.documentPropertiesButton,
+        handler: this.documentPropertiesClick},
     ];
 
-    for (var item in elements) {
-      var element = elements[item].element;
+    for (const item in elements) {
+      const element = elements[item].element;
       if (element) {
         element.addEventListener('click', elements[item].handler.bind(this));
       }
@@ -126,7 +126,7 @@ var SecondaryToolbar = {
       return;
     }
     this.buttonContainer.setAttribute('style',
-      'max-height: ' + (this.newContainerHeight - SCROLLBAR_PADDING) + 'px;');
+        `max-height: ${this.newContainerHeight - SCROLLBAR_PADDING}px;`);
     this.previousContainerHeight = this.newContainerHeight;
   },
 
@@ -156,5 +156,5 @@ var SecondaryToolbar = {
     } else {
       this.open();
     }
-  }
+  },
 };

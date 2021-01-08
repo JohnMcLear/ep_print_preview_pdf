@@ -17,55 +17,54 @@
 
 'use strict';
 
-var ANNOT_MIN_SIZE = 10; // px
+const ANNOT_MIN_SIZE = 10; // px
 
-var AnnotationUtils = (function AnnotationUtilsClosure() {
+const AnnotationUtils = (function AnnotationUtilsClosure() {
   // TODO(mack): This dupes some of the logic in CanvasGraphics.setFont()
   function setTextStyles(element, item, fontObj) {
-
-    var style = element.style;
-    style.fontSize = item.fontSize + 'px';
-    style.direction = item.fontDirection < 0 ? 'rtl': 'ltr';
+    const style = element.style;
+    style.fontSize = `${item.fontSize}px`;
+    style.direction = item.fontDirection < 0 ? 'rtl' : 'ltr';
 
     if (!fontObj) {
       return;
     }
 
-    style.fontWeight = fontObj.black ?
-      (fontObj.bold ? 'bolder' : 'bold') :
-      (fontObj.bold ? 'bold' : 'normal');
+    style.fontWeight = fontObj.black
+      ? (fontObj.bold ? 'bolder' : 'bold')
+      : (fontObj.bold ? 'bold' : 'normal');
     style.fontStyle = fontObj.italic ? 'italic' : 'normal';
 
-    var fontName = fontObj.loadedName;
-    var fontFamily = fontName ? '"' + fontName + '", ' : '';
+    const fontName = fontObj.loadedName;
+    const fontFamily = fontName ? `"${fontName}", ` : '';
     // Use a reasonable default font if the font doesn't specify a fallback
-    var fallbackName = fontObj.fallbackName || 'Helvetica, sans-serif';
+    const fallbackName = fontObj.fallbackName || 'Helvetica, sans-serif';
     style.fontFamily = fontFamily + fallbackName;
   }
 
   function initContainer(item) {
-    var container = document.createElement('section');
-    var cstyle = container.style;
-    var width = item.rect[2] - item.rect[0];
-    var height = item.rect[3] - item.rect[1];
+    const container = document.createElement('section');
+    const cstyle = container.style;
+    let width = item.rect[2] - item.rect[0];
+    let height = item.rect[3] - item.rect[1];
 
     // Border
     if (item.borderStyle.width > 0) {
       // Border width
-      container.style.borderWidth = item.borderStyle.width + 'px';
+      container.style.borderWidth = `${item.borderStyle.width}px`;
       if (item.borderStyle.style !== AnnotationBorderStyleType.UNDERLINE) {
         // Underline styles only have a bottom border, so we do not need
         // to adjust for all borders. This yields a similar result as
         // Adobe Acrobat/Reader.
-        width = width - 2 * item.borderStyle.width;
-        height = height - 2 * item.borderStyle.width;
+        width -= 2 * item.borderStyle.width;
+        height -= 2 * item.borderStyle.width;
       }
 
       // Horizontal and vertical border radius
-      var horizontalRadius = item.borderStyle.horizontalCornerRadius;
-      var verticalRadius = item.borderStyle.verticalCornerRadius;
+      const horizontalRadius = item.borderStyle.horizontalCornerRadius;
+      const verticalRadius = item.borderStyle.verticalCornerRadius;
       if (horizontalRadius > 0 || verticalRadius > 0) {
-        var radius = horizontalRadius + 'px / ' + verticalRadius + 'px';
+        const radius = `${horizontalRadius}px / ${verticalRadius}px`;
         CustomStyle.setProp('borderRadius', container, radius);
       }
 
@@ -99,36 +98,36 @@ var AnnotationUtils = (function AnnotationUtilsClosure() {
       if (item.color) {
         container.style.borderColor =
           Util.makeCssRgb(item.color[0] | 0,
-                          item.color[1] | 0,
-                          item.color[2] | 0);
+              item.color[1] | 0,
+              item.color[2] | 0);
       } else {
         // Transparent (invisible) border, so do not draw it at all.
         container.style.borderWidth = 0;
       }
     }
 
-    cstyle.width = width + 'px';
-    cstyle.height = height + 'px';
+    cstyle.width = `${width}px`;
+    cstyle.height = `${height}px`;
     return container;
   }
 
   function getHtmlElementForTextWidgetAnnotation(item, commonObjs) {
-    var element = document.createElement('div');
-    var width = item.rect[2] - item.rect[0];
-    var height = item.rect[3] - item.rect[1];
-    element.style.width = width + 'px';
-    element.style.height = height + 'px';
+    const element = document.createElement('div');
+    const width = item.rect[2] - item.rect[0];
+    const height = item.rect[3] - item.rect[1];
+    element.style.width = `${width}px`;
+    element.style.height = `${height}px`;
     element.style.display = 'table';
 
-    var content = document.createElement('div');
+    const content = document.createElement('div');
     content.textContent = item.fieldValue;
-    var textAlignment = item.textAlignment;
+    const textAlignment = item.textAlignment;
     content.style.textAlign = ['left', 'center', 'right'][textAlignment];
     content.style.verticalAlign = 'middle';
     content.style.display = 'table-cell';
 
-    var fontObj = item.fontRefName ?
-      commonObjs.getData(item.fontRefName) : null;
+    const fontObj = item.fontRefName
+      ? commonObjs.getData(item.fontRefName) : null;
     setTextStyles(content, item, fontObj);
 
     element.appendChild(content);
@@ -137,7 +136,7 @@ var AnnotationUtils = (function AnnotationUtilsClosure() {
   }
 
   function getHtmlElementForTextAnnotation(item) {
-    var rect = item.rect;
+    const rect = item.rect;
 
     // sanity check because of OOo-generated PDFs
     if ((rect[3] - rect[1]) < ANNOT_MIN_SIZE) {
@@ -147,51 +146,51 @@ var AnnotationUtils = (function AnnotationUtilsClosure() {
       rect[2] = rect[0] + (rect[3] - rect[1]); // make it square
     }
 
-    var container = initContainer(item);
+    const container = initContainer(item);
     container.className = 'annotText';
 
-    var image  = document.createElement('img');
+    const image = document.createElement('img');
     image.style.height = container.style.height;
     image.style.width = container.style.width;
-    var iconName = item.name;
-    image.src = PDFJS.imageResourcesPath + 'annotation-' +
-      iconName.toLowerCase() + '.svg';
+    const iconName = item.name;
+    image.src = `${PDFJS.imageResourcesPath}annotation-${
+      iconName.toLowerCase()}.svg`;
     image.alt = '[{{type}} Annotation]';
     image.dataset.l10nId = 'text_annotation_type';
     image.dataset.l10nArgs = JSON.stringify({type: iconName});
 
-    var contentWrapper = document.createElement('div');
+    const contentWrapper = document.createElement('div');
     contentWrapper.className = 'annotTextContentWrapper';
-    contentWrapper.style.left = Math.floor(rect[2] - rect[0] + 5) + 'px';
+    contentWrapper.style.left = `${Math.floor(rect[2] - rect[0] + 5)}px`;
     contentWrapper.style.top = '-10px';
 
-    var content = document.createElement('div');
+    const content = document.createElement('div');
     content.className = 'annotTextContent';
     content.setAttribute('hidden', true);
 
-    var i, ii;
+    let i, ii;
     if (item.hasBgColor && item.color) {
-      var color = item.color;
+      const color = item.color;
 
       // Enlighten the color (70%)
-      var BACKGROUND_ENLIGHT = 0.7;
-      var r = BACKGROUND_ENLIGHT * (255 - color[0]) + color[0];
-      var g = BACKGROUND_ENLIGHT * (255 - color[1]) + color[1];
-      var b = BACKGROUND_ENLIGHT * (255 - color[2]) + color[2];
+      const BACKGROUND_ENLIGHT = 0.7;
+      const r = BACKGROUND_ENLIGHT * (255 - color[0]) + color[0];
+      const g = BACKGROUND_ENLIGHT * (255 - color[1]) + color[1];
+      const b = BACKGROUND_ENLIGHT * (255 - color[2]) + color[2];
       content.style.backgroundColor = Util.makeCssRgb(r | 0, g | 0, b | 0);
     }
 
-    var title = document.createElement('h1');
-    var text = document.createElement('p');
+    const title = document.createElement('h1');
+    const text = document.createElement('p');
     title.textContent = item.title;
 
     if (!item.content && !item.title) {
       content.setAttribute('hidden', true);
     } else {
-      var e = document.createElement('span');
-      var lines = item.content.split(/(?:\r\n?|\n)/);
+      const e = document.createElement('span');
+      const lines = item.content.split(/(?:\r\n?|\n)/);
       for (i = 0, ii = lines.length; i < ii; ++i) {
-        var line = lines[i];
+        const line = lines[i];
         e.appendChild(document.createTextNode(line));
         if (i < (ii - 1)) {
           e.appendChild(document.createElement('br'));
@@ -199,9 +198,9 @@ var AnnotationUtils = (function AnnotationUtilsClosure() {
       }
       text.appendChild(e);
 
-      var pinned = false;
+      let pinned = false;
 
-      var showAnnotation = function showAnnotation(pin) {
+      const showAnnotation = function showAnnotation(pin) {
         if (pin) {
           pinned = true;
         }
@@ -211,7 +210,7 @@ var AnnotationUtils = (function AnnotationUtilsClosure() {
         }
       };
 
-      var hideAnnotation = function hideAnnotation(unpin) {
+      const hideAnnotation = function hideAnnotation(unpin) {
         if (unpin) {
           pinned = false;
         }
@@ -221,7 +220,7 @@ var AnnotationUtils = (function AnnotationUtilsClosure() {
         }
       };
 
-      var toggleAnnotation = function toggleAnnotation() {
+      const toggleAnnotation = function toggleAnnotation() {
         if (pinned) {
           hideAnnotation(true);
         } else {
@@ -229,17 +228,17 @@ var AnnotationUtils = (function AnnotationUtilsClosure() {
         }
       };
 
-      image.addEventListener('click', function image_clickHandler() {
+      image.addEventListener('click', () => {
         toggleAnnotation();
       }, false);
-      image.addEventListener('mouseover', function image_mouseOverHandler() {
+      image.addEventListener('mouseover', () => {
         showAnnotation();
       }, false);
-      image.addEventListener('mouseout', function image_mouseOutHandler() {
+      image.addEventListener('mouseout', () => {
         hideAnnotation();
       }, false);
 
-      content.addEventListener('click', function content_clickHandler() {
+      content.addEventListener('click', () => {
         hideAnnotation(true);
       }, false);
     }
@@ -254,10 +253,10 @@ var AnnotationUtils = (function AnnotationUtilsClosure() {
   }
 
   function getHtmlElementForLinkAnnotation(item) {
-    var container = initContainer(item);
+    const container = initContainer(item);
     container.className = 'annotLink';
 
-    var link = document.createElement('a');
+    const link = document.createElement('a');
     link.href = link.title = item.url || '';
 
     if (item.url && isExternalLinkTargetSet()) {
@@ -278,12 +277,12 @@ var AnnotationUtils = (function AnnotationUtilsClosure() {
       case AnnotationType.LINK:
         return getHtmlElementForLinkAnnotation(data);
       default:
-        throw new Error('Unsupported annotationType: ' + data.annotationType);
+        throw new Error(`Unsupported annotationType: ${data.annotationType}`);
     }
   }
 
   return {
-    getHtmlElement: getHtmlElement
+    getHtmlElement,
   };
 })();
 PDFJS.AnnotationUtils = AnnotationUtils;

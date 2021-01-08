@@ -1,6 +1,6 @@
 'use strict';
-//#if TRUE
-var i = 0;
-while(i-->0) {
+// #if TRUE
+let i = 0;
+while (i-- > 0) {
 }
-//#endif
+// #endif

@@ -15,7 +15,7 @@
 
 'use strict';
 
-var PDFHistory = (function () {
+const PDFHistory = (function () {
   function PDFHistory(options) {
     this.linkService = options.linkService;
 
@@ -48,7 +48,7 @@ var PDFHistory = (function () {
       this.currentUid = this.uid = 0;
       this.current = {};
 
-      var state = window.history.state;
+      const state = window.history.state;
       if (this._isStateObjectDefined(state)) {
         // This corresponds to navigating back to the document
         // from another page in the browser history.
@@ -71,8 +71,8 @@ var PDFHistory = (function () {
         this._pushOrReplaceState({fingerprint: this.fingerprint}, true);
       }
 
-      var self = this;
-      window.addEventListener('popstate', function pdfHistoryPopstate(evt) {
+      const self = this;
+      window.addEventListener('popstate', (evt) => {
         if (!self.historyUnlocked) {
           return;
         }
@@ -93,11 +93,11 @@ var PDFHistory = (function () {
 
         if (self.uid === 0) {
           // Replace the previous state if it was not explicitly set.
-          var previousParams = (self.previousHash && self.currentBookmark &&
-            self.previousHash !== self.currentBookmark) ?
-            {hash: self.currentBookmark, page: self.currentPage} :
-            {page: 1};
-          replacePreviousHistoryState(previousParams, function() {
+          const previousParams = (self.previousHash && self.currentBookmark &&
+            self.previousHash !== self.currentBookmark)
+            ? {hash: self.currentBookmark, page: self.currentPage}
+            : {page: 1};
+          replacePreviousHistoryState(previousParams, () => {
             updateHistoryWithCurrentHash();
           });
         } else {
@@ -142,9 +142,9 @@ var PDFHistory = (function () {
       }
 
       function pdfHistoryBeforeUnload() {
-        var previousParams = self._getPreviousParams(null, true);
+        const previousParams = self._getPreviousParams(null, true);
         if (previousParams) {
-          var replacePrevious = (!self.current.dest &&
+          const replacePrevious = (!self.current.dest &&
           self.current.hash !== self.previousHash);
           self._pushToHistory(previousParams, false, replacePrevious);
           self._updatePreviousBookmark();
@@ -152,19 +152,19 @@ var PDFHistory = (function () {
         // Remove the event listener when navigating away from the document,
         // since 'beforeunload' prevents Firefox from caching the document.
         window.removeEventListener('beforeunload', pdfHistoryBeforeUnload,
-                                   false);
+            false);
       }
 
       window.addEventListener('beforeunload', pdfHistoryBeforeUnload, false);
 
-      window.addEventListener('pageshow', function pdfHistoryPageShow(evt) {
+      window.addEventListener('pageshow', (evt) => {
         // If the entire viewer (including the PDF file) is cached in
         // the browser, we need to reattach the 'beforeunload' event listener
         // since the 'DOMContentLoaded' event is not fired on 'pageshow'.
         window.addEventListener('beforeunload', pdfHistoryBeforeUnload, false);
       }, false);
 
-      window.addEventListener('presentationmodechanged', function(e) {
+      window.addEventListener('presentationmodechanged', (e) => {
         self.isViewerInPresentationMode = !!e.detail.active;
       });
     },
@@ -180,31 +180,31 @@ var PDFHistory = (function () {
     },
 
     _pushOrReplaceState: function pdfHistory_pushOrReplaceState(stateObj,
-                                                                replace) {
-//#if CHROME
+        replace) {
+      // #if CHROME
       // history.state.chromecomState is managed by chromecom.js.
       if (window.history.state && 'chromecomState' in window.history.state) {
         stateObj = stateObj || {};
         stateObj.chromecomState = window.history.state.chromecomState;
       }
-//#endif
+      // #endif
       if (replace) {
-//#if (GENERIC || CHROME)
+        // #if (GENERIC || CHROME)
         window.history.replaceState(stateObj, '', document.URL);
-//#else
-//    window.history.replaceState(stateObj, '');
-//#endif
+        // #else
+        //    window.history.replaceState(stateObj, '');
+        // #endif
       } else {
-//#if (GENERIC || CHROME)
+        // #if (GENERIC || CHROME)
         window.history.pushState(stateObj, '', document.URL);
-//#else
-//    window.history.pushState(stateObj, '');
-//#endif
-//#if CHROME
-//    if (top === window) {
-//      chrome.runtime.sendMessage('showPageAction');
-//    }
-//#endif
+        // #else
+        //    window.history.pushState(stateObj, '');
+        // #endif
+        // #if CHROME
+        //    if (top === window) {
+        //      chrome.runtime.sendMessage('showPageAction');
+        //    }
+        // #endif
       }
     },
 
@@ -225,7 +225,7 @@ var PDFHistory = (function () {
     },
 
     updateCurrentBookmark: function pdfHistoryUpdateCurrentBookmark(bookmark,
-                                                                    pageNum) {
+        pageNum) {
       if (this.initialized) {
         this.currentBookmark = bookmark.substring(1);
         this.currentPage = pageNum | 0;
@@ -245,15 +245,15 @@ var PDFHistory = (function () {
       }
       if (params.dest && !params.hash) {
         params.hash = (this.current.hash && this.current.dest &&
-        this.current.dest === params.dest) ?
-          this.current.hash :
-          this.linkService.getDestinationHash(params.dest).split('#')[1];
+        this.current.dest === params.dest)
+          ? this.current.hash
+          : this.linkService.getDestinationHash(params.dest).split('#')[1];
       }
       if (params.page) {
         params.page |= 0;
       }
       if (isInitialBookmark) {
-        var target = window.history.state.target;
+        const target = window.history.state.target;
         if (!target) {
           // Invoked when the user specifies an initial bookmark,
           // thus setting initialBookmark, when the document is loaded.
@@ -298,7 +298,7 @@ var PDFHistory = (function () {
     },
 
     _getPreviousParams: function pdfHistory_getPreviousParams(onlyCheckPage,
-                                                              beforeUnload) {
+        beforeUnload) {
       if (!(this.currentBookmark && this.currentPage)) {
         return null;
       } else if (this.updatePreviousBookmark) {
@@ -331,7 +331,7 @@ var PDFHistory = (function () {
       } else {
         return null;
       }
-      var params = {hash: this.currentBookmark, page: this.currentPage};
+      const params = {hash: this.currentBookmark, page: this.currentPage};
       if (this.isViewerInPresentationMode) {
         params.hash = null;
       }
@@ -343,23 +343,23 @@ var PDFHistory = (function () {
     },
 
     _pushToHistory: function pdfHistory_pushToHistory(params,
-                                                      addPrevious, overwrite) {
+        addPrevious, overwrite) {
       if (!this.initialized) {
         return;
       }
       if (!params.hash && params.page) {
-        params.hash = ('page=' + params.page);
+        params.hash = (`page=${params.page}`);
       }
       if (addPrevious && !overwrite) {
-        var previousParams = this._getPreviousParams();
+        const previousParams = this._getPreviousParams();
         if (previousParams) {
-          var replacePrevious = (!this.current.dest &&
+          const replacePrevious = (!this.current.dest &&
           this.current.hash !== this.previousHash);
           this._pushToHistory(previousParams, false, replacePrevious);
         }
       }
       this._pushOrReplaceState(this._stateObj(params),
-        (overwrite || this.uid === 0));
+          (overwrite || this.uid === 0));
       this.currentUid = this.uid++;
       this.current = params;
       this.updatePreviousBookmark = true;
@@ -371,7 +371,7 @@ var PDFHistory = (function () {
         return;
       }
       if (!this.reInitialized && state.uid < this.currentUid) {
-        var previousParams = this._getPreviousParams(true);
+        const previousParams = this._getPreviousParams(true);
         if (previousParams) {
           this._pushToHistory(this.current, false);
           this._pushToHistory(previousParams, false);
@@ -394,7 +394,7 @@ var PDFHistory = (function () {
       this.current = state.target;
       this.updatePreviousBookmark = true;
 
-      var currentHash = window.location.hash.substring(1);
+      const currentHash = window.location.hash.substring(1);
       if (this.previousHash !== currentHash) {
         this.allowHashChange = false;
       }
@@ -413,14 +413,14 @@ var PDFHistory = (function () {
 
     go: function pdfHistoryGo(direction) {
       if (this.initialized && this.historyUnlocked) {
-        var state = window.history.state;
+        const state = window.history.state;
         if (direction === -1 && state && state.uid > 0) {
           window.history.back();
         } else if (direction === 1 && state && state.uid < (this.uid - 1)) {
           window.history.forward();
         }
       }
-    }
+    },
   };
 
   return PDFHistory;

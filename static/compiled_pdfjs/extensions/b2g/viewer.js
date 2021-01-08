@@ -24,10 +24,10 @@ PDFJS.workerSrc = '../pdfjs-components/build/pdf.worker.js';
 PDFJS.cMapUrl = '../pdfjs-components/cmaps/';
 PDFJS.cMapPacked = true;
 
-var DEFAULT_SCALE_DELTA = 1.1;
-var MIN_SCALE = 0.25;
-var MAX_SCALE = 10.0;
-var DEFAULT_SCALE_VALUE = 'auto';
+const DEFAULT_SCALE_DELTA = 1.1;
+const MIN_SCALE = 0.25;
+const MAX_SCALE = 10.0;
+const DEFAULT_SCALE_VALUE = 'auto';
 
 var PDFViewerApplication = {
   pdfDocument: null,
@@ -35,17 +35,18 @@ var PDFViewerApplication = {
   pdfHistory: null,
   pdfLinkService: null,
 
-  open: function (params) {
-    var url = params.url, originalUrl = params.originalUrl;
-    var self = this;
+  open(params) {
+    const url = params.url; const
+      originalUrl = params.originalUrl;
+    const self = this;
     this.setTitleUsingUrl(originalUrl);
 
     // Loading document.
-    var loadingTask = PDFJS.getDocument(url);
+    const loadingTask = PDFJS.getDocument(url);
     loadingTask.onProgress = function (progressData) {
       self.progress(progressData.loaded / progressData.total);
     };
-    loadingTask.then(function (pdfDocument) {
+    loadingTask.then((pdfDocument) => {
       // Document loaded, specifying document for the viewer.
       this.pdfDocument = pdfDocument;
       this.pdfViewer.setDocument(pdfDocument);
@@ -54,26 +55,26 @@ var PDFViewerApplication = {
 
       this.loadingBar.hide();
       this.setTitleUsingMetadata(pdfDocument);
-    }.bind(this), function (exception) {
-      var message = exception && exception.message;
-      var loadingErrorMessage = mozL10n.get('loading_error', null,
-        'An error occurred while loading the PDF.');
+    }, (exception) => {
+      const message = exception && exception.message;
+      let loadingErrorMessage = mozL10n.get('loading_error', null,
+          'An error occurred while loading the PDF.');
 
       if (exception instanceof PDFJS.InvalidPDFException) {
         // change error message also for other builds
         loadingErrorMessage = mozL10n.get('invalid_file_error', null,
-          'Invalid or corrupted PDF file.');
+            'Invalid or corrupted PDF file.');
       } else if (exception instanceof PDFJS.MissingPDFException) {
         // special message for missing PDFs
         loadingErrorMessage = mozL10n.get('missing_file_error', null,
-          'Missing PDF file.');
+            'Missing PDF file.');
       } else if (exception instanceof PDFJS.UnexpectedResponseException) {
         loadingErrorMessage = mozL10n.get('unexpected_response_error', null,
-          'Unexpected server response.');
+            'Unexpected server response.');
       }
 
-      var moreInfo = {
-        message: message
+      const moreInfo = {
+        message,
       };
       self.error(loadingErrorMessage, moreInfo);
       self.loadingBar.hide();
@@ -81,14 +82,14 @@ var PDFViewerApplication = {
   },
 
   get loadingBar() {
-    var bar = new PDFJS.ProgressBar('#loadingBar', {});
+    const bar = new PDFJS.ProgressBar('#loadingBar', {});
 
     return PDFJS.shadow(this, 'loadingBar', bar);
   },
 
   setTitleUsingUrl: function pdfViewSetTitleUsingUrl(url) {
     this.url = url;
-    var title = PDFJS.getFileName(url) || url;
+    let title = PDFJS.getFileName(url) || url;
     try {
       title = decodeURIComponent(title);
     } catch (e) {
@@ -98,23 +99,24 @@ var PDFViewerApplication = {
     this.setTitle(title);
   },
 
-  setTitleUsingMetadata: function (pdfDocument) {
-    var self = this;
-    pdfDocument.getMetadata().then(function(data) {
-      var info = data.info, metadata = data.metadata;
+  setTitleUsingMetadata(pdfDocument) {
+    const self = this;
+    pdfDocument.getMetadata().then((data) => {
+      const info = data.info; const
+        metadata = data.metadata;
       self.documentInfo = info;
       self.metadata = metadata;
 
       // Provides some basic debug information
-      console.log('PDF ' + pdfDocument.fingerprint + ' [' +
-                  info.PDFFormatVersion + ' ' + (info.Producer || '-').trim() +
-                  ' / ' + (info.Creator || '-').trim() + ']' +
-                  ' (PDF.js: ' + (PDFJS.version || '-') +
-                  (!PDFJS.disableWebGL ? ' [WebGL]' : '') + ')');
+      console.log(`PDF ${pdfDocument.fingerprint} [${
+        info.PDFFormatVersion} ${(info.Producer || '-').trim()
+      } / ${(info.Creator || '-').trim()}]` +
+                  ` (PDF.js: ${PDFJS.version || '-'
+                  }${!PDFJS.disableWebGL ? ' [WebGL]' : ''})`);
 
-      var pdfTitle;
+      let pdfTitle;
       if (metadata && metadata.has('dc:title')) {
-        var title = metadata.get('dc:title');
+        const title = metadata.get('dc:title');
         // Ghostscript sometimes returns 'Untitled', so prevent setting the
         // title to 'Untitled.
         if (title !== 'Untitled') {
@@ -122,12 +124,12 @@ var PDFViewerApplication = {
         }
       }
 
-      if (!pdfTitle && info && info['Title']) {
-        pdfTitle = info['Title'];
+      if (!pdfTitle && info && info.Title) {
+        pdfTitle = info.Title;
       }
 
       if (pdfTitle) {
-        self.setTitle(pdfTitle + ' - ' + document.title);
+        self.setTitle(`${pdfTitle} - ${document.title}`);
       }
     });
   },
@@ -138,53 +140,53 @@ var PDFViewerApplication = {
   },
 
   error: function pdfViewError(message, moreInfo) {
-    var moreInfoText = mozL10n.get('error_version_info',
-      {version: PDFJS.version || '?', build: PDFJS.build || '?'},
-      'PDF.js v{{version}} (build: {{build}})') + '\n';
+    let moreInfoText = `${mozL10n.get('error_version_info',
+        {version: PDFJS.version || '?', build: PDFJS.build || '?'},
+        'PDF.js v{{version}} (build: {{build}})')}\n`;
 
     if (moreInfo) {
       moreInfoText +=
         mozL10n.get('error_message', {message: moreInfo.message},
-          'Message: {{message}}');
+            'Message: {{message}}');
       if (moreInfo.stack) {
-        moreInfoText += '\n' +
-        mozL10n.get('error_stack', {stack: moreInfo.stack},
-          'Stack: {{stack}}');
+        moreInfoText += `\n${
+          mozL10n.get('error_stack', {stack: moreInfo.stack},
+              'Stack: {{stack}}')}`;
       } else {
         if (moreInfo.filename) {
-          moreInfoText += '\n' +
-          mozL10n.get('error_file', {file: moreInfo.filename},
-            'File: {{file}}');
+          moreInfoText += `\n${
+            mozL10n.get('error_file', {file: moreInfo.filename},
+                'File: {{file}}')}`;
         }
         if (moreInfo.lineNumber) {
-          moreInfoText += '\n' +
-          mozL10n.get('error_line', {line: moreInfo.lineNumber},
-            'Line: {{line}}');
+          moreInfoText += `\n${
+            mozL10n.get('error_line', {line: moreInfo.lineNumber},
+                'Line: {{line}}')}`;
         }
       }
     }
 
-    var errorWrapper = document.getElementById('errorWrapper');
+    const errorWrapper = document.getElementById('errorWrapper');
     errorWrapper.removeAttribute('hidden');
 
-    var errorMessage = document.getElementById('errorMessage');
+    const errorMessage = document.getElementById('errorMessage');
     errorMessage.textContent = message;
 
-    var closeButton = document.getElementById('errorClose');
-    closeButton.onclick = function() {
+    const closeButton = document.getElementById('errorClose');
+    closeButton.onclick = function () {
       errorWrapper.setAttribute('hidden', 'true');
     };
 
-    var errorMoreInfo = document.getElementById('errorMoreInfo');
-    var moreInfoButton = document.getElementById('errorShowMore');
-    var lessInfoButton = document.getElementById('errorShowLess');
-    moreInfoButton.onclick = function() {
+    const errorMoreInfo = document.getElementById('errorMoreInfo');
+    const moreInfoButton = document.getElementById('errorShowMore');
+    const lessInfoButton = document.getElementById('errorShowLess');
+    moreInfoButton.onclick = function () {
       errorMoreInfo.removeAttribute('hidden');
       moreInfoButton.setAttribute('hidden', 'true');
       lessInfoButton.removeAttribute('hidden');
-      errorMoreInfo.style.height = errorMoreInfo.scrollHeight + 'px';
+      errorMoreInfo.style.height = `${errorMoreInfo.scrollHeight}px`;
     };
-    lessInfoButton.onclick = function() {
+    lessInfoButton.onclick = function () {
       errorMoreInfo.setAttribute('hidden', 'true');
       moreInfoButton.removeAttribute('hidden');
       lessInfoButton.setAttribute('hidden', 'true');
@@ -195,7 +197,7 @@ var PDFViewerApplication = {
   },
 
   progress: function pdfViewProgress(level) {
-    var percent = Math.round(level * 100);
+    const percent = Math.round(level * 100);
     // Updating the bar if value increases.
     if (percent > this.loadingBar.percent || isNaN(percent)) {
       this.loadingBar.percent = percent;
@@ -215,7 +217,7 @@ var PDFViewerApplication = {
   },
 
   zoomIn: function pdfViewZoomIn(ticks) {
-    var newScale = this.pdfViewer.currentScale;
+    let newScale = this.pdfViewer.currentScale;
     do {
       newScale = (newScale * DEFAULT_SCALE_DELTA).toFixed(2);
       newScale = Math.ceil(newScale * 10) / 10;
@@ -225,7 +227,7 @@ var PDFViewerApplication = {
   },
 
   zoomOut: function pdfViewZoomOut(ticks) {
-    var newScale = this.pdfViewer.currentScale;
+    let newScale = this.pdfViewer.currentScale;
     do {
       newScale = (newScale / DEFAULT_SCALE_DELTA).toFixed(2);
       newScale = Math.floor(newScale * 10) / 10;
@@ -235,71 +237,71 @@ var PDFViewerApplication = {
   },
 
   initUI: function pdfViewInitUI() {
-    var linkService = new PDFJS.PDFLinkService();
+    const linkService = new PDFJS.PDFLinkService();
     this.pdfLinkService = linkService;
 
-    var container = document.getElementById('viewerContainer');
-    var pdfViewer = new PDFJS.PDFViewer({
-      container: container,
-      linkService: linkService
+    const container = document.getElementById('viewerContainer');
+    const pdfViewer = new PDFJS.PDFViewer({
+      container,
+      linkService,
     });
     this.pdfViewer = pdfViewer;
     linkService.setViewer(pdfViewer);
 
     this.pdfHistory = new PDFJS.PDFHistory({
-      linkService: linkService
+      linkService,
     });
     linkService.setHistory(this.pdfHistory);
 
-    document.getElementById('previous').addEventListener('click', function() {
+    document.getElementById('previous').addEventListener('click', () => {
       PDFViewerApplication.page--;
     });
 
-    document.getElementById('next').addEventListener('click', function() {
+    document.getElementById('next').addEventListener('click', () => {
       PDFViewerApplication.page++;
     });
 
-    document.getElementById('zoomIn').addEventListener('click', function() {
+    document.getElementById('zoomIn').addEventListener('click', () => {
       PDFViewerApplication.zoomIn();
     });
 
-    document.getElementById('zoomOut').addEventListener('click', function() {
+    document.getElementById('zoomOut').addEventListener('click', () => {
       PDFViewerApplication.zoomOut();
     });
 
-    document.getElementById('pageNumber').addEventListener('click', function() {
+    document.getElementById('pageNumber').addEventListener('click', function () {
       this.select();
     });
 
     document.getElementById('pageNumber').addEventListener('change',
-        function() {
-      // Handle the user inputting a floating point number.
-      PDFViewerApplication.page = (this.value | 0);
+        function () {
+          // Handle the user inputting a floating point number.
+          PDFViewerApplication.page = (this.value | 0);
 
-      if (this.value !== (this.value | 0).toString()) {
-        this.value = PDFViewerApplication.page;
-      }
-    });
+          if (this.value !== (this.value | 0).toString()) {
+            this.value = PDFViewerApplication.page;
+          }
+        });
 
-    container.addEventListener('pagesinit', function () {
+    container.addEventListener('pagesinit', () => {
       // We can use pdfViewer now, e.g. let's change default scale.
       pdfViewer.currentScaleValue = DEFAULT_SCALE_VALUE;
     });
 
-    container.addEventListener('pagechange', function (evt) {
-      var page = evt.pageNumber;
+    container.addEventListener('pagechange', (evt) => {
+      const page = evt.pageNumber;
       if (evt.previousPageNumber !== page) {
         document.getElementById('pageNumber').value = page;
       }
-      var numPages = PDFViewerApplication.pagesCount;
+      const numPages = PDFViewerApplication.pagesCount;
 
       document.getElementById('previous').disabled = (page <= 1);
       document.getElementById('next').disabled = (page >= numPages);
     }, true);
-  }
+  },
 };
 
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', () => {
   PDFViewerApplication.initUI();
 }, true);
 
@@ -307,42 +309,40 @@ document.addEventListener('DOMContentLoaded', function () {
   // The offsetParent is not set until the PDF.js iframe or object is visible.
   // Waiting for first animation.
   PDFViewerApplication.animationStartedPromise = new Promise(
-    function (resolve) {
-      window.requestAnimationFrame(resolve);
-    });
+      (resolve) => {
+        window.requestAnimationFrame(resolve);
+      });
 })();
 
 // Support of the new version of navigator.mozL10n -- in PDF.js older/custom
 // version is used.
 var mozL10n = {
-  get: function (id, args, fallback) {
-    var s = (navigator.mozL10n && navigator.mozL10n.get(id)) || fallback;
-    s = s.replace(/\{\{\s*(\w+)\s*\}\}/g, function (all, key) {
-      return args[key] || '';
-    });
+  get(id, args, fallback) {
+    let s = (navigator.mozL10n && navigator.mozL10n.get(id)) || fallback;
+    s = s.replace(/\{\{\s*(\w+)\s*\}\}/g, (all, key) => args[key] || '');
     return s;
   },
 
-  translate: function (fragment) {
+  translate(fragment) {
     if (navigator.mozL10n) {
       navigator.mozL10n.translateFragment(fragment);
     }
-  }
+  },
 };
 
-window.navigator.mozSetMessageHandler('activity', function(activity) {
-  var blob = activity.source.data.blob;
-  var fileURL = activity.source.data.url ||
+window.navigator.mozSetMessageHandler('activity', (activity) => {
+  const blob = activity.source.data.blob;
+  const fileURL = activity.source.data.url ||
                 activity.source.data.filename ||
                 ' '; // if no url or filename, use a non-empty string
 
-  var url = URL.createObjectURL(blob);
+  const url = URL.createObjectURL(blob);
   // We need to delay opening until all HTML is loaded.
-  PDFViewerApplication.animationStartedPromise.then(function () {
-    PDFViewerApplication.open({url: url, originalUrl: fileURL});
+  PDFViewerApplication.animationStartedPromise.then(() => {
+    PDFViewerApplication.open({url, originalUrl: fileURL});
 
-    var header = document.getElementById('header');
-    header.addEventListener('action', function() {
+    const header = document.getElementById('header');
+    header.addEventListener('action', () => {
       activity.postResult('close');
     });
   });

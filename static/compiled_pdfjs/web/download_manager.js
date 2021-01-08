@@ -16,10 +16,9 @@
 
 'use strict';
 
-var DownloadManager = (function DownloadManagerClosure() {
-
+const DownloadManager = (function DownloadManagerClosure() {
   function download(blobUrl, filename) {
-    var a = document.createElement('a');
+    const a = document.createElement('a');
     if (a.click) {
       // Use a.click() if available. Otherwise, Chrome might show
       // "Unsafe JavaScript attempt to initiate a navigation change
@@ -47,8 +46,8 @@ var DownloadManager = (function DownloadManagerClosure() {
           blobUrl.split('#')[0] === window.location.href.split('#')[0]) {
         // If _parent == self, then opening an identical URL with different
         // location hash will only cause a navigation, not a download.
-        var padCharacter = blobUrl.indexOf('?') === -1 ? '?' : '&';
-        blobUrl = blobUrl.replace(/#|$/, padCharacter + '$&');
+        const padCharacter = blobUrl.indexOf('?') === -1 ? '?' : '&';
+        blobUrl = blobUrl.replace(/#|$/, `${padCharacter}$&`);
       }
       window.open(blobUrl, '_parent');
     }
@@ -62,17 +61,17 @@ var DownloadManager = (function DownloadManagerClosure() {
         return; // restricted/invalid URL
       }
 
-      download(url + '#pdfjs.action=download', filename);
+      download(`${url}#pdfjs.action=download`, filename);
     },
 
     downloadData: function DownloadManager_downloadData(data, filename,
-                                                        contentType) {
+        contentType) {
       if (navigator.msSaveBlob) { // IE10 and above
-        return navigator.msSaveBlob(new Blob([data], { type: contentType }),
-                                    filename);
+        return navigator.msSaveBlob(new Blob([data], {type: contentType}),
+            filename);
       }
 
-      var blobUrl = PDFJS.createObjectURL(data, contentType);
+      const blobUrl = PDFJS.createObjectURL(data, contentType);
       download(blobUrl, filename);
     },
 
@@ -91,9 +90,9 @@ var DownloadManager = (function DownloadManagerClosure() {
         return;
       }
 
-      var blobUrl = URL.createObjectURL(blob);
+      const blobUrl = URL.createObjectURL(blob);
       download(blobUrl, filename);
-    }
+    },
   };
 
   return DownloadManager;

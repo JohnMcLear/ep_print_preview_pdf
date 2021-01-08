@@ -1,6 +1,6 @@
 'use strict';
-//#if notdefined
-var a;
-//#else
-var b;
-//#endif
+// #if notdefined
+let a;
+// #else
+let b;
+// #endif

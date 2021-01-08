@@ -16,16 +16,16 @@
 
 'use strict';
 
-var fs = require('fs');
+const fs = require('fs');
 
 function normalizeText(s) {
- return s.replace(/\r\n?/g, '\n').replace(/\uFEFF/g, '');
+  return s.replace(/\r\n?/g, '\n').replace(/\uFEFF/g, '');
 }
 
-var args = process.argv.slice(2);
+const args = process.argv.slice(2);
 
-args.forEach(function (file) {
-  var content = fs.readFileSync(file, 'utf8');
+args.forEach((file) => {
+  let content = fs.readFileSync(file, 'utf8');
   content = normalizeText(content);
   fs.writeFileSync(file, content, 'utf8');
 });

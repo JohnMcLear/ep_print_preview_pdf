@@ -1,2 +1,2 @@
 'use strict';
-var c;
+let c;

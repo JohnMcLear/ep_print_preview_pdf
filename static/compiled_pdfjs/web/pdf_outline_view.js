@@ -26,7 +26,7 @@
 /**
  * @class
  */
-var PDFOutlineView = (function PDFOutlineViewClosure() {
+const PDFOutlineView = (function PDFOutlineViewClosure() {
   /**
    * @constructs PDFOutlineView
    * @param {PDFOutlineViewOptions} options
@@ -40,7 +40,7 @@ var PDFOutlineView = (function PDFOutlineViewClosure() {
 
   PDFOutlineView.prototype = {
     reset: function PDFOutlineView_reset() {
-      var container = this.container;
+      const container = this.container;
       while (container.firstChild) {
         container.removeChild(container.firstChild);
       }
@@ -51,9 +51,9 @@ var PDFOutlineView = (function PDFOutlineViewClosure() {
      * @private
      */
     _dispatchEvent: function PDFOutlineView_dispatchEvent(outlineCount) {
-      var event = document.createEvent('CustomEvent');
+      const event = document.createEvent('CustomEvent');
       event.initCustomEvent('outlineloaded', true, true, {
-        outlineCount: outlineCount
+        outlineCount,
       });
       this.container.dispatchEvent(event);
     },
@@ -62,7 +62,7 @@ var PDFOutlineView = (function PDFOutlineViewClosure() {
      * @private
      */
     _bindLink: function PDFOutlineView_bindLink(element, item) {
-      var linkService = this.linkService;
+      const linkService = this.linkService;
       element.href = linkService.getDestinationHash(item.dest);
       element.onclick = function goToDestination(e) {
         linkService.navigateTo(item.dest);
@@ -77,14 +77,14 @@ var PDFOutlineView = (function PDFOutlineViewClosure() {
      * @private
      */
     _addToggleButton: function PDFOutlineView_addToggleButton(div) {
-      var toggler = document.createElement('div');
+      const toggler = document.createElement('div');
       toggler.className = 'outlineItemToggler';
-      toggler.onclick = function(event) {
+      toggler.onclick = function (event) {
         event.stopPropagation();
         toggler.classList.toggle('outlineItemsHidden');
 
         if (event.shiftKey) {
-          var shouldShowAll = !toggler.classList.contains('outlineItemsHidden');
+          const shouldShowAll = !toggler.classList.contains('outlineItemsHidden');
           this._toggleOutlineItem(div, shouldShowAll);
         }
       }.bind(this);
@@ -102,8 +102,8 @@ var PDFOutlineView = (function PDFOutlineViewClosure() {
      */
     _toggleOutlineItem: function PDFOutlineView_toggleOutlineItem(root, show) {
       this.lastToggleIsShow = show;
-      var togglers = root.querySelectorAll('.outlineItemToggler');
-      for (var i = 0, ii = togglers.length; i < ii; ++i) {
+      const togglers = root.querySelectorAll('.outlineItemToggler');
+      for (let i = 0, ii = togglers.length; i < ii; ++i) {
         togglers[i].classList[show ? 'remove' : 'add']('outlineItemsHidden');
       }
     },
@@ -116,8 +116,8 @@ var PDFOutlineView = (function PDFOutlineViewClosure() {
     },
 
     render: function PDFOutlineView_render() {
-      var outline = this.outline;
-      var outlineCount = 0;
+      const outline = this.outline;
+      let outlineCount = 0;
 
       this.reset();
 
@@ -126,16 +126,16 @@ var PDFOutlineView = (function PDFOutlineViewClosure() {
         return;
       }
 
-      var fragment = document.createDocumentFragment();
-      var queue = [{ parent: fragment, items: this.outline }];
-      var hasAnyNesting = false;
+      const fragment = document.createDocumentFragment();
+      const queue = [{parent: fragment, items: this.outline}];
+      let hasAnyNesting = false;
       while (queue.length > 0) {
-        var levelData = queue.shift();
-        for (var i = 0, len = levelData.items.length; i < len; i++) {
-          var item = levelData.items[i];
-          var div = document.createElement('div');
+        const levelData = queue.shift();
+        for (let i = 0, len = levelData.items.length; i < len; i++) {
+          const item = levelData.items[i];
+          const div = document.createElement('div');
           div.className = 'outlineItem';
-          var element = document.createElement('a');
+          const element = document.createElement('a');
           this._bindLink(element, item);
           element.textContent = removeNullCharacters(item.title);
           div.appendChild(element);
@@ -144,10 +144,10 @@ var PDFOutlineView = (function PDFOutlineViewClosure() {
             hasAnyNesting = true;
             this._addToggleButton(div);
 
-            var itemsDiv = document.createElement('div');
+            const itemsDiv = document.createElement('div');
             itemsDiv.className = 'outlineItems';
             div.appendChild(itemsDiv);
-            queue.push({ parent: itemsDiv, items: item.items });
+            queue.push({parent: itemsDiv, items: item.items});
           }
 
           levelData.parent.appendChild(div);
@@ -161,7 +161,7 @@ var PDFOutlineView = (function PDFOutlineViewClosure() {
       this.container.appendChild(fragment);
 
       this._dispatchEvent(outlineCount);
-    }
+    },
   };
 
   return PDFOutlineView;

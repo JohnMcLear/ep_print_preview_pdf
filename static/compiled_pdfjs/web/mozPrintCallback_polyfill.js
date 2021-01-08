@@ -22,10 +22,10 @@
   // Cause positive result on feature-detection:
   HTMLCanvasElement.prototype.mozPrintCallback = undefined;
 
-  var canvases;   // During print task: non-live NodeList of <canvas> elements
-  var index;      // Index of <canvas> element that is being processed
+  let canvases; // During print task: non-live NodeList of <canvas> elements
+  let index; // Index of <canvas> element that is being processed
 
-  var print = window.print;
+  const print = window.print;
   window.print = function print() {
     if (canvases) {
       console.warn('Ignored window.print() because of a pending print job.');
@@ -41,7 +41,7 @@
   };
 
   function dispatchEvent(eventType) {
-    var event = document.createEvent('CustomEvent');
+    const event = document.createEvent('CustomEvent');
     event.initCustomEvent(eventType, false, false, 'custom');
     window.dispatchEvent(event);
   }
@@ -53,12 +53,12 @@
 
     renderProgress();
     if (++index < canvases.length) {
-      var canvas = canvases[index];
+      const canvas = canvases[index];
       if (typeof canvas.mozPrintCallback === 'function') {
         canvas.mozPrintCallback({
           context: canvas.getContext('2d'),
-          abort: abort,
-          done: next
+          abort,
+          done: next,
         });
       } else {
         next();
@@ -79,13 +79,13 @@
   }
 
   function renderProgress() {
-    var progressContainer = document.getElementById('mozPrintCallback-shim');
+    const progressContainer = document.getElementById('mozPrintCallback-shim');
     if (canvases && canvases.length) {
-      var progress = Math.round(100 * index / canvases.length);
-      var progressBar = progressContainer.querySelector('progress');
-      var progressPerc = progressContainer.querySelector('.relative-progress');
+      const progress = Math.round(100 * index / canvases.length);
+      const progressBar = progressContainer.querySelector('progress');
+      const progressPerc = progressContainer.querySelector('.relative-progress');
       progressBar.value = progress;
-      progressPerc.textContent = progress + '%';
+      progressPerc.textContent = `${progress}%`;
       progressContainer.removeAttribute('hidden');
       progressContainer.onclick = abort;
     } else {
@@ -93,12 +93,12 @@
     }
   }
 
-  var hasAttachEvent = !!document.attachEvent;
+  const hasAttachEvent = !!document.attachEvent;
 
-  window.addEventListener('keydown', function(event) {
+  window.addEventListener('keydown', (event) => {
     // Intercept Cmd/Ctrl + P in all browsers.
     // Also intercept Cmd/Ctrl + Shift + P in Chrome and Opera
-    if (event.keyCode === 80/*P*/ && (event.ctrlKey || event.metaKey) &&
+    if (event.keyCode === 80/* P*/ && (event.ctrlKey || event.metaKey) &&
         !event.altKey && (!event.shiftKey || window.chrome || window.opera)) {
       window.print();
       if (hasAttachEvent) {
@@ -119,9 +119,9 @@
     }
   }, true);
   if (hasAttachEvent) {
-    document.attachEvent('onkeydown', function(event) {
+    document.attachEvent('onkeydown', (event) => {
       event = event || window.event;
-      if (event.keyCode === 80/*P*/ && event.ctrlKey) {
+      if (event.keyCode === 80/* P*/ && event.ctrlKey) {
         event.keyCode = 0;
         return false;
       }
@@ -131,7 +131,7 @@
   if ('onbeforeprint' in window) {
     // Do not propagate before/afterprint events when they are not triggered
     // from within this polyfill. (FF/IE).
-    var stopPropagationIfNeeded = function(event) {
+    const stopPropagationIfNeeded = function (event) {
       if (event.detail !== 'custom' && event.stopImmediatePropagation) {
         event.stopImmediatePropagation();
       }

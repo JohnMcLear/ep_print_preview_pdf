@@ -1,19 +1,19 @@
 'use strict';
-//#if TRUE
-var a;
+// #if TRUE
+let a;
 
-//#if TRUE
-var b;
-//#else
-var c;
-//#endif
+// #if TRUE
+let b;
+// #else
+let c;
+// #endif
 
-var d;
-//#else
-var e;
-//#if TRUE
-var f;
-//#endif
+let d;
+// #else
+let e;
+// #if TRUE
+let f;
+// #endif
 
-var g;
-//#endif
+let g;
+// #endif

@@ -15,7 +15,7 @@ limitations under the License.
 */
 /* globals chrome, getViewerURL */
 
-(function() {
+(function () {
   'use strict';
 
   if (!chrome.fileBrowserHandler) {
@@ -35,20 +35,20 @@ limitations under the License.
     if (id !== 'open-as-pdf') {
       return;
     }
-    var fileEntries = details.entries;
+    const fileEntries = details.entries;
     // "tab_id" is the currently documented format, but it is inconsistent with
     // the other Chrome APIs that use "tabId" (http://crbug.com/179767)
-    var tabId = details.tab_id || details.tabId;
+    const tabId = details.tab_id || details.tabId;
     if (tabId > 0) {
-      chrome.tabs.get(tabId, function(tab) {
+      chrome.tabs.get(tabId, (tab) => {
         openViewer(tab && tab.windowId, fileEntries);
       });
     } else {
       // Re-use existing window, if available.
-      chrome.windows.getLastFocused(function(chromeWindow) {
-        var windowId = chromeWindow && chromeWindow.id;
+      chrome.windows.getLastFocused((chromeWindow) => {
+        const windowId = chromeWindow && chromeWindow.id;
         if (windowId) {
-          chrome.windows.update(windowId, { focused: true });
+          chrome.windows.update(windowId, {focused: true});
         }
         openViewer(windowId, fileEntries);
       });
@@ -65,27 +65,27 @@ limitations under the License.
     if (!fileEntries.length) {
       return;
     }
-    var fileEntry = fileEntries.shift();
-    var url = fileEntry.toURL();
+    const fileEntry = fileEntries.shift();
+    let url = fileEntry.toURL();
     // Use drive: alias to get shorter (more human-readable) URLs.
     url = url.replace(/^filesystem:chrome-extension:\/\/[a-p]{32}\/external\//,
-                      'drive:');
+        'drive:');
     url = getViewerURL(url);
 
     if (windowId) {
       chrome.tabs.create({
-        windowId: windowId,
+        windowId,
         active: true,
-        url: url
-      }, function() {
+        url,
+      }, () => {
         openViewer(windowId, fileEntries);
       });
     } else {
       chrome.windows.create({
         type: 'normal',
         focused: true,
-        url: url
-      }, function(chromeWindow) {
+        url,
+      }, (chromeWindow) => {
         openViewer(chromeWindow.id, fileEntries);
       });
     }

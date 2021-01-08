@@ -29,28 +29,28 @@ PDFJS.workerSrc = '../../build/pdf.worker.js';
 // PDFJS.cMapUrl = '../../external/bcmaps/';
 // PDFJS.cMapPacked = true;
 
-var DEFAULT_URL = '../../web/compressed.tracemonkey-pldi-09.pdf';
-var PAGE_TO_VIEW = 1;
-var SCALE = 1.0;
+const DEFAULT_URL = '../../web/compressed.tracemonkey-pldi-09.pdf';
+const PAGE_TO_VIEW = 1;
+const SCALE = 1.0;
 
-var container = document.getElementById('pageContainer');
+const container = document.getElementById('pageContainer');
 
 // Loading document.
-PDFJS.getDocument(DEFAULT_URL).then(function (pdfDocument) {
+PDFJS.getDocument(DEFAULT_URL).then((pdfDocument) =>
   // Document loaded, retrieving the page.
-  return pdfDocument.getPage(PAGE_TO_VIEW).then(function (pdfPage) {
+  pdfDocument.getPage(PAGE_TO_VIEW).then((pdfPage) => {
     // Creating the page view with default parameters.
-    var pdfPageView = new PDFJS.PDFPageView({
-      container: container,
+    const pdfPageView = new PDFJS.PDFPageView({
+      container,
       id: PAGE_TO_VIEW,
       scale: SCALE,
       defaultViewport: pdfPage.getViewport(SCALE),
       // We can enable text/annotations layers, if needed
       textLayerFactory: new PDFJS.DefaultTextLayerFactory(),
-      annotationsLayerFactory: new PDFJS.DefaultAnnotationsLayerFactory()
+      annotationsLayerFactory: new PDFJS.DefaultAnnotationsLayerFactory(),
     });
     // Associates the actual page with the view, and drawing it
     pdfPageView.setPdfPage(pdfPage);
     return pdfPageView.draw();
-  });
-});
+  })
+);

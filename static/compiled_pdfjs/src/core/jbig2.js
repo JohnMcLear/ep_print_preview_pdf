@@ -17,17 +17,17 @@
 
 'use strict';
 
-var Jbig2Image = (function Jbig2ImageClosure() {
+const Jbig2Image = (function Jbig2ImageClosure() {
   // Utility data structures
   function ContextCache() {}
 
   ContextCache.prototype = {
-    getContexts: function(id) {
+    getContexts(id) {
       if (id in this) {
         return this[id];
       }
       return (this[id] = new Int8Array(1 << 16));
-    }
+    },
   };
 
   function DecodingContext(data, start, end) {
@@ -38,54 +38,54 @@ var Jbig2Image = (function Jbig2ImageClosure() {
 
   DecodingContext.prototype = {
     get decoder() {
-      var decoder = new ArithmeticDecoder(this.data, this.start, this.end);
+      const decoder = new ArithmeticDecoder(this.data, this.start, this.end);
       return shadow(this, 'decoder', decoder);
     },
     get contextCache() {
-      var cache = new ContextCache();
+      const cache = new ContextCache();
       return shadow(this, 'contextCache', cache);
-    }
+    },
   };
 
   // Annex A. Arithmetic Integer Decoding Procedure
   // A.2 Procedure for decoding values
   function decodeInteger(contextCache, procedure, decoder) {
-    var contexts = contextCache.getContexts(procedure);
-    var prev = 1;
+    const contexts = contextCache.getContexts(procedure);
+    let prev = 1;
 
     function readBits(length) {
-      var v = 0;
-      for (var i = 0; i < length; i++) {
-        var bit = decoder.readBit(contexts, prev);
-        prev = (prev < 256 ? (prev << 1) | bit :
-                (((prev << 1) | bit) & 511) | 256);
+      let v = 0;
+      for (let i = 0; i < length; i++) {
+        const bit = decoder.readBit(contexts, prev);
+        prev = (prev < 256 ? (prev << 1) | bit
+          : (((prev << 1) | bit) & 511) | 256);
         v = (v << 1) | bit;
       }
       return v >>> 0;
     }
 
-    var sign = readBits(1);
-    var value = readBits(1) ?
-                  (readBits(1) ?
-                    (readBits(1) ?
-                      (readBits(1) ?
-                        (readBits(1) ?
-                          (readBits(32) + 4436) :
-                        readBits(12) + 340) :
-                      readBits(8) + 84) :
-                    readBits(6) + 20) :
-                  readBits(4) + 4) :
-                readBits(2);
+    const sign = readBits(1);
+    const value = readBits(1)
+      ? (readBits(1)
+          ? (readBits(1)
+              ? (readBits(1)
+                  ? (readBits(1)
+                      ? (readBits(32) + 4436)
+                      : readBits(12) + 340)
+                  : readBits(8) + 84)
+              : readBits(6) + 20)
+          : readBits(4) + 4)
+      : readBits(2);
     return (sign === 0 ? value : (value > 0 ? -value : null));
   }
 
   // A.3 The IAID decoding procedure
   function decodeIAID(contextCache, decoder, codeLength) {
-    var contexts = contextCache.getContexts('IAID');
+    const contexts = contextCache.getContexts('IAID');
 
-    var prev = 1;
-    for (var i = 0; i < codeLength; i++) {
-      var bit = decoder.readBit(contexts, prev);
+    let prev = 1;
+    for (let i = 0; i < codeLength; i++) {
+      const bit = decoder.readBit(contexts, prev);
       prev = (prev << 1) | bit;
     }
     if (codeLength < 31) {
@@ -95,71 +95,163 @@ var Jbig2Image = (function Jbig2ImageClosure() {
   }
 
   // 7.3 Segment types
-  var SegmentTypes = [
-    'SymbolDictionary', null, null, null, 'IntermediateTextRegion', null,
-    'ImmediateTextRegion', 'ImmediateLosslessTextRegion', null, null, null,
-    null, null, null, null, null, 'patternDictionary', null, null, null,
-    'IntermediateHalftoneRegion', null, 'ImmediateHalftoneRegion',
-    'ImmediateLosslessHalftoneRegion', null, null, null, null, null, null, null,
-    null, null, null, null, null, 'IntermediateGenericRegion', null,
-    'ImmediateGenericRegion', 'ImmediateLosslessGenericRegion',
-    'IntermediateGenericRefinementRegion', null,
+  const SegmentTypes = [
+    'SymbolDictionary',
+    null,
+    null,
+    null,
+    'IntermediateTextRegion',
+    null,
+    'ImmediateTextRegion',
+    'ImmediateLosslessTextRegion',
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    'patternDictionary',
+    null,
+    null,
+    null,
+    'IntermediateHalftoneRegion',
+    null,
+    'ImmediateHalftoneRegion',
+    'ImmediateLosslessHalftoneRegion',
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    'IntermediateGenericRegion',
+    null,
+    'ImmediateGenericRegion',
+    'ImmediateLosslessGenericRegion',
+    'IntermediateGenericRefinementRegion',
+    null,
     'ImmediateGenericRefinementRegion',
-    'ImmediateLosslessGenericRefinementRegion', null, null, null, null,
-    'PageInformation', 'EndOfPage', 'EndOfStripe', 'EndOfFile', 'Profiles',
-    'Tables', null, null, null, null, null, null, null, null,
-    'Extension'
+    'ImmediateLosslessGenericRefinementRegion',
+    null,
+    null,
+    null,
+    null,
+    'PageInformation',
+    'EndOfPage',
+    'EndOfStripe',
+    'EndOfFile',
+    'Profiles',
+    'Tables',
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    'Extension',
   ];
 
-  var CodingTemplates = [
-    [{x: -1, y: -2}, {x: 0, y: -2}, {x: 1, y: -2}, {x: -2, y: -1},
-     {x: -1, y: -1}, {x: 0, y: -1}, {x: 1, y: -1}, {x: 2, y: -1},
-     {x: -4, y: 0}, {x: -3, y: 0}, {x: -2, y: 0}, {x: -1, y: 0}],
-    [{x: -1, y: -2}, {x: 0, y: -2}, {x: 1, y: -2}, {x: 2, y: -2},
-     {x: -2, y: -1}, {x: -1, y: -1}, {x: 0, y: -1}, {x: 1, y: -1},
-     {x: 2, y: -1}, {x: -3, y: 0}, {x: -2, y: 0}, {x: -1, y: 0}],
-    [{x: -1, y: -2}, {x: 0, y: -2}, {x: 1, y: -2}, {x: -2, y: -1},
-     {x: -1, y: -1}, {x: 0, y: -1}, {x: 1, y: -1}, {x: -2, y: 0},
-     {x: -1, y: 0}],
-    [{x: -3, y: -1}, {x: -2, y: -1}, {x: -1, y: -1}, {x: 0, y: -1},
-     {x: 1, y: -1}, {x: -4, y: 0}, {x: -3, y: 0}, {x: -2, y: 0}, {x: -1, y: 0}]
+  const CodingTemplates = [
+    [{x: -1, y: -2},
+      {x: 0, y: -2},
+      {x: 1, y: -2},
+      {x: -2, y: -1},
+      {x: -1, y: -1},
+      {x: 0, y: -1},
+      {x: 1, y: -1},
+      {x: 2, y: -1},
+      {x: -4, y: 0},
+      {x: -3, y: 0},
+      {x: -2, y: 0},
+      {x: -1, y: 0}],
+    [{x: -1, y: -2},
+      {x: 0, y: -2},
+      {x: 1, y: -2},
+      {x: 2, y: -2},
+      {x: -2, y: -1},
+      {x: -1, y: -1},
+      {x: 0, y: -1},
+      {x: 1, y: -1},
+      {x: 2, y: -1},
+      {x: -3, y: 0},
+      {x: -2, y: 0},
+      {x: -1, y: 0}],
+    [{x: -1, y: -2},
+      {x: 0, y: -2},
+      {x: 1, y: -2},
+      {x: -2, y: -1},
+      {x: -1, y: -1},
+      {x: 0, y: -1},
+      {x: 1, y: -1},
+      {x: -2, y: 0},
+      {x: -1, y: 0}],
+    [{x: -3, y: -1},
+      {x: -2, y: -1},
+      {x: -1, y: -1},
+      {x: 0, y: -1},
+      {x: 1, y: -1},
+      {x: -4, y: 0},
+      {x: -3, y: 0},
+      {x: -2, y: 0},
+      {x: -1, y: 0}],
   ];
 
-  var RefinementTemplates = [
+  const RefinementTemplates = [
     {
       coding: [{x: 0, y: -1}, {x: 1, y: -1}, {x: -1, y: 0}],
-      reference: [{x: 0, y: -1}, {x: 1, y: -1}, {x: -1, y: 0}, {x: 0, y: 0},
-                  {x: 1, y: 0}, {x: -1, y: 1}, {x: 0, y: 1}, {x: 1, y: 1}]
+      reference: [{x: 0, y: -1},
+        {x: 1, y: -1},
+        {x: -1, y: 0},
+        {x: 0, y: 0},
+        {x: 1, y: 0},
+        {x: -1, y: 1},
+        {x: 0, y: 1},
+        {x: 1, y: 1}],
     },
     {
       coding: [{x: -1, y: -1}, {x: 0, y: -1}, {x: 1, y: -1}, {x: -1, y: 0}],
-      reference: [{x: 0, y: -1}, {x: -1, y: 0}, {x: 0, y: 0}, {x: 1, y: 0},
-                  {x: 0, y: 1}, {x: 1, y: 1}]
-    }
+      reference: [{x: 0, y: -1},
+        {x: -1, y: 0},
+        {x: 0, y: 0},
+        {x: 1, y: 0},
+        {x: 0, y: 1},
+        {x: 1, y: 1}],
+    },
   ];
 
   // See 6.2.5.7 Decoding the bitmap.
-  var ReusedContexts = [
+  const ReusedContexts = [
     0x9B25, // 10011 0110010 0101
     0x0795, // 0011 110010 101
     0x00E5, // 001 11001 01
-    0x0195  // 011001 0101
+    0x0195, // 011001 0101
   ];
 
-  var RefinementReusedContexts = [
+  const RefinementReusedContexts = [
     0x0020, // '000' + '0' (coding) + '00010000' + '0' (reference)
-    0x0008  // '0000' + '001000'
+    0x0008, // '0000' + '001000'
   ];
 
   function decodeBitmapTemplate0(width, height, decodingContext) {
-    var decoder = decodingContext.decoder;
-    var contexts = decodingContext.contextCache.getContexts('GB');
-    var contextLabel, i, j, pixel, row, row1, row2, bitmap = [];
+    const decoder = decodingContext.decoder;
+    const contexts = decodingContext.contextCache.getContexts('GB');
+    let contextLabel; let i; let j; let pixel; let row; let row1; let row2; const
+      bitmap = [];
 
     // ...ooooo....
     // ..ooooooo... Context template for current pixel (X)
     // .ooooX...... (concatenate values of 'o'-pixels to get contextLabel)
-    var OLD_PIXEL_MASK = 0x7BF7; // 01111 0111111 0111
+    const OLD_PIXEL_MASK = 0x7BF7; // 01111 0111111 0111
 
     for (i = 0; i < height; i++) {
       row = bitmap[i] = new Uint8Array(width);
@@ -188,7 +280,7 @@ var Jbig2Image = (function Jbig2ImageClosure() {
 
   // 6.2 Generic Region Decoding Procedure
   function decodeBitmap(mmr, width, height, templateIndex, prediction, skip, at,
-                        decodingContext) {
+      decodingContext) {
     if (mmr) {
       error('JBIG2 error: MMR encoding is not supported');
     }
@@ -200,22 +292,21 @@ var Jbig2Image = (function Jbig2ImageClosure() {
       return decodeBitmapTemplate0(width, height, decodingContext);
     }
 
-    var useskip = !!skip;
-    var template = CodingTemplates[templateIndex].concat(at);
+    const useskip = !!skip;
+    const template = CodingTemplates[templateIndex].concat(at);
 
     // Sorting is non-standard, and it is not required. But sorting increases
     // the number of template bits that can be reused from the previous
     // contextLabel in the main loop.
-    template.sort(function (a, b) {
-      return (a.y - b.y) || (a.x - b.x);
-    });
+    template.sort((a, b) => (a.y - b.y) || (a.x - b.x));
 
-    var templateLength = template.length;
-    var templateX = new Int8Array(templateLength);
-    var templateY = new Int8Array(templateLength);
-    var changingTemplateEntries = [];
-    var reuseMask = 0, minX = 0, maxX = 0, minY = 0;
-    var c, k;
+    const templateLength = template.length;
+    const templateX = new Int8Array(templateLength);
+    const templateY = new Int8Array(templateLength);
+    const changingTemplateEntries = [];
+    let reuseMask = 0; let minX = 0; let maxX = 0; let
+      minY = 0;
+    let c, k;
 
     for (k = 0; k < templateLength; k++) {
       templateX[k] = template[k].x;
@@ -234,11 +325,11 @@ var Jbig2Image = (function Jbig2ImageClosure() {
         changingTemplateEntries.push(k);
       }
     }
-    var changingEntriesLength = changingTemplateEntries.length;
+    const changingEntriesLength = changingTemplateEntries.length;
 
-    var changingTemplateX = new Int8Array(changingEntriesLength);
-    var changingTemplateY = new Int8Array(changingEntriesLength);
-    var changingTemplateBit = new Uint16Array(changingEntriesLength);
+    const changingTemplateX = new Int8Array(changingEntriesLength);
+    const changingTemplateY = new Int8Array(changingEntriesLength);
+    const changingTemplateBit = new Uint16Array(changingEntriesLength);
     for (c = 0; c < changingEntriesLength; c++) {
       k = changingTemplateEntries[c];
       changingTemplateX[c] = template[k].x;
@@ -247,21 +338,21 @@ var Jbig2Image = (function Jbig2ImageClosure() {
     }
 
     // Get the safe bounding box edges from the width, height, minX, maxX, minY
-    var sbb_left = -minX;
-    var sbb_top = -minY;
-    var sbb_right = width - maxX;
+    const sbb_left = -minX;
+    const sbb_top = -minY;
+    const sbb_right = width - maxX;
 
-    var pseudoPixelContext = ReusedContexts[templateIndex];
-    var row = new Uint8Array(width);
-    var bitmap = [];
+    const pseudoPixelContext = ReusedContexts[templateIndex];
+    let row = new Uint8Array(width);
+    const bitmap = [];
 
-    var decoder = decodingContext.decoder;
-    var contexts = decodingContext.contextCache.getContexts('GB');
+    const decoder = decodingContext.decoder;
+    const contexts = decodingContext.contextCache.getContexts('GB');
 
-    var ltp = 0, j, i0, j0, contextLabel = 0, bit, shift;
-    for (var i = 0; i < height; i++) {
+    let ltp = 0; let j; let i0; let j0; let contextLabel = 0; let bit; let shift;
+    for (let i = 0; i < height; i++) {
       if (prediction) {
-        var sltp = decoder.readBit(contexts, pseudoPixelContext);
+        const sltp = decoder.readBit(contexts, pseudoPixelContext);
         ltp ^= sltp;
         if (ltp) {
           bitmap.push(row); // duplicate previous row
@@ -307,7 +398,7 @@ var Jbig2Image = (function Jbig2ImageClosure() {
             }
           }
         }
-        var pixel = decoder.readBit(contexts, contextLabel);
+        const pixel = decoder.readBit(contexts, contextLabel);
         row[j] = pixel;
       }
     }
@@ -316,55 +407,55 @@ var Jbig2Image = (function Jbig2ImageClosure() {
 
   // 6.3.2 Generic Refinement Region Decoding Procedure
   function decodeRefinement(width, height, templateIndex, referenceBitmap,
-                            offsetX, offsetY, prediction, at,
-                            decodingContext) {
-    var codingTemplate = RefinementTemplates[templateIndex].coding;
+      offsetX, offsetY, prediction, at,
+      decodingContext) {
+    let codingTemplate = RefinementTemplates[templateIndex].coding;
     if (templateIndex === 0) {
       codingTemplate = codingTemplate.concat([at[0]]);
     }
-    var codingTemplateLength = codingTemplate.length;
-    var codingTemplateX = new Int32Array(codingTemplateLength);
-    var codingTemplateY = new Int32Array(codingTemplateLength);
-    var k;
+    const codingTemplateLength = codingTemplate.length;
+    const codingTemplateX = new Int32Array(codingTemplateLength);
+    const codingTemplateY = new Int32Array(codingTemplateLength);
+    let k;
     for (k = 0; k < codingTemplateLength; k++) {
       codingTemplateX[k] = codingTemplate[k].x;
       codingTemplateY[k] = codingTemplate[k].y;
     }
 
-    var referenceTemplate = RefinementTemplates[templateIndex].reference;
+    let referenceTemplate = RefinementTemplates[templateIndex].reference;
     if (templateIndex === 0) {
       referenceTemplate = referenceTemplate.concat([at[1]]);
     }
-    var referenceTemplateLength = referenceTemplate.length;
-    var referenceTemplateX = new Int32Array(referenceTemplateLength);
-    var referenceTemplateY = new Int32Array(referenceTemplateLength);
+    const referenceTemplateLength = referenceTemplate.length;
+    const referenceTemplateX = new Int32Array(referenceTemplateLength);
+    const referenceTemplateY = new Int32Array(referenceTemplateLength);
     for (k = 0; k < referenceTemplateLength; k++) {
       referenceTemplateX[k] = referenceTemplate[k].x;
       referenceTemplateY[k] = referenceTemplate[k].y;
     }
-    var referenceWidth = referenceBitmap[0].length;
-    var referenceHeight = referenceBitmap.length;
+    const referenceWidth = referenceBitmap[0].length;
+    const referenceHeight = referenceBitmap.length;
 
-    var pseudoPixelContext = RefinementReusedContexts[templateIndex];
-    var bitmap = [];
+    const pseudoPixelContext = RefinementReusedContexts[templateIndex];
+    const bitmap = [];
 
-    var decoder = decodingContext.decoder;
-    var contexts = decodingContext.contextCache.getContexts('GR');
+    const decoder = decodingContext.decoder;
+    const contexts = decodingContext.contextCache.getContexts('GR');
 
-    var ltp = 0;
-    for (var i = 0; i < height; i++) {
+    let ltp = 0;
+    for (let i = 0; i < height; i++) {
       if (prediction) {
-        var sltp = decoder.readBit(contexts, pseudoPixelContext);
+        const sltp = decoder.readBit(contexts, pseudoPixelContext);
         ltp ^= sltp;
         if (ltp) {
           error('JBIG2 error: prediction is not supported');
         }
       }
-      var row = new Uint8Array(width);
+      const row = new Uint8Array(width);
       bitmap.push(row);
-      for (var j = 0; j < width; j++) {
+      for (let j = 0; j < width; j++) {
         var i0, j0;
-        var contextLabel = 0;
+        let contextLabel = 0;
         for (k = 0; k < codingTemplateLength; k++) {
           i0 = i + codingTemplateY[k];
           j0 = j + codingTemplateX[k];
@@ -384,7 +475,7 @@ var Jbig2Image = (function Jbig2ImageClosure() {
             contextLabel = (contextLabel << 1) | referenceBitmap[i0][j0];
           }
         }
-        var pixel = decoder.readBit(contexts, contextLabel);
+        const pixel = decoder.readBit(contexts, contextLabel);
         row[j] = pixel;
       }
     }
@@ -394,28 +485,28 @@ var Jbig2Image = (function Jbig2ImageClosure() {
 
   // 6.5.5 Decoding the symbol dictionary
   function decodeSymbolDictionary(huffman, refinement, symbols,
-                                  numberOfNewSymbols, numberOfExportedSymbols,
-                                  huffmanTables, templateIndex, at,
-                                  refinementTemplateIndex, refinementAt,
-                                  decodingContext) {
+      numberOfNewSymbols, numberOfExportedSymbols,
+      huffmanTables, templateIndex, at,
+      refinementTemplateIndex, refinementAt,
+      decodingContext) {
     if (huffman) {
       error('JBIG2 error: huffman is not supported');
     }
 
-    var newSymbols = [];
-    var currentHeight = 0;
-    var symbolCodeLength = log2(symbols.length + numberOfNewSymbols);
+    const newSymbols = [];
+    let currentHeight = 0;
+    const symbolCodeLength = log2(symbols.length + numberOfNewSymbols);
 
-    var decoder = decodingContext.decoder;
-    var contextCache = decodingContext.contextCache;
+    const decoder = decodingContext.decoder;
+    const contextCache = decodingContext.contextCache;
 
     while (newSymbols.length < numberOfNewSymbols) {
-      var deltaHeight = decodeInteger(contextCache, 'IADH', decoder); // 6.5.6
+      const deltaHeight = decodeInteger(contextCache, 'IADH', decoder); // 6.5.6
       currentHeight += deltaHeight;
-      var currentWidth = 0;
-      var totalWidth = 0;
+      let currentWidth = 0;
+      let totalWidth = 0;
       while (true) {
-        var deltaWidth = decodeInteger(contextCache, 'IADW', decoder); // 6.5.7
+        const deltaWidth = decodeInteger(contextCache, 'IADW', decoder); // 6.5.7
         if (deltaWidth === null) {
           break; // OOB
         }
@@ -424,44 +515,45 @@ var Jbig2Image = (function Jbig2ImageClosure() {
         var bitmap;
         if (refinement) {
           // 6.5.8.2 Refinement/aggregate-coded symbol bitmap
-          var numberOfInstances = decodeInteger(contextCache, 'IAAI', decoder);
+          const numberOfInstances = decodeInteger(contextCache, 'IAAI', decoder);
           if (numberOfInstances > 1) {
             bitmap = decodeTextRegion(huffman, refinement,
-                                      currentWidth, currentHeight, 0,
-                                      numberOfInstances, 1, //strip size
-                                      symbols.concat(newSymbols),
-                                      symbolCodeLength,
-                                      0, //transposed
-                                      0, //ds offset
-                                      1, //top left 7.4.3.1.1
-                                      0, //OR operator
-                                      huffmanTables,
-                                      refinementTemplateIndex, refinementAt,
-                                      decodingContext);
+                currentWidth, currentHeight, 0,
+                numberOfInstances, 1, // strip size
+                symbols.concat(newSymbols),
+                symbolCodeLength,
+                0, // transposed
+                0, // ds offset
+                1, // top left 7.4.3.1.1
+                0, // OR operator
+                huffmanTables,
+                refinementTemplateIndex, refinementAt,
+                decodingContext);
           } else {
-            var symbolId = decodeIAID(contextCache, decoder, symbolCodeLength);
-            var rdx = decodeInteger(contextCache, 'IARDX', decoder); // 6.4.11.3
-            var rdy = decodeInteger(contextCache, 'IARDY', decoder); // 6.4.11.4
-            var symbol = (symbolId < symbols.length ? symbols[symbolId] :
-                          newSymbols[symbolId - symbols.length]);
+            const symbolId = decodeIAID(contextCache, decoder, symbolCodeLength);
+            const rdx = decodeInteger(contextCache, 'IARDX', decoder); // 6.4.11.3
+            const rdy = decodeInteger(contextCache, 'IARDY', decoder); // 6.4.11.4
+            const symbol = (symbolId < symbols.length ? symbols[symbolId]
+              : newSymbols[symbolId - symbols.length]);
             bitmap = decodeRefinement(currentWidth, currentHeight,
-            refinementTemplateIndex, symbol, rdx, rdy, false, refinementAt,
-            decodingContext);
+                refinementTemplateIndex, symbol, rdx, rdy, false, refinementAt,
+                decodingContext);
           }
         } else {
           // 6.5.8.1 Direct-coded symbol bitmap
           bitmap = decodeBitmap(false, currentWidth, currentHeight,
-            templateIndex, false, null, at, decodingContext);
+              templateIndex, false, null, at, decodingContext);
         }
         newSymbols.push(bitmap);
       }
     }
     // 6.5.10 Exported symbols
-    var exportedSymbols = [];
-    var flags = [], currentFlag = false;
-    var totalSymbolsLength = symbols.length + numberOfNewSymbols;
+    const exportedSymbols = [];
+    const flags = []; let
+      currentFlag = false;
+    const totalSymbolsLength = symbols.length + numberOfNewSymbols;
     while (flags.length < totalSymbolsLength) {
-      var runLength = decodeInteger(contextCache, 'IAEX', decoder);
+      let runLength = decodeInteger(contextCache, 'IAEX', decoder);
       while (runLength--) {
         flags.push(currentFlag);
       }
@@ -472,7 +564,7 @@ var Jbig2Image = (function Jbig2ImageClosure() {
         exportedSymbols.push(symbols[i]);
       }
     }
-    for (var j = 0; j < numberOfNewSymbols; i++, j++) {
+    for (let j = 0; j < numberOfNewSymbols; i++, j++) {
       if (flags[i]) {
         exportedSymbols.push(newSymbols[j]);
       }
@@ -481,65 +573,65 @@ var Jbig2Image = (function Jbig2ImageClosure() {
   }
 
   function decodeTextRegion(huffman, refinement, width, height,
-                            defaultPixelValue, numberOfSymbolInstances,
-                            stripSize, inputSymbols, symbolCodeLength,
-                            transposed, dsOffset, referenceCorner,
-                            combinationOperator, huffmanTables,
-                            refinementTemplateIndex, refinementAt,
-                            decodingContext) {
+      defaultPixelValue, numberOfSymbolInstances,
+      stripSize, inputSymbols, symbolCodeLength,
+      transposed, dsOffset, referenceCorner,
+      combinationOperator, huffmanTables,
+      refinementTemplateIndex, refinementAt,
+      decodingContext) {
     if (huffman) {
       error('JBIG2 error: huffman is not supported');
     }
 
     // Prepare bitmap
-    var bitmap = [];
-    var i, row;
+    const bitmap = [];
+    let i, row;
     for (i = 0; i < height; i++) {
       row = new Uint8Array(width);
       if (defaultPixelValue) {
-        for (var j = 0; j < width; j++) {
+        for (let j = 0; j < width; j++) {
           row[j] = defaultPixelValue;
         }
       }
       bitmap.push(row);
     }
 
-    var decoder = decodingContext.decoder;
-    var contextCache = decodingContext.contextCache;
-    var stripT = -decodeInteger(contextCache, 'IADT', decoder); // 6.4.6
-    var firstS = 0;
+    const decoder = decodingContext.decoder;
+    const contextCache = decodingContext.contextCache;
+    let stripT = -decodeInteger(contextCache, 'IADT', decoder); // 6.4.6
+    let firstS = 0;
     i = 0;
     while (i < numberOfSymbolInstances) {
-      var deltaT = decodeInteger(contextCache, 'IADT', decoder); // 6.4.6
+      const deltaT = decodeInteger(contextCache, 'IADT', decoder); // 6.4.6
       stripT += deltaT;
 
-      var deltaFirstS = decodeInteger(contextCache, 'IAFS', decoder); // 6.4.7
+      const deltaFirstS = decodeInteger(contextCache, 'IAFS', decoder); // 6.4.7
       firstS += deltaFirstS;
-      var currentS = firstS;
+      let currentS = firstS;
       do {
-        var currentT = (stripSize === 1 ? 0 :
-                        decodeInteger(contextCache, 'IAIT', decoder)); // 6.4.9
-        var t = stripSize * stripT + currentT;
-        var symbolId = decodeIAID(contextCache, decoder, symbolCodeLength);
-        var applyRefinement = (refinement &&
+        const currentT = (stripSize === 1 ? 0
+          : decodeInteger(contextCache, 'IAIT', decoder)); // 6.4.9
+        const t = stripSize * stripT + currentT;
+        const symbolId = decodeIAID(contextCache, decoder, symbolCodeLength);
+        const applyRefinement = (refinement &&
                                decodeInteger(contextCache, 'IARI', decoder));
-        var symbolBitmap = inputSymbols[symbolId];
-        var symbolWidth = symbolBitmap[0].length;
-        var symbolHeight = symbolBitmap.length;
+        let symbolBitmap = inputSymbols[symbolId];
+        let symbolWidth = symbolBitmap[0].length;
+        let symbolHeight = symbolBitmap.length;
         if (applyRefinement) {
-          var rdw = decodeInteger(contextCache, 'IARDW', decoder); // 6.4.11.1
-          var rdh = decodeInteger(contextCache, 'IARDH', decoder); // 6.4.11.2
-          var rdx = decodeInteger(contextCache, 'IARDX', decoder); // 6.4.11.3
-          var rdy = decodeInteger(contextCache, 'IARDY', decoder); // 6.4.11.4
+          const rdw = decodeInteger(contextCache, 'IARDW', decoder); // 6.4.11.1
+          const rdh = decodeInteger(contextCache, 'IARDH', decoder); // 6.4.11.2
+          const rdx = decodeInteger(contextCache, 'IARDX', decoder); // 6.4.11.3
+          const rdy = decodeInteger(contextCache, 'IARDY', decoder); // 6.4.11.4
           symbolWidth += rdw;
           symbolHeight += rdh;
           symbolBitmap = decodeRefinement(symbolWidth, symbolHeight,
-            refinementTemplateIndex, symbolBitmap, (rdw >> 1) + rdx,
-            (rdh >> 1) + rdy, false, refinementAt,
-            decodingContext);
+              refinementTemplateIndex, symbolBitmap, (rdw >> 1) + rdx,
+              (rdh >> 1) + rdy, false, refinementAt,
+              decodingContext);
         }
-        var offsetT = t - ((referenceCorner & 1) ? 0 : symbolHeight);
-        var offsetS = currentS - ((referenceCorner & 2) ? symbolWidth : 0);
+        const offsetT = t - ((referenceCorner & 1) ? 0 : symbolHeight);
+        const offsetS = currentS - ((referenceCorner & 2) ? symbolWidth : 0);
         var s2, t2, symbolRow;
         if (transposed) {
           // Place Symbol Bitmap from T1,S1
@@ -551,7 +643,7 @@ var Jbig2Image = (function Jbig2ImageClosure() {
             symbolRow = symbolBitmap[s2];
             // To ignore Parts of Symbol bitmap which goes
             // outside bitmap region
-            var maxWidth = Math.min(width - offsetT, symbolWidth);
+            const maxWidth = Math.min(width - offsetT, symbolWidth);
             switch (combinationOperator) {
               case 0: // OR
                 for (t2 = 0; t2 < maxWidth; t2++) {
@@ -564,8 +656,8 @@ var Jbig2Image = (function Jbig2ImageClosure() {
                 }
                 break;
               default:
-                error('JBIG2 error: operator ' + combinationOperator +
-                      ' is not supported');
+                error(`JBIG2 error: operator ${combinationOperator
+                } is not supported`);
             }
           }
           currentS += symbolHeight - 1;
@@ -588,14 +680,14 @@ var Jbig2Image = (function Jbig2ImageClosure() {
                 }
                 break;
               default:
-                error('JBIG2 error: operator ' + combinationOperator +
-                      ' is not supported');
+                error(`JBIG2 error: operator ${combinationOperator
+                } is not supported`);
             }
           }
           currentS += symbolWidth - 1;
         }
         i++;
-        var deltaS = decodeInteger(contextCache, 'IADS', decoder); // 6.4.8
+        const deltaS = decodeInteger(contextCache, 'IADS', decoder); // 6.4.8
         if (deltaS === null) {
           break; // OOB
         }
@@ -606,26 +698,26 @@ var Jbig2Image = (function Jbig2ImageClosure() {
   }
 
   function readSegmentHeader(data, start) {
-    var segmentHeader = {};
+    const segmentHeader = {};
     segmentHeader.number = readUint32(data, start);
-    var flags = data[start + 4];
-    var segmentType = flags & 0x3F;
+    const flags = data[start + 4];
+    const segmentType = flags & 0x3F;
     if (!SegmentTypes[segmentType]) {
-      error('JBIG2 error: invalid segment type: ' + segmentType);
+      error(`JBIG2 error: invalid segment type: ${segmentType}`);
     }
     segmentHeader.type = segmentType;
     segmentHeader.typeName = SegmentTypes[segmentType];
     segmentHeader.deferredNonRetain = !!(flags & 0x80);
 
-    var pageAssociationFieldSize = !!(flags & 0x40);
-    var referredFlags = data[start + 5];
-    var referredToCount = (referredFlags >> 5) & 7;
-    var retainBits = [referredFlags & 31];
-    var position = start + 6;
+    const pageAssociationFieldSize = !!(flags & 0x40);
+    const referredFlags = data[start + 5];
+    let referredToCount = (referredFlags >> 5) & 7;
+    const retainBits = [referredFlags & 31];
+    let position = start + 6;
     if (referredFlags === 7) {
       referredToCount = readUint32(data, position - 1) & 0x1FFFFFFF;
       position += 3;
-      var bytes = (referredToCount + 7) >> 3;
+      let bytes = (referredToCount + 7) >> 3;
       retainBits[0] = data[position++];
       while (--bytes > 0) {
         retainBits.push(data[position++]);
@@ -635,14 +727,14 @@ var Jbig2Image = (function Jbig2ImageClosure() {
     }
 
     segmentHeader.retainBits = retainBits;
-    var referredToSegmentNumberSize = (segmentHeader.number <= 256 ? 1 :
-      (segmentHeader.number <= 65536 ? 2 : 4));
-    var referredTo = [];
-    var i, ii;
+    const referredToSegmentNumberSize = (segmentHeader.number <= 256 ? 1
+      : (segmentHeader.number <= 65536 ? 2 : 4));
+    const referredTo = [];
+    let i, ii;
     for (i = 0; i < referredToCount; i++) {
-      var number = (referredToSegmentNumberSize === 1 ? data[position] :
-        (referredToSegmentNumberSize === 2 ? readUint16(data, position) :
-        readUint32(data, position)));
+      const number = (referredToSegmentNumberSize === 1 ? data[position]
+        : (referredToSegmentNumberSize === 2 ? readUint16(data, position)
+          : readUint32(data, position)));
       referredTo.push(number);
       position += referredToSegmentNumberSize;
     }
@@ -659,13 +751,13 @@ var Jbig2Image = (function Jbig2ImageClosure() {
     if (segmentHeader.length === 0xFFFFFFFF) {
       // 7.2.7 Segment data length, unknown segment length
       if (segmentType === 38) { // ImmediateGenericRegion
-        var genericRegionInfo = readRegionSegmentInformation(data, position);
-        var genericRegionSegmentFlags = data[position +
+        const genericRegionInfo = readRegionSegmentInformation(data, position);
+        const genericRegionSegmentFlags = data[position +
           RegionSegmentInformationFieldLength];
-        var genericRegionMmr = !!(genericRegionSegmentFlags & 1);
+        const genericRegionMmr = !!(genericRegionSegmentFlags & 1);
         // searching for the segment end
-        var searchPatternLength = 6;
-        var searchPattern = new Uint8Array(searchPatternLength);
+        const searchPatternLength = 6;
+        const searchPattern = new Uint8Array(searchPatternLength);
         if (!genericRegionMmr) {
           searchPattern[0] = 0xFF;
           searchPattern[1] = 0xAC;
@@ -675,7 +767,7 @@ var Jbig2Image = (function Jbig2ImageClosure() {
         searchPattern[4] = (genericRegionInfo.height >> 8) & 0xFF;
         searchPattern[5] = genericRegionInfo.height & 0xFF;
         for (i = position, ii = data.length; i < ii; i++) {
-          var j = 0;
+          let j = 0;
           while (j < searchPatternLength && searchPattern[j] === data[i + j]) {
             j++;
           }
@@ -696,14 +788,14 @@ var Jbig2Image = (function Jbig2ImageClosure() {
   }
 
   function readSegments(header, data, start, end) {
-    var segments = [];
-    var position = start;
+    const segments = [];
+    let position = start;
     while (position < end) {
-      var segmentHeader = readSegmentHeader(data, position);
+      const segmentHeader = readSegmentHeader(data, position);
       position = segmentHeader.headerEnd;
-      var segment = {
+      const segment = {
         header: segmentHeader,
-        data: data
+        data,
       };
       if (!header.randomAccess) {
         segment.start = position;
@@ -716,7 +808,7 @@ var Jbig2Image = (function Jbig2ImageClosure() {
       }
     }
     if (header.randomAccess) {
-      for (var i = 0, ii = segments.length; i < ii; i++) {
+      for (let i = 0, ii = segments.length; i < ii; i++) {
         segments[i].start = position;
         position += segments[i].header.length;
         segments[i].end = position;
@@ -732,16 +824,17 @@ var Jbig2Image = (function Jbig2ImageClosure() {
       height: readUint32(data, start + 4),
       x: readUint32(data, start + 8),
       y: readUint32(data, start + 12),
-      combinationOperator: data[start + 16] & 7
+      combinationOperator: data[start + 16] & 7,
     };
   }
   var RegionSegmentInformationFieldLength = 17;
 
   function processSegment(segment, visitor) {
-    var header = segment.header;
+    const header = segment.header;
 
-    var data = segment.data, position = segment.start, end = segment.end;
-    var args, at, i, atLength;
+    const data = segment.data; let position = segment.start; const
+      end = segment.end;
+    let args, at, i, atLength;
     switch (header.type) {
       case 0: // SymbolDictionary
         // 7.4.2 Symbol dictionary segment syntax
@@ -764,7 +857,7 @@ var Jbig2Image = (function Jbig2ImageClosure() {
           for (i = 0; i < atLength; i++) {
             at.push({
               x: readInt8(data, position),
-              y: readInt8(data, position + 1)
+              y: readInt8(data, position + 1),
             });
             position += 2;
           }
@@ -775,7 +868,7 @@ var Jbig2Image = (function Jbig2ImageClosure() {
           for (i = 0; i < 2; i++) {
             at.push({
               x: readInt8(data, position),
-              y: readInt8(data, position + 1)
+              y: readInt8(data, position + 1),
             });
             position += 2;
           }
@@ -785,8 +878,12 @@ var Jbig2Image = (function Jbig2ImageClosure() {
         position += 4;
         dictionary.numberOfNewSymbols = readUint32(data, position);
         position += 4;
-        args = [dictionary, header.number, header.referredTo,
-                data, position, end];
+        args = [dictionary,
+          header.number,
+          header.referredTo,
+          data,
+          position,
+          end];
         break;
       case 6: // ImmediateTextRegion
       case 7: // ImmediateLosslessTextRegion
@@ -805,7 +902,7 @@ var Jbig2Image = (function Jbig2ImageClosure() {
         textRegion.dsOffset = (textRegionSegmentFlags << 17) >> 27;
         textRegion.refinementTemplate = (textRegionSegmentFlags >> 15) & 1;
         if (textRegion.huffman) {
-          var textRegionHuffmanFlags = readUint16(data, position);
+          const textRegionHuffmanFlags = readUint16(data, position);
           position += 2;
           textRegion.huffmanFS = (textRegionHuffmanFlags) & 3;
           textRegion.huffmanDS = (textRegionHuffmanFlags >> 2) & 3;
@@ -822,7 +919,7 @@ var Jbig2Image = (function Jbig2ImageClosure() {
           for (i = 0; i < 2; i++) {
             at.push({
               x: readInt8(data, position),
-              y: readInt8(data, position + 1)
+              y: readInt8(data, position + 1),
             });
             position += 2;
           }
@@ -851,7 +948,7 @@ var Jbig2Image = (function Jbig2ImageClosure() {
           for (i = 0; i < atLength; i++) {
             at.push({
               x: readInt8(data, position),
-              y: readInt8(data, position + 1)
+              y: readInt8(data, position + 1),
             });
             position += 2;
           }
@@ -864,7 +961,7 @@ var Jbig2Image = (function Jbig2ImageClosure() {
           width: readUint32(data, position),
           height: readUint32(data, position + 4),
           resolutionX: readUint32(data, position + 8),
-          resolutionY: readUint32(data, position + 12)
+          resolutionY: readUint32(data, position + 12),
         };
         if (pageInfo.height === 0xFFFFFFFF) {
           delete pageInfo.height;
@@ -886,50 +983,50 @@ var Jbig2Image = (function Jbig2ImageClosure() {
       case 51: // EndOfFile
         break;
       case 62: // 7.4.15 defines 2 extension types which
-               // are comments and can be ignored.
+        // are comments and can be ignored.
         break;
       default:
-        error('JBIG2 error: segment type ' + header.typeName + '(' +
-              header.type + ') is not implemented');
+        error(`JBIG2 error: segment type ${header.typeName}(${
+          header.type}) is not implemented`);
     }
-    var callbackName = 'on' + header.typeName;
+    const callbackName = `on${header.typeName}`;
     if (callbackName in visitor) {
       visitor[callbackName].apply(visitor, args);
     }
   }
 
   function processSegments(segments, visitor) {
-    for (var i = 0, ii = segments.length; i < ii; i++) {
+    for (let i = 0, ii = segments.length; i < ii; i++) {
       processSegment(segments[i], visitor);
     }
   }
 
   function parseJbig2(data, start, end) {
-    var position = start;
+    let position = start;
     if (data[position] !== 0x97 || data[position + 1] !== 0x4A ||
         data[position + 2] !== 0x42 || data[position + 3] !== 0x32 ||
         data[position + 4] !== 0x0D || data[position + 5] !== 0x0A ||
         data[position + 6] !== 0x1A || data[position + 7] !== 0x0A) {
       error('JBIG2 error: invalid header');
     }
-    var header = {};
+    const header = {};
     position += 8;
-    var flags = data[position++];
+    const flags = data[position++];
     header.randomAccess = !(flags & 1);
     if (!(flags & 2)) {
       header.numberOfPages = readUint32(data, position);
       position += 4;
     }
-    var segments = readSegments(header, data, position, end);
+    const segments = readSegments(header, data, position, end);
     error('Not implemented');
     // processSegments(segments, new SimpleSegmentVisitor());
   }
 
   function parseJbig2Chunks(chunks) {
-    var visitor = new SimpleSegmentVisitor();
-    for (var i = 0, ii = chunks.length; i < ii; i++) {
-      var chunk = chunks[i];
-      var segments = readSegments({}, chunk.data, chunk.start, chunk.end);
+    const visitor = new SimpleSegmentVisitor();
+    for (let i = 0, ii = chunks.length; i < ii; i++) {
+      const chunk = chunks[i];
+      const segments = readSegments({}, chunk.data, chunk.start, chunk.end);
       processSegments(segments, visitor);
     }
     return visitor.buffer;
@@ -940,27 +1037,28 @@ var Jbig2Image = (function Jbig2ImageClosure() {
   SimpleSegmentVisitor.prototype = {
     onPageInformation: function SimpleSegmentVisitor_onPageInformation(info) {
       this.currentPageInfo = info;
-      var rowSize = (info.width + 7) >> 3;
-      var buffer = new Uint8Array(rowSize * info.height);
+      const rowSize = (info.width + 7) >> 3;
+      const buffer = new Uint8Array(rowSize * info.height);
       // The contents of ArrayBuffers are initialized to 0.
       // Fill the buffer with 0xFF only if info.defaultPixelValue is set
       if (info.defaultPixelValue) {
-        for (var i = 0, ii = buffer.length; i < ii; i++) {
+        for (let i = 0, ii = buffer.length; i < ii; i++) {
           buffer[i] = 0xFF;
         }
       }
       this.buffer = buffer;
     },
     drawBitmap: function SimpleSegmentVisitor_drawBitmap(regionInfo, bitmap) {
-      var pageInfo = this.currentPageInfo;
-      var width = regionInfo.width, height = regionInfo.height;
-      var rowSize = (pageInfo.width + 7) >> 3;
-      var combinationOperator = pageInfo.combinationOperatorOverride ?
-        regionInfo.combinationOperator : pageInfo.combinationOperator;
-      var buffer = this.buffer;
-      var mask0 =  128 >> (regionInfo.x & 7);
-      var offset0 = regionInfo.y * rowSize + (regionInfo.x >> 3);
-      var i, j, mask, offset;
+      const pageInfo = this.currentPageInfo;
+      const width = regionInfo.width; const
+        height = regionInfo.height;
+      const rowSize = (pageInfo.width + 7) >> 3;
+      const combinationOperator = pageInfo.combinationOperatorOverride
+        ? regionInfo.combinationOperator : pageInfo.combinationOperator;
+      const buffer = this.buffer;
+      const mask0 = 128 >> (regionInfo.x & 7);
+      let offset0 = regionInfo.y * rowSize + (regionInfo.x >> 3);
+      let i, j, mask, offset;
       switch (combinationOperator) {
         case 0: // OR
           for (i = 0; i < height; i++) {
@@ -978,7 +1076,7 @@ var Jbig2Image = (function Jbig2ImageClosure() {
             }
             offset0 += rowSize;
           }
-        break;
+          break;
         case 2: // XOR
           for (i = 0; i < height; i++) {
             mask = mask0;
@@ -997,81 +1095,81 @@ var Jbig2Image = (function Jbig2ImageClosure() {
           }
           break;
         default:
-          error('JBIG2 error: operator ' + combinationOperator +
-                ' is not supported');
+          error(`JBIG2 error: operator ${combinationOperator
+          } is not supported`);
       }
     },
     onImmediateGenericRegion:
       function SimpleSegmentVisitor_onImmediateGenericRegion(region, data,
-                                                             start, end) {
-      var regionInfo = region.info;
-      var decodingContext = new DecodingContext(data, start, end);
-      var bitmap = decodeBitmap(region.mmr, regionInfo.width, regionInfo.height,
-                                region.template, region.prediction, null,
-                                region.at, decodingContext);
-      this.drawBitmap(regionInfo, bitmap);
-    },
+          start, end) {
+        const regionInfo = region.info;
+        const decodingContext = new DecodingContext(data, start, end);
+        const bitmap = decodeBitmap(region.mmr, regionInfo.width, regionInfo.height,
+            region.template, region.prediction, null,
+            region.at, decodingContext);
+        this.drawBitmap(regionInfo, bitmap);
+      },
     onImmediateLosslessGenericRegion:
       function SimpleSegmentVisitor_onImmediateLosslessGenericRegion() {
-      this.onImmediateGenericRegion.apply(this, arguments);
-    },
+        this.onImmediateGenericRegion.apply(this, arguments);
+      },
     onSymbolDictionary:
       function SimpleSegmentVisitor_onSymbolDictionary(dictionary,
-                                                       currentSegment,
-                                                       referredSegments,
-                                                       data, start, end) {
-      var huffmanTables;
-      if (dictionary.huffman) {
-        error('JBIG2 error: huffman is not supported');
-      }
+          currentSegment,
+          referredSegments,
+          data, start, end) {
+        let huffmanTables;
+        if (dictionary.huffman) {
+          error('JBIG2 error: huffman is not supported');
+        }
 
-      // Combines exported symbols from all referred segments
-      var symbols = this.symbols;
-      if (!symbols) {
-        this.symbols = symbols = {};
-      }
+        // Combines exported symbols from all referred segments
+        let symbols = this.symbols;
+        if (!symbols) {
+          this.symbols = symbols = {};
+        }
 
-      var inputSymbols = [];
-      for (var i = 0, ii = referredSegments.length; i < ii; i++) {
-        inputSymbols = inputSymbols.concat(symbols[referredSegments[i]]);
-      }
+        let inputSymbols = [];
+        for (let i = 0, ii = referredSegments.length; i < ii; i++) {
+          inputSymbols = inputSymbols.concat(symbols[referredSegments[i]]);
+        }
 
-      var decodingContext = new DecodingContext(data, start, end);
-      symbols[currentSegment] = decodeSymbolDictionary(dictionary.huffman,
-        dictionary.refinement, inputSymbols, dictionary.numberOfNewSymbols,
-        dictionary.numberOfExportedSymbols, huffmanTables,
-        dictionary.template, dictionary.at,
-        dictionary.refinementTemplate, dictionary.refinementAt,
-        decodingContext);
-    },
+        const decodingContext = new DecodingContext(data, start, end);
+        symbols[currentSegment] = decodeSymbolDictionary(dictionary.huffman,
+            dictionary.refinement, inputSymbols, dictionary.numberOfNewSymbols,
+            dictionary.numberOfExportedSymbols, huffmanTables,
+            dictionary.template, dictionary.at,
+            dictionary.refinementTemplate, dictionary.refinementAt,
+            decodingContext);
+      },
     onImmediateTextRegion:
       function SimpleSegmentVisitor_onImmediateTextRegion(region,
-                                                          referredSegments,
-                                                          data, start, end) {
-      var regionInfo = region.info;
-      var huffmanTables;
+          referredSegments,
+          data, start, end) {
+        const regionInfo = region.info;
+        let huffmanTables;
 
-      // Combines exported symbols from all referred segments
-      var symbols = this.symbols;
-      var inputSymbols = [];
-      for (var i = 0, ii = referredSegments.length; i < ii; i++) {
-        inputSymbols = inputSymbols.concat(symbols[referredSegments[i]]);
-      }
-      var symbolCodeLength = log2(inputSymbols.length);
+        // Combines exported symbols from all referred segments
+        const symbols = this.symbols;
+        let inputSymbols = [];
+        for (let i = 0, ii = referredSegments.length; i < ii; i++) {
+          inputSymbols = inputSymbols.concat(symbols[referredSegments[i]]);
+        }
+        const symbolCodeLength = log2(inputSymbols.length);
 
-      var decodingContext = new DecodingContext(data, start, end);
-      var bitmap = decodeTextRegion(region.huffman, region.refinement,
-        regionInfo.width, regionInfo.height, region.defaultPixelValue,
-        region.numberOfSymbolInstances, region.stripSize, inputSymbols,
-        symbolCodeLength, region.transposed, region.dsOffset,
-        region.referenceCorner, region.combinationOperator, huffmanTables,
-        region.refinementTemplate, region.refinementAt, decodingContext);
-      this.drawBitmap(regionInfo, bitmap);
-    },
+        const decodingContext = new DecodingContext(data, start, end);
+        const bitmap = decodeTextRegion(region.huffman, region.refinement,
+            regionInfo.width, regionInfo.height, region.defaultPixelValue,
+            region.numberOfSymbolInstances, region.stripSize, inputSymbols,
+            symbolCodeLength, region.transposed, region.dsOffset,
+            region.referenceCorner, region.combinationOperator, huffmanTables,
+            region.refinementTemplate, region.refinementAt, decodingContext);
+        this.drawBitmap(regionInfo, bitmap);
+      },
     onImmediateLosslessTextRegion:
       function SimpleSegmentVisitor_onImmediateLosslessTextRegion() {
-      this.onImmediateTextRegion.apply(this, arguments);
-    }
+        this.onImmediateTextRegion.apply(this, arguments);
+      },
   };
 
   function Jbig2Image() {}
@@ -1079,7 +1177,7 @@ var Jbig2Image = (function Jbig2ImageClosure() {
   Jbig2Image.prototype = {
     parseChunks: function Jbig2Image_parseChunks(chunks) {
       return parseJbig2Chunks(chunks);
-    }
+    },
   };
 
   return Jbig2Image;

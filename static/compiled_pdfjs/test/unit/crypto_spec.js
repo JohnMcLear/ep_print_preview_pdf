@@ -5,10 +5,11 @@
 
 'use strict';
 
-describe('crypto', function() {
+describe('crypto', () => {
   function string2binary(s) {
-    var n = s.length, i;
-    var result = new Uint8Array(n);
+    const n = s.length; let
+      i;
+    const result = new Uint8Array(n);
     for (i = 0; i < n; ++i) {
       result[i] = s.charCodeAt(i) % 0xFF;
     }
@@ -16,66 +17,66 @@ describe('crypto', function() {
   }
 
   function hex2binary(s) {
-    var digits = '0123456789ABCDEF';
+    const digits = '0123456789ABCDEF';
     s = s.toUpperCase();
-    var n = s.length >> 1, i, j;
-    var result = new Uint8Array(n);
+    const n = s.length >> 1; let i; let j;
+    const result = new Uint8Array(n);
     for (i = 0, j = 0; i < n; ++i) {
-      var d1 = s.charAt(j++);
-      var d2 = s.charAt(j++);
-      var value = (digits.indexOf(d1) << 4) | (digits.indexOf(d2));
+      const d1 = s.charAt(j++);
+      const d2 = s.charAt(j++);
+      const value = (digits.indexOf(d1) << 4) | (digits.indexOf(d2));
       result[i] = value;
     }
     return result;
   }
 
   // RFC 1321, A.5 Test suite
-  describe('calculateMD5', function() {
-    it('should pass RFC 1321 test #1', function() {
-      var input, result, expected;
+  describe('calculateMD5', () => {
+    it('should pass RFC 1321 test #1', () => {
+      let input, result, expected;
       input = string2binary('');
       result = calculateMD5(input, 0, input.length);
       expected = hex2binary('d41d8cd98f00b204e9800998ecf8427e');
       expect(result).toEqual(expected);
     });
-    it('should pass RFC 1321 test #2', function() {
-      var input, result, expected;
+    it('should pass RFC 1321 test #2', () => {
+      let input, result, expected;
       input = string2binary('a');
       result = calculateMD5(input, 0, input.length);
       expected = hex2binary('0cc175b9c0f1b6a831c399e269772661');
       expect(result).toEqual(expected);
     });
-    it('should pass RFC 1321 test #3', function() {
-      var input, result, expected;
+    it('should pass RFC 1321 test #3', () => {
+      let input, result, expected;
       input = string2binary('abc');
       result = calculateMD5(input, 0, input.length);
       expected = hex2binary('900150983cd24fb0d6963f7d28e17f72');
       expect(result).toEqual(expected);
     });
-    it('should pass RFC 1321 test #4', function() {
-      var input, result, expected;
+    it('should pass RFC 1321 test #4', () => {
+      let input, result, expected;
       input = string2binary('message digest');
       result = calculateMD5(input, 0, input.length);
       expected = hex2binary('f96b697d7cb7938d525a2f31aaf161d0');
       expect(result).toEqual(expected);
     });
-    it('should pass RFC 1321 test #5', function() {
-      var input, result, expected;
+    it('should pass RFC 1321 test #5', () => {
+      let input, result, expected;
       input = string2binary('abcdefghijklmnopqrstuvwxyz');
       result = calculateMD5(input, 0, input.length);
       expected = hex2binary('c3fcd3d76192e4007dfb496cca67e13b');
       expect(result).toEqual(expected);
     });
-    it('should pass RFC 1321 test #6', function() {
-      var input, result, expected;
+    it('should pass RFC 1321 test #6', () => {
+      let input, result, expected;
       input = string2binary('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv' +
         'wxyz0123456789');
       result = calculateMD5(input, 0, input.length);
       expected = hex2binary('d174ab98d277d9f5a5611c2c9f419d9f');
       expect(result).toEqual(expected);
     });
-    it('should pass RFC 1321 test #7', function() {
-      var input, result, expected;
+    it('should pass RFC 1321 test #7', () => {
+      let input, result, expected;
       input = string2binary('123456789012345678901234567890123456789012345678' +
         '90123456789012345678901234567890');
       result = calculateMD5(input, 0, input.length);
@@ -85,9 +86,9 @@ describe('crypto', function() {
   });
 
   // http://www.freemedialibrary.com/index.php/RC4_test_vectors are used
-  describe('ARCFourCipher', function() {
-    it('should pass test #1', function() {
-      var key, input, result, expected, cipher;
+  describe('ARCFourCipher', () => {
+    it('should pass test #1', () => {
+      let key, input, result, expected, cipher;
       key = hex2binary('0123456789abcdef');
       input = hex2binary('0123456789abcdef');
       cipher = new ARCFourCipher(key);
@@ -95,8 +96,8 @@ describe('crypto', function() {
       expected = hex2binary('75b7878099e0c596');
       expect(result).toEqual(expected);
     });
-    it('should pass test #2', function() {
-      var key, input, result, expected, cipher;
+    it('should pass test #2', () => {
+      let key, input, result, expected, cipher;
       key = hex2binary('0123456789abcdef');
       input = hex2binary('0000000000000000');
       cipher = new ARCFourCipher(key);
@@ -104,8 +105,8 @@ describe('crypto', function() {
       expected = hex2binary('7494c2e7104b0879');
       expect(result).toEqual(expected);
     });
-    it('should pass test #3', function() {
-      var key, input, result, expected, cipher;
+    it('should pass test #3', () => {
+      let key, input, result, expected, cipher;
       key = hex2binary('0000000000000000');
       input = hex2binary('0000000000000000');
       cipher = new ARCFourCipher(key);
@@ -113,8 +114,8 @@ describe('crypto', function() {
       expected = hex2binary('de188941a3375d3a');
       expect(result).toEqual(expected);
     });
-    it('should pass test #4', function() {
-      var key, input, result, expected, cipher;
+    it('should pass test #4', () => {
+      let key, input, result, expected, cipher;
       key = hex2binary('ef012345');
       input = hex2binary('00000000000000000000');
       cipher = new ARCFourCipher(key);
@@ -122,8 +123,8 @@ describe('crypto', function() {
       expected = hex2binary('d6a141a7ec3c38dfbd61');
       expect(result).toEqual(expected);
     });
-    it('should pass test #5', function() {
-      var key, input, result, expected, cipher;
+    it('should pass test #5', () => {
+      let key, input, result, expected, cipher;
       key = hex2binary('0123456789abcdef');
       input = hex2binary('010101010101010101010101010101010101010101010101010' +
         '10101010101010101010101010101010101010101010101010101010101010101010' +
@@ -161,8 +162,8 @@ describe('crypto', function() {
         'd49e2755ab181ab7e940b0c0');
       expect(result).toEqual(expected);
     });
-    it('should pass test #6', function() {
-      var key, input, result, expected, cipher;
+    it('should pass test #6', () => {
+      let key, input, result, expected, cipher;
       key = hex2binary('fb029e3031323334');
       input = hex2binary('aaaa0300000008004500004e661a00008011be640a0001220af' +
         'fffff00890089003a000080a601100001000000000000204543454a4548454346434' +
@@ -174,8 +175,8 @@ describe('crypto', function() {
         '80805ad0c61a5d6f58f41040b24b7d1a693856ed0d4398e7aee3bf0e2a2ca8f7');
       expect(result).toEqual(expected);
     });
-    it('should pass test #7', function() {
-      var key, input, result, expected, cipher;
+    it('should pass test #7', () => {
+      let key, input, result, expected, cipher;
       key = hex2binary('0123456789abcdef');
       input = hex2binary('123456789abcdef0123456789abcdef0123456789abcdef0123' +
         '45678');
@@ -187,17 +188,17 @@ describe('crypto', function() {
     });
   });
 
-  describe('calculateSHA256', function() {
-    it('should properly hash abc', function() {
-      var input, result, expected;
+  describe('calculateSHA256', () => {
+    it('should properly hash abc', () => {
+      let input, result, expected;
       input = string2binary('abc');
       result = calculateSHA256(input, 0, input.length);
       expected = hex2binary('BA7816BF8F01CFEA414140DE5DAE2223B00361A396177A9C' +
                             'B410FF61F20015AD');
       expect(result).toEqual(expected);
     });
-    it('should properly hash a multiblock input', function() {
-      var input, result, expected;
+    it('should properly hash a multiblock input', () => {
+      let input, result, expected;
       input = string2binary('abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmno' +
                             'mnopnopq');
       result = calculateSHA256(input, 0, input.length);
@@ -207,17 +208,17 @@ describe('crypto', function() {
     });
   });
 
-  describe('calculateSHA384', function() {
-    it('should properly hash abc', function() {
-      var input, result, expected;
+  describe('calculateSHA384', () => {
+    it('should properly hash abc', () => {
+      let input, result, expected;
       input = string2binary('abc');
       result = calculateSHA384(input, 0, input.length);
       expected = hex2binary('CB00753F45A35E8BB5A03D699AC65007272C32AB0EDED163' +
                             '1A8B605A43FF5BED8086072BA1E7CC2358BAECA134C825A7');
       expect(result).toEqual(expected);
     });
-    it('should properly hash a multiblock input', function() {
-      var input, result, expected;
+    it('should properly hash a multiblock input', () => {
+      let input, result, expected;
       input = string2binary('abcdefghbcdefghicdefghijdefghijkefghijklfghijklm' +
                             'ghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrs' +
                             'mnopqrstnopqrstu');
@@ -228,9 +229,9 @@ describe('crypto', function() {
     });
   });
 
-  describe('calculateSHA512', function() {
-    it('should properly hash abc', function() {
-      var input, result, expected;
+  describe('calculateSHA512', () => {
+    it('should properly hash abc', () => {
+      let input, result, expected;
       input = string2binary('abc');
       result = calculateSHA512(input, 0, input.length);
       expected = hex2binary('DDAF35A193617ABACC417349AE20413112E6FA4E89A97EA2' +
@@ -238,8 +239,8 @@ describe('crypto', function() {
                             '454D4423643CE80E2A9AC94FA54CA49F');
       expect(result).toEqual(expected);
     });
-    it('should properly hash a multiblock input', function() {
-      var input, result, expected;
+    it('should properly hash a multiblock input', () => {
+      let input, result, expected;
       input = string2binary('abcdefghbcdefghicdefghijdefghijkefghijklfghijklm' +
                             'ghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrs' +
                             'mnopqrstnopqrstu');
@@ -252,24 +253,23 @@ describe('crypto', function() {
   });
 
 
-
-  describe('AES128', function() {
-    describe('Encryption', function() {
-      it('should be able to encrypt a block', function() {
-        var input, key, result, expected, iv, cipher;
+  describe('AES128', () => {
+    describe('Encryption', () => {
+      it('should be able to encrypt a block', () => {
+        let input, key, result, expected, iv, cipher;
         input = hex2binary('00112233445566778899aabbccddeeff');
         key = hex2binary('000102030405060708090a0b0c0d0e0f');
         iv = hex2binary('00000000000000000000000000000000');
         cipher = new AES128Cipher(key);
-        result = cipher.encrypt(input,iv);
+        result = cipher.encrypt(input, iv);
         expected = hex2binary('69c4e0d86a7b0430d8cdb78070b4c55a');
         expect(result).toEqual(expected);
       });
     });
 
-    describe('Decryption', function() {
-      it('should be able to decrypt a block with IV in stream', function() {
-        var input, key, result, expected, cipher;
+    describe('Decryption', () => {
+      it('should be able to decrypt a block with IV in stream', () => {
+        let input, key, result, expected, cipher;
         input = hex2binary('0000000000000000000000000000000069c4e0d86a7b0430d' +
                            '8cdb78070b4c55a');
         key = hex2binary('000102030405060708090a0b0c0d0e0f');
@@ -281,213 +281,722 @@ describe('crypto', function() {
     });
   });
 
-  describe('AES256', function() {
-    describe('Encryption', function() {
-      it('should be able to encrypt a block', function() {
-        var input, key, result, expected, iv, cipher;
+  describe('AES256', () => {
+    describe('Encryption', () => {
+      it('should be able to encrypt a block', () => {
+        let input, key, result, expected, iv, cipher;
         input = hex2binary('00112233445566778899aabbccddeeff');
         key = hex2binary('000102030405060708090a0b0c0d0e0f101112131415161718' +
                          '191a1b1c1d1e1f');
         iv = hex2binary('00000000000000000000000000000000');
         cipher = new AES256Cipher(key);
-        result = cipher.encrypt(input,iv);
+        result = cipher.encrypt(input, iv);
         expected = hex2binary('8ea2b7ca516745bfeafc49904b496089');
         expect(result).toEqual(expected);
       });
     });
 
-    describe('Decryption', function() {
-      it('should be able to decrypt a block with specified iv', function() {
-        var input, key, result, expected, cipher, iv;
+    describe('Decryption', () => {
+      it('should be able to decrypt a block with specified iv', () => {
+        let input, key, result, expected, cipher, iv;
         input = hex2binary('8ea2b7ca516745bfeafc49904b496089');
         key = hex2binary('000102030405060708090a0b0c0d0e0f101112131415161718' +
                          '191a1b1c1d1e1f');
         iv = hex2binary('00000000000000000000000000000000');
         cipher = new AES256Cipher(key);
-        result = cipher.decryptBlock(input,false,iv);
+        result = cipher.decryptBlock(input, false, iv);
         expected = hex2binary('00112233445566778899aabbccddeeff');
         expect(result).toEqual(expected);
       });
-      it('should be able to decrypt a block with IV in stream', function() {
-        var input, key, result, expected, cipher;
+      it('should be able to decrypt a block with IV in stream', () => {
+        let input, key, result, expected, cipher;
         input = hex2binary('000000000000000000000000000000008ea2b7ca516745bf' +
                            'eafc49904b496089');
         key = hex2binary('000102030405060708090a0b0c0d0e0f101112131415161718' +
                          '191a1b1c1d1e1f');
         cipher = new AES256Cipher(key);
-        result = cipher.decryptBlock(input,false);
+        result = cipher.decryptBlock(input, false);
         expected = hex2binary('00112233445566778899aabbccddeeff');
         expect(result).toEqual(expected);
       });
     });
   });
 
-  describe('PDF17Algorithm', function() {
-    it('should correctly check a user key', function() {
-      var password, userValidation, userPassword, alg, result;
+  describe('PDF17Algorithm', () => {
+    it('should correctly check a user key', () => {
+      let password, userValidation, userPassword, alg, result;
       alg = new PDF17();
       password = new Uint8Array([117, 115, 101, 114]);
       userValidation = new Uint8Array([117, 169, 4, 32, 159, 101, 22, 220]);
       userPassword = new Uint8Array([
-                                      131, 242, 143, 160, 87, 2, 138, 134, 79,
-                                      253, 189, 173, 224, 73, 144, 241, 190, 81,
-                                      197, 15, 249, 105, 145, 151, 15, 194, 65,
-                                      3, 1, 126, 187, 221]);
+        131,
+        242,
+        143,
+        160,
+        87,
+        2,
+        138,
+        134,
+        79,
+        253,
+        189,
+        173,
+        224,
+        73,
+        144,
+        241,
+        190,
+        81,
+        197,
+        15,
+        249,
+        105,
+        145,
+        151,
+        15,
+        194,
+        65,
+        3,
+        1,
+        126,
+        187,
+        221,
+      ]);
       result = alg.checkUserPassword(password, userValidation, userPassword);
       expect(result).toEqual(true);
     });
 
-    it('should correctly check an owner key', function () {
-      var password, ownerValidation, ownerPassword, alg, result, uBytes;
+    it('should correctly check an owner key', () => {
+      let password, ownerValidation, ownerPassword, alg, result, uBytes;
       alg = new PDF17();
       password = new Uint8Array([111, 119, 110, 101, 114]);
       ownerValidation = new Uint8Array([243, 118, 71, 153, 128, 17, 101, 62]);
-      ownerPassword = new Uint8Array([60, 98, 137, 35, 51, 101, 200, 152, 210,
-                                      178, 226, 228, 134, 205, 163, 24, 204,
-                                      126, 177, 36, 106, 50, 36, 125, 210, 172,
-                                      171, 120, 222, 108, 139, 115]);
-      uBytes = new Uint8Array([131, 242, 143, 160, 87, 2, 138, 134, 79, 253,
-                               189, 173, 224, 73, 144, 241, 190, 81, 197, 15,
-                               249, 105, 145, 151, 15, 194, 65, 3, 1, 126, 187,
-                               221, 117, 169, 4, 32, 159, 101, 22, 220, 168,
-                               94, 215, 192, 100, 38, 188, 40]);
+      ownerPassword = new Uint8Array([60,
+        98,
+        137,
+        35,
+        51,
+        101,
+        200,
+        152,
+        210,
+        178,
+        226,
+        228,
+        134,
+        205,
+        163,
+        24,
+        204,
+        126,
+        177,
+        36,
+        106,
+        50,
+        36,
+        125,
+        210,
+        172,
+        171,
+        120,
+        222,
+        108,
+        139,
+        115]);
+      uBytes = new Uint8Array([131,
+        242,
+        143,
+        160,
+        87,
+        2,
+        138,
+        134,
+        79,
+        253,
+        189,
+        173,
+        224,
+        73,
+        144,
+        241,
+        190,
+        81,
+        197,
+        15,
+        249,
+        105,
+        145,
+        151,
+        15,
+        194,
+        65,
+        3,
+        1,
+        126,
+        187,
+        221,
+        117,
+        169,
+        4,
+        32,
+        159,
+        101,
+        22,
+        220,
+        168,
+        94,
+        215,
+        192,
+        100,
+        38,
+        188,
+        40]);
       result = alg.checkOwnerPassword(password, ownerValidation, uBytes,
-                                      ownerPassword);
+          ownerPassword);
       expect(result).toEqual(true);
     });
 
-    it('should generate a file encryption key from the user key', function () {
-      var password, userKeySalt, expected, alg, result, userEncryption;
+    it('should generate a file encryption key from the user key', () => {
+      let password, userKeySalt, expected, alg, result, userEncryption;
       alg = new PDF17();
       password = new Uint8Array([117, 115, 101, 114]);
       userKeySalt = new Uint8Array([168, 94, 215, 192, 100, 38, 188, 40]);
-      userEncryption = new Uint8Array([35, 150, 195, 169, 245, 51, 51, 255,
-                                       158, 158, 33, 242, 231, 75, 125, 190,
-                                       25, 126, 172, 114, 195, 244, 137, 245,
-                                       234, 165, 42, 74, 60, 38, 17, 17]);
+      userEncryption = new Uint8Array([35,
+        150,
+        195,
+        169,
+        245,
+        51,
+        51,
+        255,
+        158,
+        158,
+        33,
+        242,
+        231,
+        75,
+        125,
+        190,
+        25,
+        126,
+        172,
+        114,
+        195,
+        244,
+        137,
+        245,
+        234,
+        165,
+        42,
+        74,
+        60,
+        38,
+        17,
+        17]);
       result = alg.getUserKey(password, userKeySalt, userEncryption);
-      expected = new Uint8Array([63, 114, 136, 209, 87, 61, 12, 30, 249, 1,
-                                 186, 144, 254, 248, 163, 153, 151, 51, 133,
-                                 10, 80, 152, 206, 15, 72, 187, 231, 33, 224,
-                                 239, 13, 213]);
+      expected = new Uint8Array([63,
+        114,
+        136,
+        209,
+        87,
+        61,
+        12,
+        30,
+        249,
+        1,
+        186,
+        144,
+        254,
+        248,
+        163,
+        153,
+        151,
+        51,
+        133,
+        10,
+        80,
+        152,
+        206,
+        15,
+        72,
+        187,
+        231,
+        33,
+        224,
+        239,
+        13,
+        213]);
       expect(result).toEqual(expected);
     });
 
-    it('should generate a file encryption key from the owner key', function () {
-      var password, ownerKeySalt, expected, alg, result, ownerEncryption;
-      var uBytes;
+    it('should generate a file encryption key from the owner key', () => {
+      let password, ownerKeySalt, expected, alg, result, ownerEncryption;
+      let uBytes;
       alg = new PDF17();
       password = new Uint8Array([111, 119, 110, 101, 114]);
       ownerKeySalt = new Uint8Array([200, 245, 242, 12, 218, 123, 24, 120]);
-      ownerEncryption = new Uint8Array([213, 202, 14, 189, 110, 76, 70, 191, 6,
-                                        195, 10, 190, 157, 100, 144, 85, 8, 62,
-                                        123, 178, 156, 229, 50, 40, 229, 216,
-                                        54, 222, 34, 38, 106, 223]);
-      uBytes = new Uint8Array([131, 242, 143, 160, 87, 2, 138, 134, 79, 253,
-                               189, 173, 224, 73, 144, 241, 190, 81, 197, 15,
-                               249, 105, 145, 151, 15, 194, 65, 3, 1, 126, 187,
-                               221, 117, 169, 4, 32, 159, 101, 22, 220, 168,
-                               94, 215, 192, 100, 38, 188, 40]);
+      ownerEncryption = new Uint8Array([213,
+        202,
+        14,
+        189,
+        110,
+        76,
+        70,
+        191,
+        6,
+        195,
+        10,
+        190,
+        157,
+        100,
+        144,
+        85,
+        8,
+        62,
+        123,
+        178,
+        156,
+        229,
+        50,
+        40,
+        229,
+        216,
+        54,
+        222,
+        34,
+        38,
+        106,
+        223]);
+      uBytes = new Uint8Array([131,
+        242,
+        143,
+        160,
+        87,
+        2,
+        138,
+        134,
+        79,
+        253,
+        189,
+        173,
+        224,
+        73,
+        144,
+        241,
+        190,
+        81,
+        197,
+        15,
+        249,
+        105,
+        145,
+        151,
+        15,
+        194,
+        65,
+        3,
+        1,
+        126,
+        187,
+        221,
+        117,
+        169,
+        4,
+        32,
+        159,
+        101,
+        22,
+        220,
+        168,
+        94,
+        215,
+        192,
+        100,
+        38,
+        188,
+        40]);
       result = alg.getOwnerKey(password, ownerKeySalt, uBytes, ownerEncryption);
-      expected = new Uint8Array([63, 114, 136, 209, 87, 61, 12, 30, 249, 1,
-                                 186, 144, 254, 248, 163, 153, 151, 51, 133,
-                                 10, 80, 152, 206, 15, 72, 187, 231, 33, 224,
-                                 239, 13, 213]);
+      expected = new Uint8Array([63,
+        114,
+        136,
+        209,
+        87,
+        61,
+        12,
+        30,
+        249,
+        1,
+        186,
+        144,
+        254,
+        248,
+        163,
+        153,
+        151,
+        51,
+        133,
+        10,
+        80,
+        152,
+        206,
+        15,
+        72,
+        187,
+        231,
+        33,
+        224,
+        239,
+        13,
+        213]);
       expect(result).toEqual(expected);
     });
   });
 
-  describe('PDF20Algorithm', function() {
-    it('should correctly check a user key', function () {
-      var password, userValidation, userPassword, alg, result;
+  describe('PDF20Algorithm', () => {
+    it('should correctly check a user key', () => {
+      let password, userValidation, userPassword, alg, result;
       alg = new PDF20();
       password = new Uint8Array([117, 115, 101, 114]);
       userValidation = new Uint8Array([83, 245, 146, 101, 198, 247, 34, 198]);
       userPassword = new Uint8Array([
-                                      94, 230, 205, 75, 166, 99, 250, 76, 219,
-                                      128, 17, 85, 57, 17, 33, 164, 150, 46,
-                                      103, 176, 160, 156, 187, 233, 166, 223,
-                                      163, 253, 147, 235, 95, 184]);
+        94,
+        230,
+        205,
+        75,
+        166,
+        99,
+        250,
+        76,
+        219,
+        128,
+        17,
+        85,
+        57,
+        17,
+        33,
+        164,
+        150,
+        46,
+        103,
+        176,
+        160,
+        156,
+        187,
+        233,
+        166,
+        223,
+        163,
+        253,
+        147,
+        235,
+        95,
+        184,
+      ]);
       result = alg.checkUserPassword(password, userValidation, userPassword);
       expect(result).toEqual(true);
     });
 
-    it('should correctly check an owner key', function () {
-      var password, ownerValidation, ownerPassword, alg, result, uBytes;
+    it('should correctly check an owner key', () => {
+      let password, ownerValidation, ownerPassword, alg, result, uBytes;
       alg = new PDF20();
       password = new Uint8Array([111, 119, 110, 101, 114]);
       ownerValidation = new Uint8Array([142, 232, 169, 208, 202, 214, 5, 185]);
-      ownerPassword = new Uint8Array([88, 232, 62, 54, 245, 26, 245, 209, 137,
-                                      123, 221, 72, 199, 49, 37, 217, 31, 74,
-                                      115, 167, 127, 158, 176, 77, 45, 163, 87,
-                                      47, 39, 90, 217, 141]);
-      uBytes = new Uint8Array([94, 230, 205, 75, 166, 99, 250, 76, 219, 128,
-                               17, 85, 57, 17, 33, 164, 150, 46, 103, 176, 160,
-                               156, 187, 233, 166, 223, 163, 253, 147, 235, 95,
-                               184, 83, 245, 146, 101, 198, 247, 34, 198, 191,
-                               11, 16, 94, 237, 216, 20, 175]);
+      ownerPassword = new Uint8Array([88,
+        232,
+        62,
+        54,
+        245,
+        26,
+        245,
+        209,
+        137,
+        123,
+        221,
+        72,
+        199,
+        49,
+        37,
+        217,
+        31,
+        74,
+        115,
+        167,
+        127,
+        158,
+        176,
+        77,
+        45,
+        163,
+        87,
+        47,
+        39,
+        90,
+        217,
+        141]);
+      uBytes = new Uint8Array([94,
+        230,
+        205,
+        75,
+        166,
+        99,
+        250,
+        76,
+        219,
+        128,
+        17,
+        85,
+        57,
+        17,
+        33,
+        164,
+        150,
+        46,
+        103,
+        176,
+        160,
+        156,
+        187,
+        233,
+        166,
+        223,
+        163,
+        253,
+        147,
+        235,
+        95,
+        184,
+        83,
+        245,
+        146,
+        101,
+        198,
+        247,
+        34,
+        198,
+        191,
+        11,
+        16,
+        94,
+        237,
+        216,
+        20,
+        175]);
       result = alg.checkOwnerPassword(password, ownerValidation, uBytes,
-                                      ownerPassword);
+          ownerPassword);
       expect(result).toEqual(true);
     });
 
-    it('should generate a file encryption key from the user key', function () {
-      var password, userKeySalt, expected, alg, result, userEncryption;
+    it('should generate a file encryption key from the user key', () => {
+      let password, userKeySalt, expected, alg, result, userEncryption;
       alg = new PDF20();
       password = new Uint8Array([117, 115, 101, 114]);
       userKeySalt = new Uint8Array([191, 11, 16, 94, 237, 216, 20, 175]);
-      userEncryption = new Uint8Array([121, 208, 2, 181, 230, 89, 156, 60, 253,
-                                       143, 212, 28, 84, 180, 196, 177, 173,
-                                       128, 221, 107, 46, 20, 94, 186, 135, 51,
-                                       95, 24, 20, 223, 254, 36]);
+      userEncryption = new Uint8Array([121,
+        208,
+        2,
+        181,
+        230,
+        89,
+        156,
+        60,
+        253,
+        143,
+        212,
+        28,
+        84,
+        180,
+        196,
+        177,
+        173,
+        128,
+        221,
+        107,
+        46,
+        20,
+        94,
+        186,
+        135,
+        51,
+        95,
+        24,
+        20,
+        223,
+        254,
+        36]);
       result = alg.getUserKey(password, userKeySalt, userEncryption);
-      expected = new Uint8Array([42, 218, 213, 39, 73, 91, 72, 79, 67, 38, 248,
-                                 133, 18, 189, 61, 34, 107, 79, 29, 56, 59,
-                                 181, 213, 118, 113, 34, 65, 210, 87, 174, 22,
-                                 239]);
+      expected = new Uint8Array([42,
+        218,
+        213,
+        39,
+        73,
+        91,
+        72,
+        79,
+        67,
+        38,
+        248,
+        133,
+        18,
+        189,
+        61,
+        34,
+        107,
+        79,
+        29,
+        56,
+        59,
+        181,
+        213,
+        118,
+        113,
+        34,
+        65,
+        210,
+        87,
+        174,
+        22,
+        239]);
       expect(result).toEqual(expected);
     });
 
-    it('should generate a file encryption key from the owner key', function () {
-      var password, ownerKeySalt, expected, alg, result, ownerEncryption;
-      var uBytes;
+    it('should generate a file encryption key from the owner key', () => {
+      let password, ownerKeySalt, expected, alg, result, ownerEncryption;
+      let uBytes;
       alg = new PDF20();
       password = new Uint8Array([111, 119, 110, 101, 114]);
       ownerKeySalt = new Uint8Array([29, 208, 185, 46, 11, 76, 135, 149]);
-      ownerEncryption = new Uint8Array([209, 73, 224, 77, 103, 155, 201, 181,
-                                        190, 68, 223, 20, 62, 90, 56, 210, 5,
-                                        240, 178, 128, 238, 124, 68, 254, 253,
-                                        244, 62, 108, 208, 135, 10, 251]);
-      uBytes = new Uint8Array([94, 230, 205, 75, 166, 99, 250, 76, 219, 128,
-                               17, 85, 57, 17, 33, 164, 150, 46, 103, 176, 160,
-                               156, 187, 233, 166, 223, 163, 253, 147, 235, 95,
-                               184, 83, 245, 146, 101, 198, 247, 34, 198, 191,
-                               11, 16, 94, 237, 216, 20, 175]);
+      ownerEncryption = new Uint8Array([209,
+        73,
+        224,
+        77,
+        103,
+        155,
+        201,
+        181,
+        190,
+        68,
+        223,
+        20,
+        62,
+        90,
+        56,
+        210,
+        5,
+        240,
+        178,
+        128,
+        238,
+        124,
+        68,
+        254,
+        253,
+        244,
+        62,
+        108,
+        208,
+        135,
+        10,
+        251]);
+      uBytes = new Uint8Array([94,
+        230,
+        205,
+        75,
+        166,
+        99,
+        250,
+        76,
+        219,
+        128,
+        17,
+        85,
+        57,
+        17,
+        33,
+        164,
+        150,
+        46,
+        103,
+        176,
+        160,
+        156,
+        187,
+        233,
+        166,
+        223,
+        163,
+        253,
+        147,
+        235,
+        95,
+        184,
+        83,
+        245,
+        146,
+        101,
+        198,
+        247,
+        34,
+        198,
+        191,
+        11,
+        16,
+        94,
+        237,
+        216,
+        20,
+        175]);
       result = alg.getOwnerKey(password, ownerKeySalt, uBytes, ownerEncryption);
-      expected = new Uint8Array([42, 218, 213, 39, 73, 91, 72, 79, 67, 38, 248,
-                                 133, 18, 189, 61, 34, 107, 79, 29, 56, 59,
-                                 181, 213, 118, 113, 34, 65, 210, 87, 174, 22,
-                                 239]);
+      expected = new Uint8Array([42,
+        218,
+        213,
+        39,
+        73,
+        91,
+        72,
+        79,
+        67,
+        38,
+        248,
+        133,
+        18,
+        189,
+        61,
+        34,
+        107,
+        79,
+        29,
+        56,
+        59,
+        181,
+        213,
+        118,
+        113,
+        34,
+        65,
+        210,
+        87,
+        174,
+        22,
+        239]);
       expect(result).toEqual(expected);
     });
   });
 });
 
 
-
-describe('CipherTransformFactory', function() {
+describe('CipherTransformFactory', () => {
   function DictMock(map) {
     this.map = map;
   }
   DictMock.prototype = {
-    get: function(key) {
+    get(key) {
       return this.map[key];
-    }
+    },
   };
 
   function ensureCipherTransformFactoryPasswordIncorrect(
       dict, fileId, password) {
-    var exception = null;
+    let exception = null;
     try {
       new CipherTransformFactory(dict, fileId, password);
     } catch (ex) {
@@ -497,7 +1006,7 @@ describe('CipherTransformFactory', function() {
     expect(exception.code).toEqual(PasswordResponses.INCORRECT_PASSWORD);
   }
 
-  var map1 = {
+  const map1 = {
     Filter: Name.get('Standard'),
     V: 2,
     Length: 128,
@@ -506,11 +1015,11 @@ describe('CipherTransformFactory', function() {
     U: unescape('j%0C%8D%3EY%19%00%BCjd%7D%91%BD%AA%00%18%00%00%00%00%00%00%0' +
                 '0%00%00%00%00%00%00%00%00%00'),
     P: -1028,
-    R: 3
+    R: 3,
   };
-  var fileID1 = unescape('%F6%C6%AF%17%F3rR%8DRM%9A%80%D1%EF%DF%18');
+  const fileID1 = unescape('%F6%C6%AF%17%F3rR%8DRM%9A%80%D1%EF%DF%18');
 
-  var map2 = {
+  const map2 = {
     Filter: Name.get('Standard'),
     V: 4,
     Length: 128,
@@ -519,10 +1028,10 @@ describe('CipherTransformFactory', function() {
     U: unescape('%93%04%89%A9%BF%8AE%A6%88%A2%DB%C2%A0%A8gn%00%00%00%00%00%00' +
                 '%00%00%00%00%00%00%00%00%00%00'),
     P: -1084,
-    R: 4
+    R: 4,
   };
 
-  var aes256Map = {
+  const aes256Map = {
     Filter: Name.get('Standard'),
     V: 5,
     Length: 256,
@@ -537,10 +1046,10 @@ describe('CipherTransformFactory', function() {
                  '89%F5%EA%A5*J%3C%26%11%11'),
     Perms: unescape('%D8%FC%844%E5e%0DB%5D%7Ff%FD%3COMM'),
     P: -1084,
-    R: 5
+    R: 5,
   };
 
-  var aes256IsoMap = {
+  const aes256IsoMap = {
     Filter: Name.get('Standard'),
     V: 5,
     Length: 256,
@@ -555,10 +1064,10 @@ describe('CipherTransformFactory', function() {
                  '%BA%873_%18%14%DF%FE%24'),
     Perms: unescape('l%AD%0F%A0%EBM%86WM%3E%CB%B5%E0X%C97'),
     P: -1084,
-    R: 6
+    R: 6,
   };
 
-  var aes256BlankMap = {
+  const aes256BlankMap = {
     Filter: Name.get('Standard'),
     V: 5,
     Length: 256,
@@ -573,10 +1082,10 @@ describe('CipherTransformFactory', function() {
                  '%5E%912%B6d%12%27%05%F6'),
     Perms: unescape('%86%1562%0D%AE%A2%FB%5D%3B%22%3Dq%12%B2H'),
     P: -1084,
-    R: 5
+    R: 5,
   };
 
-  var aes256IBlankMap = {
+  const aes256IBlankMap = {
     Filter: Name.get('Standard'),
     V: 5,
     Length: 256,
@@ -590,59 +1099,59 @@ describe('CipherTransformFactory', function() {
                  'N%99%F1%A4Deq'),
     Perms: unescape('%03%F2i%07%0D%C3%F9%F2%28%80%B7%F5%DD%D1c%EB'),
     P: -1084,
-    R: 6
+    R: 6,
   };
 
-  var fileID2 = unescape('%3CL_%3AD%96%AF@%9A%9D%B3%3Cx%1Cv%AC');
+  const fileID2 = unescape('%3CL_%3AD%96%AF@%9A%9D%B3%3Cx%1Cv%AC');
 
-  describe('#ctor', function() {
-    describe('AES256 Revision 5', function () {
-      it('should accept user password', function () {
+  describe('#ctor', () => {
+    describe('AES256 Revision 5', () => {
+      it('should accept user password', () => {
         new CipherTransformFactory(new DictMock(aes256Map), fileID1, 'user');
       });
-      it('should accept owner password', function () {
+      it('should accept owner password', () => {
         new CipherTransformFactory(new DictMock(aes256Map), fileID1, 'owner');
       });
-      it('should not accept wrong password', function () {
+      it('should not accept wrong password', () => {
         ensureCipherTransformFactoryPasswordIncorrect(
-          new DictMock(aes256Map), fileID1, 'wrong');
+            new DictMock(aes256Map), fileID1, 'wrong');
       });
-      it('should accept blank password', function () {
+      it('should accept blank password', () => {
         new CipherTransformFactory(new DictMock(aes256BlankMap), fileID1);
       });
     });
 
-    describe('AES256 Revision 6', function () {
-      it('should accept user password', function () {
+    describe('AES256 Revision 6', () => {
+      it('should accept user password', () => {
         new CipherTransformFactory(new DictMock(aes256IsoMap), fileID1,
-                                   'user');
+            'user');
       });
-      it('should accept owner password', function () {
+      it('should accept owner password', () => {
         new CipherTransformFactory(new DictMock(aes256IsoMap), fileID1,
-                                   'owner');
+            'owner');
       });
-      it('should not accept wrong password', function () {
+      it('should not accept wrong password', () => {
         ensureCipherTransformFactoryPasswordIncorrect(
-          new DictMock(aes256IsoMap), fileID1, 'wrong');
+            new DictMock(aes256IsoMap), fileID1, 'wrong');
       });
-      it('should accept blank password', function () {
+      it('should accept blank password', () => {
         new CipherTransformFactory(new DictMock(aes256IBlankMap), fileID1);
       });
     });
-    it('should accept user password', function() {
+    it('should accept user password', () => {
       new CipherTransformFactory(new DictMock(map1), fileID1, '123456');
     });
 
-    it('should accept owner password', function() {
+    it('should accept owner password', () => {
       new CipherTransformFactory(new DictMock(map1), fileID1, '654321');
     });
 
-    it('should not accept wrong password', function() {
+    it('should not accept wrong password', () => {
       ensureCipherTransformFactoryPasswordIncorrect(
-        new DictMock(map1), fileID1, 'wrong');
+          new DictMock(map1), fileID1, 'wrong');
     });
 
-    it('should accept no password', function() {
+    it('should accept no password', () => {
       new CipherTransformFactory(new DictMock(map2), fileID2);
     });
   });

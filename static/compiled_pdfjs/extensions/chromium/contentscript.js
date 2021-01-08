@@ -17,14 +17,14 @@ limitations under the License.
 
 'use strict';
 
-var VIEWER_URL = chrome.extension.getURL('content/web/viewer.html');
+const VIEWER_URL = chrome.extension.getURL('content/web/viewer.html');
 
 function getViewerURL(pdf_url) {
-  return VIEWER_URL + '?file=' + encodeURIComponent(pdf_url);
+  return `${VIEWER_URL}?file=${encodeURIComponent(pdf_url)}`;
 }
 
 // (un)prefixed property names
-var createShadowRoot, shadowRoot;
+let createShadowRoot, shadowRoot;
 if (typeof Element.prototype.createShadowRoot !== 'undefined') {
   // Chrome 35+
   createShadowRoot = 'createShadowRoot';
@@ -62,13 +62,13 @@ function onAnimationStart(event) {
 // Calling this function multiple times for the same element is safe, i.e.
 // it has no side effects.
 function watchObjectOrEmbed(elem) {
-  var mimeType = elem.type;
+  const mimeType = elem.type;
   if (mimeType && 'application/pdf' !== mimeType.toLowerCase()) {
     return;
   }
   // <embed src> <object data>
-  var srcAttribute = 'src' in elem ? 'src' : 'data';
-  var path = elem[srcAttribute];
+  const srcAttribute = 'src' in elem ? 'src' : 'data';
+  const path = elem[srcAttribute];
   if (!mimeType && !/\.pdf($|[?#])/i.test(path)) {
     return;
   }
@@ -94,7 +94,7 @@ function watchObjectOrEmbed(elem) {
   elem[createShadowRoot]();
 
   function updateViewerFrame() {
-    var path = elem[srcAttribute];
+    const path = elem[srcAttribute];
     if (!path) {
       elem[shadowRoot].textContent = '';
     } else {
@@ -119,23 +119,23 @@ function watchObjectOrEmbed(elem) {
   updateViewerFrame();
 
   // Watch for page-initiated changes of the src/data attribute.
-  var srcObserver = new MutationObserver(updateViewerFrame);
+  const srcObserver = new MutationObserver(updateViewerFrame);
   srcObserver.observe(elem, {
     attributes: true,
     childList: false,
     characterData: false,
-    attributeFilter: [srcAttribute]
+    attributeFilter: [srcAttribute],
   });
 }
 
 // Get the viewer URL, provided that the path is a valid URL.
 function getEmbeddedViewerURL(path) {
-  var fragment = /^([^#]*)(#.*)?$/.exec(path);
+  let fragment = /^([^#]*)(#.*)?$/.exec(path);
   path = fragment[1];
   fragment = fragment[2] || '';
 
   // Resolve relative path to document.
-  var a = document.createElement('a');
+  const a = document.createElement('a');
   a.href = document.baseURI;
   a.href = path;
   path = a.href;

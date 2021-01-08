@@ -18,33 +18,33 @@ limitations under the License.
 'use strict';
 
 Promise.all([
-  new Promise(function getManagedPrefs(resolve) {
+  new Promise((resolve) => {
     // Get preferences as set by the system administrator.
-    chrome.storage.managed.get(null, function(prefs) {
+    chrome.storage.managed.get(null, (prefs) => {
       // Managed storage may be disabled, e.g. in Opera.
       resolve(prefs || {});
     });
   }),
-  new Promise(function getUserPrefs(resolve) {
-    chrome.storage.local.get(null, function(prefs) {
+  new Promise((resolve) => {
+    chrome.storage.local.get(null, (prefs) => {
       resolve(prefs || {});
     });
   }),
-  new Promise(function getStorageSchema(resolve) {
+  new Promise((resolve) => {
     // Get the storage schema - a dictionary of preferences.
-    var x = new XMLHttpRequest();
-    var schema_location = chrome.runtime.getManifest().storage.managed_schema;
+    const x = new XMLHttpRequest();
+    const schema_location = chrome.runtime.getManifest().storage.managed_schema;
     x.open('get', chrome.runtime.getURL(schema_location));
-    x.onload = function() {
+    x.onload = function () {
       resolve(x.response.properties);
     };
     x.responseType = 'json';
     x.send();
-  })
-]).then(function(values) {
-  var managedPrefs = values[0];
-  var userPrefs = values[1];
-  var schema = values[2];
+  }),
+]).then((values) => {
+  const managedPrefs = values[0];
+  let userPrefs = values[1];
+  const schema = values[2];
   function getPrefValue(prefName) {
     if (prefName in userPrefs) {
       return userPrefs[prefName];
@@ -53,23 +53,23 @@ Promise.all([
     }
     return schema[prefName].default;
   }
-  var prefNames = Object.keys(schema);
-  var renderPreferenceFunctions = {};
+  const prefNames = Object.keys(schema);
+  const renderPreferenceFunctions = {};
   // Render options
-  prefNames.forEach(function(prefName) {
-    var prefSchema = schema[prefName];
+  prefNames.forEach((prefName) => {
+    const prefSchema = schema[prefName];
     if (!prefSchema.title) {
       // Don't show preferences if the title is missing.
       return;
     }
 
     // A DOM element with a method renderPreference.
-    var renderPreference;
+    let renderPreference;
     if (prefSchema.type === 'boolean') {
       // Most prefs are booleans, render them in a generic way.
       renderPreference = renderBooleanPref(prefSchema.title,
-                                           prefSchema.description,
-                                           prefName);
+          prefSchema.description,
+          prefName);
     } else if (prefName === 'defaultZoomValue') {
       renderPreference = renderDefaultZoomValue(prefSchema.title);
     } else if (prefName === 'sidebarViewOnLoad') {
@@ -77,7 +77,7 @@ Promise.all([
     } else {
       // Should NEVER be reached. Only happens if a new type of preference is
       // added to the storage manifest.
-      console.error('Don\'t know how to handle ' + prefName + '!');
+      console.error(`Don't know how to handle ${prefName}!`);
       return;
     }
 
@@ -86,25 +86,25 @@ Promise.all([
   });
 
   // Names of preferences that are displayed in the UI.
-  var renderedPrefNames = Object.keys(renderPreferenceFunctions);
+  const renderedPrefNames = Object.keys(renderPreferenceFunctions);
 
   // Reset button to restore default settings.
-  document.getElementById('reset-button').onclick = function() {
+  document.getElementById('reset-button').onclick = function () {
     userPrefs = {};
-    chrome.storage.local.remove(prefNames, function() {
-      renderedPrefNames.forEach(function(prefName) {
+    chrome.storage.local.remove(prefNames, () => {
+      renderedPrefNames.forEach((prefName) => {
         renderPreferenceFunctions[prefName](getPrefValue(prefName));
       });
     });
   };
 
   // Automatically update the UI when the preferences were changed elsewhere.
-  chrome.storage.onChanged.addListener(function(changes, areaName) {
-    var prefs = areaName === 'local' ? userPrefs :
-                areaName === 'managed' ? managedPrefs : null;
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    const prefs = areaName === 'local' ? userPrefs
+      : areaName === 'managed' ? managedPrefs : null;
     if (prefs) {
-      renderedPrefNames.forEach(function(prefName) {
-        var prefChanges = changes[prefName];
+      renderedPrefNames.forEach((prefName) => {
+        const prefChanges = changes[prefName];
         if (prefChanges) {
           if ('newValue' in prefChanges) {
             userPrefs[prefName] = prefChanges.newValue;
@@ -127,12 +127,12 @@ function importTemplate(id) {
 // function which updates the UI with the preference.
 
 function renderBooleanPref(shortDescription, description, prefName) {
-  var wrapper = importTemplate('checkbox-template');
+  const wrapper = importTemplate('checkbox-template');
   wrapper.title = description;
 
-  var checkbox = wrapper.querySelector('input[type="checkbox"]');
-  checkbox.onchange = function() {
-    var pref = {};
+  const checkbox = wrapper.querySelector('input[type="checkbox"]');
+  checkbox.onchange = function () {
+    const pref = {};
     pref[prefName] = this.checked;
     chrome.storage.local.set(pref);
   };
@@ -146,11 +146,11 @@ function renderBooleanPref(shortDescription, description, prefName) {
 }
 
 function renderDefaultZoomValue(shortDescription) {
-  var wrapper = importTemplate('defaultZoomValue-template');
-  var select = wrapper.querySelector('select');
-  select.onchange = function() {
+  const wrapper = importTemplate('defaultZoomValue-template');
+  const select = wrapper.querySelector('select');
+  select.onchange = function () {
     chrome.storage.local.set({
-      defaultZoomValue: this.value
+      defaultZoomValue: this.value,
     });
   };
   wrapper.querySelector('span').textContent = shortDescription;
@@ -159,11 +159,11 @@ function renderDefaultZoomValue(shortDescription) {
   function renderPreference(value) {
     value = value || 'auto';
     select.value = value;
-    var customOption = select.querySelector('option.custom-zoom');
+    const customOption = select.querySelector('option.custom-zoom');
     if (select.selectedIndex === -1 && value) {
       // Custom zoom percentage, e.g. set via managed preferences.
       // [zoom] or [zoom],[left],[top]
-      customOption.text = value.indexOf(',') > 0 ? value : value + '%';
+      customOption.text = value.indexOf(',') > 0 ? value : `${value}%`;
       customOption.value = value;
       customOption.hidden = false;
       customOption.selected = true;
@@ -175,11 +175,11 @@ function renderDefaultZoomValue(shortDescription) {
 }
 
 function renderSidebarViewOnLoad(shortDescription) {
-  var wrapper = importTemplate('sidebarViewOnLoad-template');
-  var select = wrapper.querySelector('select');
-  select.onchange = function() {
+  const wrapper = importTemplate('sidebarViewOnLoad-template');
+  const select = wrapper.querySelector('select');
+  select.onchange = function () {
     chrome.storage.local.set({
-      sidebarViewOnLoad: parseInt(this.value)
+      sidebarViewOnLoad: parseInt(this.value),
     });
   };
   wrapper.querySelector('span').textContent = shortDescription;

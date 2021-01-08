@@ -25,9 +25,9 @@
 
 'use strict';
 
-var PartialEvaluator = (function PartialEvaluatorClosure() {
+const PartialEvaluator = (function PartialEvaluatorClosure() {
   function PartialEvaluator(pdfManager, xref, handler, pageIndex,
-                            uniquePrefix, idCounters, fontCache) {
+      uniquePrefix, idCounters, fontCache) {
     this.pdfManager = pdfManager;
     this.xref = xref;
     this.handler = handler;
@@ -38,8 +38,8 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
   }
 
   // Trying to minimize Date.now() usage and check every 100 time
-  var TIME_SLOT_DURATION_MS = 20;
-  var CHECK_TIME_EVERY = 100;
+  const TIME_SLOT_DURATION_MS = 20;
+  const CHECK_TIME_EVERY = 100;
   function TimeSlotManager() {
     this.reset();
   }
@@ -54,12 +54,13 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
     reset: function TimeSlotManager_reset() {
       this.endTime = Date.now() + TIME_SLOT_DURATION_MS;
       this.checked = 0;
-    }
+    },
   };
 
-  var deferred = Promise.resolve();
+  const deferred = Promise.resolve();
 
-  var TILING_PATTERN = 1, SHADING_PATTERN = 2;
+  const TILING_PATTERN = 1; const
+    SHADING_PATTERN = 2;
 
   PartialEvaluator.prototype = {
     hasBlendModes: function PartialEvaluator_hasBlendModes(resources) {
@@ -67,35 +68,35 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
         return false;
       }
 
-      var processed = Object.create(null);
+      const processed = Object.create(null);
       if (resources.objId) {
         processed[resources.objId] = true;
       }
 
-      var nodes = [resources];
+      const nodes = [resources];
       while (nodes.length) {
         var key;
-        var node = nodes.shift();
+        const node = nodes.shift();
         // First check the current resources for blend modes.
-        var graphicStates = node.get('ExtGState');
+        let graphicStates = node.get('ExtGState');
         if (isDict(graphicStates)) {
           graphicStates = graphicStates.getAll();
           for (key in graphicStates) {
-            var graphicState = graphicStates[key];
-            var bm = graphicState['BM'];
+            const graphicState = graphicStates[key];
+            const bm = graphicState.BM;
             if (isName(bm) && bm.name !== 'Normal') {
               return true;
             }
           }
         }
         // Descend into the XObjects to look for more resources and blend modes.
-        var xObjects = node.get('XObject');
+        let xObjects = node.get('XObject');
         if (!isDict(xObjects)) {
           continue;
         }
         xObjects = xObjects.getAll();
         for (key in xObjects) {
-          var xObject = xObjects[key];
+          const xObject = xObjects[key];
           if (!isStream(xObject)) {
             continue;
           }
@@ -106,7 +107,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
             }
             processed[xObject.dict.objId] = true;
           }
-          var xResources = xObject.dict.get('Resources');
+          const xResources = xObject.dict.get('Resources');
           // Checking objId to detect an infinite loop.
           if (isDict(xResources) &&
               (!xResources.objId || !processed[xResources.objId])) {
@@ -121,29 +122,29 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
     },
 
     buildFormXObject: function PartialEvaluator_buildFormXObject(resources,
-                                                                 xobj, smask,
-                                                                 operatorList,
-                                                                 task,
-                                                                 initialState) {
-      var matrix = xobj.dict.getArray('Matrix');
-      var bbox = xobj.dict.getArray('BBox');
-      var group = xobj.dict.get('Group');
+        xobj, smask,
+        operatorList,
+        task,
+        initialState) {
+      const matrix = xobj.dict.getArray('Matrix');
+      const bbox = xobj.dict.getArray('BBox');
+      const group = xobj.dict.get('Group');
       if (group) {
         var groupOptions = {
-          matrix: matrix,
-          bbox: bbox,
-          smask: smask,
+          matrix,
+          bbox,
+          smask,
           isolated: false,
-          knockout: false
+          knockout: false,
         };
 
-        var groupSubtype = group.get('S');
-        var colorSpace;
+        const groupSubtype = group.get('S');
+        let colorSpace;
         if (isName(groupSubtype) && groupSubtype.name === 'Transparency') {
           groupOptions.isolated = (group.get('I') || false);
           groupOptions.knockout = (group.get('K') || false);
-          colorSpace = (group.has('CS') ?
-            ColorSpace.parse(group.get('CS'), this.xref, resources) : null);
+          colorSpace = (group.has('CS')
+            ? ColorSpace.parse(group.get('CS'), this.xref, resources) : null);
         }
 
         if (smask && smask.backdrop) {
@@ -157,202 +158,200 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
       operatorList.addOp(OPS.paintFormXObjectBegin, [matrix, bbox]);
 
       return this.getOperatorList(xobj, task,
-        (xobj.dict.get('Resources') || resources), operatorList, initialState).
-        then(function () {
-          operatorList.addOp(OPS.paintFormXObjectEnd, []);
+          (xobj.dict.get('Resources') || resources), operatorList, initialState)
+          .then(() => {
+            operatorList.addOp(OPS.paintFormXObjectEnd, []);
 
-          if (group) {
-            operatorList.addOp(OPS.endGroup, [groupOptions]);
-          }
-        });
+            if (group) {
+              operatorList.addOp(OPS.endGroup, [groupOptions]);
+            }
+          });
     },
 
     buildPaintImageXObject:
         function PartialEvaluator_buildPaintImageXObject(resources, image,
-                                                         inline, operatorList,
-                                                         cacheKey, imageCache) {
-      var self = this;
-      var dict = image.dict;
-      var w = dict.get('Width', 'W');
-      var h = dict.get('Height', 'H');
+            inline, operatorList,
+            cacheKey, imageCache) {
+          const self = this;
+          const dict = image.dict;
+          const w = dict.get('Width', 'W');
+          const h = dict.get('Height', 'H');
 
-      if (!(w && isNum(w)) || !(h && isNum(h))) {
-        warn('Image dimensions are missing, or not numbers.');
-        return;
-      }
-      if (PDFJS.maxImageSize !== -1 && w * h > PDFJS.maxImageSize) {
-        warn('Image exceeded maximum allowed size and was removed.');
-        return;
-      }
+          if (!(w && isNum(w)) || !(h && isNum(h))) {
+            warn('Image dimensions are missing, or not numbers.');
+            return;
+          }
+          if (PDFJS.maxImageSize !== -1 && w * h > PDFJS.maxImageSize) {
+            warn('Image exceeded maximum allowed size and was removed.');
+            return;
+          }
 
-      var imageMask = (dict.get('ImageMask', 'IM') || false);
-      var imgData, args;
-      if (imageMask) {
-        // This depends on a tmpCanvas being filled with the
-        // current fillStyle, such that processing the pixel
-        // data can't be done here. Instead of creating a
-        // complete PDFImage, only read the information needed
-        // for later.
+          const imageMask = (dict.get('ImageMask', 'IM') || false);
+          let imgData, args;
+          if (imageMask) {
+            // This depends on a tmpCanvas being filled with the
+            // current fillStyle, such that processing the pixel
+            // data can't be done here. Instead of creating a
+            // complete PDFImage, only read the information needed
+            // for later.
 
-        var width = dict.get('Width', 'W');
-        var height = dict.get('Height', 'H');
-        var bitStrideLength = (width + 7) >> 3;
-        var imgArray = image.getBytes(bitStrideLength * height);
-        var decode = dict.get('Decode', 'D');
-        var inverseDecode = (!!decode && decode[0] > 0);
+            const width = dict.get('Width', 'W');
+            const height = dict.get('Height', 'H');
+            const bitStrideLength = (width + 7) >> 3;
+            const imgArray = image.getBytes(bitStrideLength * height);
+            const decode = dict.get('Decode', 'D');
+            const inverseDecode = (!!decode && decode[0] > 0);
 
-        imgData = PDFImage.createMask(imgArray, width, height,
-                                      image instanceof DecodeStream,
-                                      inverseDecode);
-        imgData.cached = true;
-        args = [imgData];
-        operatorList.addOp(OPS.paintImageMaskXObject, args);
-        if (cacheKey) {
-          imageCache[cacheKey] = {
-            fn: OPS.paintImageMaskXObject,
-            args: args
-          };
-        }
-        return;
-      }
+            imgData = PDFImage.createMask(imgArray, width, height,
+                image instanceof DecodeStream,
+                inverseDecode);
+            imgData.cached = true;
+            args = [imgData];
+            operatorList.addOp(OPS.paintImageMaskXObject, args);
+            if (cacheKey) {
+              imageCache[cacheKey] = {
+                fn: OPS.paintImageMaskXObject,
+                args,
+              };
+            }
+            return;
+          }
 
-      var softMask = (dict.get('SMask', 'SM') || false);
-      var mask = (dict.get('Mask') || false);
+          const softMask = (dict.get('SMask', 'SM') || false);
+          const mask = (dict.get('Mask') || false);
 
-      var SMALL_IMAGE_DIMENSIONS = 200;
-      // Inlining small images into the queue as RGB data
-      if (inline && !softMask && !mask && !(image instanceof JpegStream) &&
+          const SMALL_IMAGE_DIMENSIONS = 200;
+          // Inlining small images into the queue as RGB data
+          if (inline && !softMask && !mask && !(image instanceof JpegStream) &&
           (w + h) < SMALL_IMAGE_DIMENSIONS) {
-        var imageObj = new PDFImage(this.xref, resources, image,
-                                    inline, null, null);
-        // We force the use of RGBA_32BPP images here, because we can't handle
-        // any other kind.
-        imgData = imageObj.createImageData(/* forceRGBA = */ true);
-        operatorList.addOp(OPS.paintInlineImageXObject, [imgData]);
-        return;
-      }
+            const imageObj = new PDFImage(this.xref, resources, image,
+                inline, null, null);
+            // We force the use of RGBA_32BPP images here, because we can't handle
+            // any other kind.
+            imgData = imageObj.createImageData(/* forceRGBA = */ true);
+            operatorList.addOp(OPS.paintInlineImageXObject, [imgData]);
+            return;
+          }
 
-      // If there is no imageMask, create the PDFImage and a lot
-      // of image processing can be done here.
-      var uniquePrefix = (this.uniquePrefix || '');
-      var objId = 'img_' + uniquePrefix + (++this.idCounters.obj);
-      operatorList.addDependency(objId);
-      args = [objId, w, h];
+          // If there is no imageMask, create the PDFImage and a lot
+          // of image processing can be done here.
+          const uniquePrefix = (this.uniquePrefix || '');
+          const objId = `img_${uniquePrefix}${++this.idCounters.obj}`;
+          operatorList.addDependency(objId);
+          args = [objId, w, h];
 
-      if (!softMask && !mask && image instanceof JpegStream &&
+          if (!softMask && !mask && image instanceof JpegStream &&
           image.isNativelySupported(this.xref, resources)) {
-        // These JPEGs don't need any more processing so we can just send it.
-        operatorList.addOp(OPS.paintJpegXObject, args);
-        this.handler.send('obj',
-          [objId, this.pageIndex, 'JpegStream', image.getIR()]);
-        return;
-      }
+            // These JPEGs don't need any more processing so we can just send it.
+            operatorList.addOp(OPS.paintJpegXObject, args);
+            this.handler.send('obj',
+                [objId, this.pageIndex, 'JpegStream', image.getIR()]);
+            return;
+          }
 
-      PDFImage.buildImage(self.handler, self.xref, resources, image, inline).
-        then(function(imageObj) {
-          var imgData = imageObj.createImageData(/* forceRGBA = */ false);
-          self.handler.send('obj', [objId, self.pageIndex, 'Image', imgData],
-            [imgData.data.buffer]);
-        }).then(undefined, function (reason) {
-          warn('Unable to decode image: ' + reason);
-          self.handler.send('obj', [objId, self.pageIndex, 'Image', null]);
-        });
+          PDFImage.buildImage(self.handler, self.xref, resources, image, inline)
+              .then((imageObj) => {
+                const imgData = imageObj.createImageData(/* forceRGBA = */ false);
+                self.handler.send('obj', [objId, self.pageIndex, 'Image', imgData],
+                    [imgData.data.buffer]);
+              }).then(undefined, (reason) => {
+                warn(`Unable to decode image: ${reason}`);
+                self.handler.send('obj', [objId, self.pageIndex, 'Image', null]);
+              });
 
-      operatorList.addOp(OPS.paintImageXObject, args);
-      if (cacheKey) {
-        imageCache[cacheKey] = {
-          fn: OPS.paintImageXObject,
-          args: args
-        };
-      }
-    },
+          operatorList.addOp(OPS.paintImageXObject, args);
+          if (cacheKey) {
+            imageCache[cacheKey] = {
+              fn: OPS.paintImageXObject,
+              args,
+            };
+          }
+        },
 
     handleSMask: function PartialEvaluator_handleSmask(smask, resources,
-                                                       operatorList, task,
-                                                       stateManager) {
-      var smaskContent = smask.get('G');
-      var smaskOptions = {
+        operatorList, task,
+        stateManager) {
+      const smaskContent = smask.get('G');
+      const smaskOptions = {
         subtype: smask.get('S').name,
-        backdrop: smask.get('BC')
+        backdrop: smask.get('BC'),
       };
       return this.buildFormXObject(resources, smaskContent, smaskOptions,
-                            operatorList, task, stateManager.state.clone());
+          operatorList, task, stateManager.state.clone());
     },
 
     handleTilingType:
         function PartialEvaluator_handleTilingType(fn, args, resources,
-                                                   pattern, patternDict,
-                                                   operatorList, task) {
-      // Create an IR of the pattern code.
-      var tilingOpList = new OperatorList();
-      // Merge the available resources, to prevent issues when the patternDict
-      // is missing some /Resources entries (fixes issue6541.pdf).
-      var resourcesArray = [patternDict.get('Resources'), resources];
-      var patternResources = Dict.merge(this.xref, resourcesArray);
+            pattern, patternDict,
+            operatorList, task) {
+          // Create an IR of the pattern code.
+          const tilingOpList = new OperatorList();
+          // Merge the available resources, to prevent issues when the patternDict
+          // is missing some /Resources entries (fixes issue6541.pdf).
+          const resourcesArray = [patternDict.get('Resources'), resources];
+          const patternResources = Dict.merge(this.xref, resourcesArray);
 
-      return this.getOperatorList(pattern, task, patternResources,
-                                  tilingOpList).then(function () {
+          return this.getOperatorList(pattern, task, patternResources,
+              tilingOpList).then(() => {
           // Add the dependencies to the parent operator list so they are
           // resolved before sub operator list is executed synchronously.
-          operatorList.addDependencies(tilingOpList.dependencies);
-          operatorList.addOp(fn, getTilingPatternIR({
-            fnArray: tilingOpList.fnArray,
-            argsArray: tilingOpList.argsArray
-          }, patternDict, args));
-        });
-    },
+            operatorList.addDependencies(tilingOpList.dependencies);
+            operatorList.addOp(fn, getTilingPatternIR({
+              fnArray: tilingOpList.fnArray,
+              argsArray: tilingOpList.argsArray,
+            }, patternDict, args));
+          });
+        },
 
     handleSetFont:
         function PartialEvaluator_handleSetFont(resources, fontArgs, fontRef,
-                                                operatorList, task, state) {
-      // TODO(mack): Not needed?
-      var fontName;
-      if (fontArgs) {
-        fontArgs = fontArgs.slice();
-        fontName = fontArgs[0].name;
-      }
+            operatorList, task, state) {
+          // TODO(mack): Not needed?
+          let fontName;
+          if (fontArgs) {
+            fontArgs = fontArgs.slice();
+            fontName = fontArgs[0].name;
+          }
 
-      var self = this;
-      return this.loadFont(fontName, fontRef, this.xref, resources).then(
-          function (translated) {
-        if (!translated.font.isType3Font) {
-          return translated;
-        }
-        return translated.loadType3Data(self, resources, operatorList, task).
-          then(function () {
-          return translated;
-        });
-      }).then(function (translated) {
-        state.font = translated.font;
-        translated.send(self.handler);
-        return translated.loadedName;
-      });
-    },
+          const self = this;
+          return this.loadFont(fontName, fontRef, this.xref, resources).then(
+              (translated) => {
+                if (!translated.font.isType3Font) {
+                  return translated;
+                }
+                return translated.loadType3Data(self, resources, operatorList, task)
+                    .then(() => translated);
+              }).then((translated) => {
+            state.font = translated.font;
+            translated.send(self.handler);
+            return translated.loadedName;
+          });
+        },
 
     handleText: function PartialEvaluator_handleText(chars, state) {
-      var font = state.font;
-      var glyphs = font.charsToGlyphs(chars);
-      var isAddToPathSet = !!(state.textRenderingMode &
+      const font = state.font;
+      const glyphs = font.charsToGlyphs(chars);
+      const isAddToPathSet = !!(state.textRenderingMode &
                               TextRenderingMode.ADD_TO_PATH_FLAG);
       if (font.data && (isAddToPathSet || PDFJS.disableFontFace)) {
-        var buildPath = function (fontChar) {
+        const buildPath = function (fontChar) {
           if (!font.renderer.hasBuiltPath(fontChar)) {
-            var path = font.renderer.getPathJs(fontChar);
+            const path = font.renderer.getPathJs(fontChar);
             this.handler.send('commonobj', [
-              font.loadedName + '_path_' + fontChar,
+              `${font.loadedName}_path_${fontChar}`,
               'FontPath',
-              path
+              path,
             ]);
           }
         }.bind(this);
 
-        for (var i = 0, ii = glyphs.length; i < ii; i++) {
-          var glyph = glyphs[i];
+        for (let i = 0, ii = glyphs.length; i < ii; i++) {
+          const glyph = glyphs[i];
           buildPath(glyph.fontChar);
 
           // If the glyph has an accent we need to build a path for its
           // fontChar too, otherwise CanvasGraphics_paintChar will fail.
-          var accent = glyph.accent;
+          const accent = glyph.accent;
           if (accent && accent.fontChar) {
             buildPath(accent.fontChar);
           }
@@ -363,13 +362,13 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
     },
 
     setGState: function PartialEvaluator_setGState(resources, gState,
-                                                   operatorList, task,
-                                                   xref, stateManager) {
+        operatorList, task,
+        xref, stateManager) {
       // This array holds the converted/processed state data.
-      var gStateObj = [];
-      var gStateMap = gState.map;
-      var self = this;
-      var promise = Promise.resolve();
+      const gStateObj = [];
+      const gStateMap = gState.map;
+      const self = this;
+      let promise = Promise.resolve();
       for (var key in gStateMap) {
         var value = gStateMap[key];
         switch (key) {
@@ -387,14 +386,12 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
             gStateObj.push([key, value]);
             break;
           case 'Font':
-            promise = promise.then(function () {
-              return self.handleSetFont(resources, null, value[0], operatorList,
-                                        task, stateManager.state).
-                then(function (loadedName) {
+            promise = promise.then(() => self.handleSetFont(resources, null, value[0], operatorList,
+                task, stateManager.state)
+                .then((loadedName) => {
                   operatorList.addDependency(loadedName);
                   gStateObj.push([key, [loadedName, value[1]]]);
-                });
-            });
+                }));
             break;
           case 'BM':
             gStateObj.push([key, value]);
@@ -406,10 +403,8 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
             }
             var dict = xref.fetchIfRef(value);
             if (isDict(dict)) {
-              promise = promise.then(function () {
-                return self.handleSMask(dict, resources, operatorList,
-                                        task, stateManager);
-              });
+              promise = promise.then(() => self.handleSMask(dict, resources, operatorList,
+                  task, stateManager));
               gStateObj.push([key, true]);
             } else {
               warn('Unsupported SMask type');
@@ -433,14 +428,14 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
           case 'AIS':
           case 'TK':
             // TODO implement these operators.
-            info('graphic state operator ' + key);
+            info(`graphic state operator ${key}`);
             break;
           default:
-            info('Unknown graphic state operator ' + key);
+            info(`Unknown graphic state operator ${key}`);
             break;
         }
       }
-      return promise.then(function () {
+      return promise.then(() => {
         if (gStateObj.length >= 0) {
           operatorList.addOp(OPS.setGState, [gStateObj]);
         }
@@ -448,18 +443,17 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
     },
 
     loadFont: function PartialEvaluator_loadFont(fontName, font, xref,
-                                                 resources) {
-
+        resources) {
       function errorFont() {
         return Promise.resolve(new TranslatedFont('g_font_error',
-          new ErrorFont('Font ' + fontName + ' is not available'), font));
+            new ErrorFont(`Font ${fontName} is not available`), font));
       }
-      var fontRef;
+      let fontRef;
       if (font) { // Loading by ref.
         assert(isRef(font));
         fontRef = font;
       } else { // Loading by name.
-        var fontRes = resources.get('Font');
+        const fontRes = resources.get('Font');
         if (fontRes) {
           fontRef = fontRes.getRaw(fontName);
         } else {
@@ -487,20 +481,20 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
         return font.translated;
       }
 
-      var fontCapability = createPromiseCapability();
+      const fontCapability = createPromiseCapability();
 
-      var preEvaluatedFont = this.preEvaluateFont(font, xref);
-      var descriptor = preEvaluatedFont.descriptor;
-      var fontID = fontRef.num + '_' + fontRef.gen;
+      const preEvaluatedFont = this.preEvaluateFont(font, xref);
+      const descriptor = preEvaluatedFont.descriptor;
+      let fontID = `${fontRef.num}_${fontRef.gen}`;
       if (isDict(descriptor)) {
         if (!descriptor.fontAliases) {
           descriptor.fontAliases = Object.create(null);
         }
 
-        var fontAliases = descriptor.fontAliases;
-        var hash = preEvaluatedFont.hash;
+        const fontAliases = descriptor.fontAliases;
+        const hash = preEvaluatedFont.hash;
         if (fontAliases[hash]) {
-          var aliasFontRef = fontAliases[hash].aliasRef;
+          const aliasFontRef = fontAliases[hash].aliasRef;
           if (aliasFontRef && this.fontCache.has(aliasFontRef)) {
             this.fontCache.putAlias(fontRef, aliasFontRef);
             return this.fontCache.get(fontRef);
@@ -509,7 +503,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
 
         if (!fontAliases[hash]) {
           fontAliases[hash] = {
-            fontID: Font.getFontID()
+            fontID: Font.getFontID(),
           };
         }
 
@@ -522,59 +516,59 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
       // Check if the fontRef is a Dict (as opposed to a standard object),
       // in which case we don't cache the font and instead reference it by
       // fontName in font.loadedName below.
-      var fontRefIsDict = isDict(fontRef);
+      const fontRefIsDict = isDict(fontRef);
       if (!fontRefIsDict) {
         this.fontCache.put(fontRef, fontCapability.promise);
       }
 
       // Keep track of each font we translated so the caller can
       // load them asynchronously before calling display on a page.
-      font.loadedName = 'g_font_' + (fontRefIsDict ?
-        fontName.replace(/\W/g, '') : fontID);
+      font.loadedName = `g_font_${fontRefIsDict
+        ? fontName.replace(/\W/g, '') : fontID}`;
 
       font.translated = fontCapability.promise;
 
       // TODO move promises into translate font
-      var translatedPromise;
+      let translatedPromise;
       try {
         translatedPromise = Promise.resolve(
-          this.translateFont(preEvaluatedFont, xref));
+            this.translateFont(preEvaluatedFont, xref));
       } catch (e) {
         translatedPromise = Promise.reject(e);
       }
 
-      translatedPromise.then(function (translatedFont) {
+      translatedPromise.then((translatedFont) => {
         if (translatedFont.fontType !== undefined) {
-          var xrefFontStats = xref.stats.fontTypes;
+          const xrefFontStats = xref.stats.fontTypes;
           xrefFontStats[translatedFont.fontType] = true;
         }
 
         fontCapability.resolve(new TranslatedFont(font.loadedName,
-          translatedFont, font));
-      }, function (reason) {
+            translatedFont, font));
+      }, (reason) => {
         // TODO fontCapability.reject?
         UnsupportedManager.notify(UNSUPPORTED_FEATURES.font);
 
         try {
           // error, but it's still nice to have font type reported
-          var descriptor = preEvaluatedFont.descriptor;
-          var fontFile3 = descriptor && descriptor.get('FontFile3');
-          var subtype = fontFile3 && fontFile3.get('Subtype');
-          var fontType = getFontType(preEvaluatedFont.type,
-                                     subtype && subtype.name);
-          var xrefFontStats = xref.stats.fontTypes;
+          const descriptor = preEvaluatedFont.descriptor;
+          const fontFile3 = descriptor && descriptor.get('FontFile3');
+          const subtype = fontFile3 && fontFile3.get('Subtype');
+          const fontType = getFontType(preEvaluatedFont.type,
+              subtype && subtype.name);
+          const xrefFontStats = xref.stats.fontTypes;
           xrefFontStats[fontType] = true;
         } catch (ex) { }
 
         fontCapability.resolve(new TranslatedFont(font.loadedName,
-          new ErrorFont(reason instanceof Error ? reason.message : reason),
-          font));
+            new ErrorFont(reason instanceof Error ? reason.message : reason),
+            font));
       });
       return fontCapability.promise;
     },
 
     buildPath: function PartialEvaluator_buildPath(operatorList, fn, args) {
-      var lastIndex = operatorList.length - 1;
+      const lastIndex = operatorList.length - 1;
       if (!args) {
         args = [];
       }
@@ -582,35 +576,35 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
           operatorList.fnArray[lastIndex] !== OPS.constructPath) {
         operatorList.addOp(OPS.constructPath, [[fn], args]);
       } else {
-        var opArgs = operatorList.argsArray[lastIndex];
+        const opArgs = operatorList.argsArray[lastIndex];
         opArgs[0].push(fn);
         Array.prototype.push.apply(opArgs[1], args);
       }
     },
 
     handleColorN: function PartialEvaluator_handleColorN(operatorList, fn, args,
-          cs, patterns, resources, task, xref) {
+        cs, patterns, resources, task, xref) {
       // compile tiling patterns
-      var patternName = args[args.length - 1];
+      const patternName = args[args.length - 1];
       // SCN/scn applies patterns along with normal colors
-      var pattern;
+      let pattern;
       if (isName(patternName) &&
           (pattern = patterns.get(patternName.name))) {
-        var dict = (isStream(pattern) ? pattern.dict : pattern);
-        var typeNum = dict.get('PatternType');
+        const dict = (isStream(pattern) ? pattern.dict : pattern);
+        const typeNum = dict.get('PatternType');
 
         if (typeNum === TILING_PATTERN) {
-          var color = cs.base ? cs.base.getRgb(args, 0) : null;
+          const color = cs.base ? cs.base.getRgb(args, 0) : null;
           return this.handleTilingType(fn, color, resources, pattern,
-                                       dict, operatorList, task);
+              dict, operatorList, task);
         } else if (typeNum === SHADING_PATTERN) {
-          var shading = dict.get('Shading');
-          var matrix = dict.get('Matrix');
+          const shading = dict.get('Shading');
+          const matrix = dict.get('Matrix');
           pattern = Pattern.parseShading(shading, matrix, xref, resources);
           operatorList.addOp(fn, pattern.getIR());
           return Promise.resolve();
         } else {
-          return Promise.reject('Unknown PatternType: ' + typeNum);
+          return Promise.reject(`Unknown PatternType: ${typeNum}`);
         }
       }
       // TODO shall we fail here?
@@ -619,28 +613,27 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
     },
 
     getOperatorList: function PartialEvaluator_getOperatorList(stream,
-                                                               task,
-                                                               resources,
-                                                               operatorList,
-                                                               initialState) {
-
-      var self = this;
-      var xref = this.xref;
-      var imageCache = {};
+        task,
+        resources,
+        operatorList,
+        initialState) {
+      const self = this;
+      const xref = this.xref;
+      const imageCache = {};
 
       assert(operatorList);
 
       resources = (resources || Dict.empty);
-      var xobjs = (resources.get('XObject') || Dict.empty);
-      var patterns = (resources.get('Pattern') || Dict.empty);
-      var stateManager = new StateManager(initialState || new EvalState());
-      var preprocessor = new EvaluatorPreprocessor(stream, xref, stateManager);
-      var timeSlotManager = new TimeSlotManager();
+      const xobjs = (resources.get('XObject') || Dict.empty);
+      const patterns = (resources.get('Pattern') || Dict.empty);
+      const stateManager = new StateManager(initialState || new EvalState());
+      const preprocessor = new EvaluatorPreprocessor(stream, xref, stateManager);
+      const timeSlotManager = new TimeSlotManager();
 
       return new Promise(function next(resolve, reject) {
         task.ensureNotTerminated();
         timeSlotManager.reset();
-        var stop, operation = {}, i, ii, cs;
+        let stop; const operation = {}; let i; let ii; let cs;
         while (!(stop = timeSlotManager.check())) {
           // The arguments parsed by read() are used beyond this loop, so we
           // cannot reuse the same array on each iteration. Therefore we pass
@@ -650,8 +643,8 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
           if (!(preprocessor.read(operation))) {
             break;
           }
-          var args = operation.args;
-          var fn = operation.fn;
+          let args = operation.args;
+          let fn = operation.fn;
 
           switch (fn | 0) {
             case OPS.paintXObject:
@@ -674,22 +667,22 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
               if (xobj) {
                 assert(isStream(xobj), 'XObject should be a stream');
 
-                var type = xobj.dict.get('Subtype');
+                const type = xobj.dict.get('Subtype');
                 assert(isName(type),
-                  'XObject should have a Name subtype');
+                    'XObject should have a Name subtype');
 
                 if (type.name === 'Form') {
                   stateManager.save();
                   return self.buildFormXObject(resources, xobj, null,
-                                               operatorList, task,
-                                               stateManager.state.clone()).
-                    then(function () {
-                      stateManager.restore();
-                      next(resolve, reject);
-                    }, reject);
+                      operatorList, task,
+                      stateManager.state.clone())
+                      .then(() => {
+                        stateManager.restore();
+                        next(resolve, reject);
+                      }, reject);
                 } else if (type.name === 'Image') {
                   self.buildPaintImageXObject(resources, xobj, false,
-                    operatorList, name, imageCache);
+                      operatorList, name, imageCache);
                   args = null;
                   continue;
                 } else if (type.name === 'PS') {
@@ -698,7 +691,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
                   info('Ignored XObject subtype PS');
                   continue;
                 } else {
-                  error('Unhandled XObject subtype ' + type.name);
+                  error(`Unhandled XObject subtype ${type.name}`);
                 }
               }
               break;
@@ -706,16 +699,16 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
               var fontSize = args[1];
               // eagerly collect all fonts
               return self.handleSetFont(resources, args, null, operatorList,
-                                        task, stateManager.state).
-                then(function (loadedName) {
-                  operatorList.addDependency(loadedName);
-                  operatorList.addOp(OPS.setFont, [loadedName, fontSize]);
-                  next(resolve, reject);
-                }, reject);
+                  task, stateManager.state)
+                  .then((loadedName) => {
+                    operatorList.addDependency(loadedName);
+                    operatorList.addOp(OPS.setFont, [loadedName, fontSize]);
+                    next(resolve, reject);
+                  }, reject);
             case OPS.endInlineImage:
               var cacheKey = args[0].cacheKey;
               if (cacheKey) {
-                var cacheEntry = imageCache[cacheKey];
+                const cacheEntry = imageCache[cacheKey];
                 if (cacheEntry !== undefined) {
                   operatorList.addOp(cacheEntry.fn, cacheEntry.args);
                   args = null;
@@ -723,7 +716,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
                 }
               }
               self.buildPaintImageXObject(resources, args[0], true,
-                operatorList, cacheKey, imageCache);
+                  operatorList, cacheKey, imageCache);
               args = null;
               continue;
             case OPS.showText:
@@ -735,10 +728,10 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
               var arrLength = arr.length;
               var state = stateManager.state;
               for (i = 0; i < arrLength; ++i) {
-                var arrItem = arr[i];
+                const arrItem = arr[i];
                 if (isString(arrItem)) {
                   Array.prototype.push.apply(combinedGlyphs,
-                    self.handleText(arrItem, state));
+                      self.handleText(arrItem, state));
                 } else if (isNum(arrItem)) {
                   combinedGlyphs.push(arrItem);
                 }
@@ -812,9 +805,9 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
               cs = stateManager.state.fillColorSpace;
               if (cs.name === 'Pattern') {
                 return self.handleColorN(operatorList, OPS.setFillColorN,
-                  args, cs, patterns, resources, task, xref).then(function() {
-                    next(resolve, reject);
-                  }, reject);
+                    args, cs, patterns, resources, task, xref).then(() => {
+                  next(resolve, reject);
+                }, reject);
               }
               args = cs.getRgb(args, 0);
               fn = OPS.setFillRGBColor;
@@ -823,9 +816,9 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
               cs = stateManager.state.strokeColorSpace;
               if (cs.name === 'Pattern') {
                 return self.handleColorN(operatorList, OPS.setStrokeColorN,
-                  args, cs, patterns, resources, task, xref).then(function() {
-                    next(resolve, reject);
-                  }, reject);
+                    args, cs, patterns, resources, task, xref).then(() => {
+                  next(resolve, reject);
+                }, reject);
               }
               args = cs.getRgb(args, 0);
               fn = OPS.setStrokeRGBColor;
@@ -843,7 +836,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
               }
 
               var shadingFill = Pattern.parseShading(shading, null, xref,
-                resources);
+                  resources);
               var patternIR = shadingFill.getIR();
               args = [patternIR];
               fn = OPS.shadingFill;
@@ -858,9 +851,9 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
 
               var gState = extGState.get(dictName.name);
               return self.setGState(resources, gState, operatorList, task,
-                xref, stateManager).then(function() {
-                  next(resolve, reject);
-                }, reject);
+                  xref, stateManager).then(() => {
+                next(resolve, reject);
+              }, reject);
             case OPS.moveTo:
             case OPS.lineTo:
             case OPS.curveTo:
@@ -894,7 +887,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
           operatorList.addOp(fn, args);
         }
         if (stop) {
-          deferred.then(function () {
+          deferred.then(() => {
             next(resolve, reject);
           }, reject);
           return;
@@ -909,16 +902,15 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
     },
 
     getTextContent: function PartialEvaluator_getTextContent(stream, task,
-                                                             resources,
-                                                             stateManager) {
-
+        resources,
+        stateManager) {
       stateManager = (stateManager || new StateManager(new TextState()));
 
-      var textContent = {
+      const textContent = {
         items: [],
-        styles: Object.create(null)
+        styles: Object.create(null),
       };
-      var textContentItem = {
+      const textContentItem = {
         initialized: false,
         str: [],
         width: 0,
@@ -933,57 +925,60 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
         fakeMultiSpaceMax: -0,
         textRunBreakAllowed: false,
         transform: null,
-        fontName: null
+        fontName: null,
       };
-      var SPACE_FACTOR = 0.3;
-      var MULTI_SPACE_FACTOR = 1.5;
-      var MULTI_SPACE_FACTOR_MAX = 4;
+      const SPACE_FACTOR = 0.3;
+      const MULTI_SPACE_FACTOR = 1.5;
+      const MULTI_SPACE_FACTOR_MAX = 4;
 
-      var self = this;
-      var xref = this.xref;
+      const self = this;
+      const xref = this.xref;
 
       resources = (xref.fetchIfRef(resources) || Dict.empty);
 
       // The xobj is parsed iff it's needed, e.g. if there is a `DO` cmd.
-      var xobjs = null;
-      var xobjsCache = {};
+      let xobjs = null;
+      const xobjsCache = {};
 
-      var preprocessor = new EvaluatorPreprocessor(stream, xref, stateManager);
+      const preprocessor = new EvaluatorPreprocessor(stream, xref, stateManager);
 
-      var textState;
+      let textState;
 
       function ensureTextContentItem() {
         if (textContentItem.initialized) {
           return textContentItem;
         }
-        var font = textState.font;
+        const font = textState.font;
         if (!(font.loadedName in textContent.styles)) {
           textContent.styles[font.loadedName] = {
             fontFamily: font.fallbackName,
             ascent: font.ascent,
             descent: font.descent,
-            vertical: font.vertical
+            vertical: font.vertical,
           };
         }
         textContentItem.fontName = font.loadedName;
 
         // 9.4.4 Text Space Details
-        var tsm = [textState.fontSize * textState.textHScale, 0,
-                   0, textState.fontSize,
-                   0, textState.textRise];
+        const tsm = [textState.fontSize * textState.textHScale,
+          0,
+          0,
+          textState.fontSize,
+          0,
+          textState.textRise];
 
         if (font.isType3Font &&
             textState.fontMatrix !== FONT_IDENTITY_MATRIX &&
             textState.fontSize === 1) {
-          var glyphHeight = font.bbox[3] - font.bbox[1];
+          let glyphHeight = font.bbox[3] - font.bbox[1];
           if (glyphHeight > 0) {
-            glyphHeight = glyphHeight * textState.fontMatrix[3];
+            glyphHeight *= textState.fontMatrix[3];
             tsm[3] *= glyphHeight;
           }
         }
 
-        var trm = Util.transform(textState.ctm,
-                                 Util.transform(textState.textMatrix, tsm));
+        const trm = Util.transform(textState.ctm,
+            Util.transform(textState.textMatrix, tsm));
         textContentItem.transform = trm;
         if (!font.vertical) {
           textContentItem.width = 0;
@@ -995,17 +990,17 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
           textContentItem.vertical = true;
         }
 
-        var a = textState.textLineMatrix[0];
-        var b = textState.textLineMatrix[1];
-        var scaleLineX = Math.sqrt(a * a + b * b);
+        let a = textState.textLineMatrix[0];
+        let b = textState.textLineMatrix[1];
+        const scaleLineX = Math.sqrt(a * a + b * b);
         a = textState.ctm[0];
         b = textState.ctm[1];
-        var scaleCtmX = Math.sqrt(a * a + b * b);
+        const scaleCtmX = Math.sqrt(a * a + b * b);
         textContentItem.textAdvanceScale = scaleCtmX * scaleLineX;
         textContentItem.lastAdvanceWidth = 0;
         textContentItem.lastAdvanceHeight = 0;
 
-        var spaceWidth = font.spaceWidth / 1000 * textState.fontSize;
+        const spaceWidth = font.spaceWidth / 1000 * textState.fontSize;
         if (spaceWidth) {
           textContentItem.spaceWidth = spaceWidth;
           textContentItem.fakeSpaceMin = spaceWidth * SPACE_FACTOR;
@@ -1028,39 +1023,39 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
       }
 
       function runBidiTransform(textChunk) {
-        var str = textChunk.str.join('');
-        var bidiResult = PDFJS.bidi(str, -1, textChunk.vertical);
+        const str = textChunk.str.join('');
+        const bidiResult = PDFJS.bidi(str, -1, textChunk.vertical);
         return {
           str: bidiResult.str,
           dir: bidiResult.dir,
           width: textChunk.width,
           height: textChunk.height,
           transform: textChunk.transform,
-          fontName: textChunk.fontName
+          fontName: textChunk.fontName,
         };
       }
 
       function handleSetFont(fontName, fontRef) {
-        return self.loadFont(fontName, fontRef, xref, resources).
-          then(function (translated) {
-            textState.font = translated.font;
-            textState.fontMatrix = translated.font.fontMatrix ||
+        return self.loadFont(fontName, fontRef, xref, resources)
+            .then((translated) => {
+              textState.font = translated.font;
+              textState.fontMatrix = translated.font.fontMatrix ||
               FONT_IDENTITY_MATRIX;
-          });
+            });
       }
 
       function buildTextContentItem(chars) {
-        var font = textState.font;
-        var textChunk = ensureTextContentItem();
-        var width = 0;
-        var height = 0;
-        var glyphs = font.charsToGlyphs(chars);
-        var defaultVMetrics = font.defaultVMetrics;
-        for (var i = 0; i < glyphs.length; i++) {
-          var glyph = glyphs[i];
-          var vMetricX = null;
-          var vMetricY = null;
-          var glyphWidth = null;
+        const font = textState.font;
+        const textChunk = ensureTextContentItem();
+        let width = 0;
+        let height = 0;
+        const glyphs = font.charsToGlyphs(chars);
+        const defaultVMetrics = font.defaultVMetrics;
+        for (let i = 0; i < glyphs.length; i++) {
+          const glyph = glyphs[i];
+          let vMetricX = null;
+          let vMetricY = null;
+          let glyphWidth = null;
           if (font.vertical) {
             if (glyph.vmetric) {
               glyphWidth = glyph.vmetric[0];
@@ -1075,7 +1070,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
             glyphWidth = glyph.width;
           }
 
-          var glyphUnicode = glyph.unicode;
+          let glyphUnicode = glyph.unicode;
           if (NormalizedUnicodes[glyphUnicode] !== undefined) {
             glyphUnicode = NormalizedUnicodes[glyphUnicode];
           }
@@ -1093,24 +1088,24 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
           // var x = pt[0];
           // var y = pt[1];
 
-          var charSpacing = textState.charSpacing;
+          let charSpacing = textState.charSpacing;
           if (glyph.isSpace) {
-            var wordSpacing = textState.wordSpacing;
+            const wordSpacing = textState.wordSpacing;
             charSpacing += wordSpacing;
             if (wordSpacing > 0) {
               addFakeSpaces(wordSpacing, textChunk.str);
             }
           }
 
-          var tx = 0;
-          var ty = 0;
+          let tx = 0;
+          let ty = 0;
           if (!font.vertical) {
-            var w0 = glyphWidth * textState.fontMatrix[0];
+            const w0 = glyphWidth * textState.fontMatrix[0];
             tx = (w0 * textState.fontSize + charSpacing) *
                  textState.textHScale;
             width += tx;
           } else {
-            var w1 = glyphWidth * textState.fontMatrix[0];
+            const w1 = glyphWidth * textState.fontMatrix[0];
             ty = w1 * textState.fontSize + charSpacing;
             height += ty;
           }
@@ -1138,7 +1133,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
           strBuf.push(' ');
           return;
         }
-        var fakeSpaces = Math.round(width / textContentItem.spaceWidth);
+        let fakeSpaces = Math.round(width / textContentItem.spaceWidth);
         while (fakeSpaces-- > 0) {
           strBuf.push(' ');
         }
@@ -1154,12 +1149,13 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
         textContentItem.str.length = 0;
       }
 
-      var timeSlotManager = new TimeSlotManager();
+      const timeSlotManager = new TimeSlotManager();
 
       return new Promise(function next(resolve, reject) {
         task.ensureNotTerminated();
         timeSlotManager.reset();
-        var stop, operation = {}, args = [];
+        let stop; const operation = {}; let
+          args = [];
         while (!(stop = timeSlotManager.check())) {
           // The arguments parsed by read() are not used beyond this loop, so
           // we can reuse the same array on every iteration, thus avoiding
@@ -1170,7 +1166,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
             break;
           }
           textState = stateManager.state;
-          var fn = operation.fn;
+          const fn = operation.fn;
           args = operation.args;
           var advance;
 
@@ -1178,7 +1174,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
             case OPS.setFont:
               flushTextContentItem();
               textState.fontSize = args[1];
-              return handleSetFont(args[0].name).then(function() {
+              return handleSetFont(args[0].name).then(() => {
                 next(resolve, reject);
               }, reject);
             case OPS.setTextRise:
@@ -1195,8 +1191,8 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
               break;
             case OPS.moveText:
               // Optimization to treat same line movement as advance
-              var isSameTextLine = !textState.font ? false :
-                ((textState.font.vertical ? args[0] : args[1]) === 0);
+              var isSameTextLine = !textState.font ? false
+                : ((textState.font.vertical ? args[0] : args[1]) === 0);
               advance = args[0] - args[1];
               if (isSameTextLine && textContentItem.initialized &&
                   advance > 0 &&
@@ -1206,7 +1202,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
                   (args[0] - textContentItem.lastAdvanceWidth);
                 textContentItem.height +=
                   (args[1] - textContentItem.lastAdvanceHeight);
-                var diff = (args[0] - textContentItem.lastAdvanceWidth) -
+                const diff = (args[0] - textContentItem.lastAdvanceWidth) -
                            (args[1] - textContentItem.lastAdvanceHeight);
                 addFakeSpaces(diff, textContentItem.str);
                 break;
@@ -1229,9 +1225,9 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
             case OPS.setTextMatrix:
               flushTextContentItem();
               textState.setTextMatrix(args[0], args[1], args[2], args[3],
-                args[4], args[5]);
+                  args[4], args[5]);
               textState.setTextLineMatrix(args[0], args[1], args[2], args[3],
-                args[4], args[5]);
+                  args[4], args[5]);
               break;
             case OPS.setCharSpacing:
               textState.charSpacing = args[0];
@@ -1247,7 +1243,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
             case OPS.showSpacedText:
               var items = args[0];
               var offset;
-              for (var j = 0, jj = items.length; j < jj; j++) {
+              for (let j = 0, jj = items.length; j < jj; j++) {
                 if (typeof items[j] === 'string') {
                   buildTextContentItem(items[j]);
                 } else {
@@ -1262,7 +1258,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
                   // has the effect of moving the next glyph painted either to
                   // the left or down by the given amount.
                   advance = items[j] * textState.fontSize / 1000;
-                  var breakTextRun = false;
+                  let breakTextRun = false;
                   if (textState.font.vertical) {
                     offset = advance *
                       (textState.textHScale * textState.textMatrix[2] +
@@ -1337,7 +1333,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
 
               var type = xobj.dict.get('Subtype');
               assert(isName(type),
-                'XObject should have a Name subtype');
+                  'XObject should have a Name subtype');
 
               if ('Form' !== type.name) {
                 xobjsCache.key = name;
@@ -1352,17 +1348,17 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
               }
 
               return self.getTextContent(xobj, task,
-                xobj.dict.get('Resources') || resources, stateManager).
-                then(function (formTextContent) {
-                  Util.appendToArray(textContent.items, formTextContent.items);
-                  Util.extendObj(textContent.styles, formTextContent.styles);
-                  stateManager.restore();
+                  xobj.dict.get('Resources') || resources, stateManager)
+                  .then((formTextContent) => {
+                    Util.appendToArray(textContent.items, formTextContent.items);
+                    Util.extendObj(textContent.styles, formTextContent.styles);
+                    stateManager.restore();
 
-                  xobjsCache.key = name;
-                  xobjsCache.texts = formTextContent;
+                    xobjsCache.key = name;
+                    xobjsCache.texts = formTextContent;
 
-                  next(resolve, reject);
-                }, reject);
+                    next(resolve, reject);
+                  }, reject);
             case OPS.setGState:
               flushTextContentItem();
               var dictName = args[0];
@@ -1374,7 +1370,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
 
               var gsStateMap = extGState.get(dictName.name);
               var gsStateFont = null;
-              for (var key in gsStateMap) {
+              for (const key in gsStateMap) {
                 if (key === 'Font') {
                   assert(!gsStateFont);
                   gsStateFont = gsStateMap[key];
@@ -1382,7 +1378,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
               }
               if (gsStateFont) {
                 textState.fontSize = gsStateFont[1];
-                return handleSetFont(gsStateFont[0]).then(function() {
+                return handleSetFont(gsStateFont[0]).then(() => {
                   next(resolve, reject);
                 }, reject);
               }
@@ -1390,7 +1386,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
           } // switch
         } // while
         if (stop) {
-          deferred.then(function () {
+          deferred.then(() => {
             next(resolve, reject);
           }, reject);
           return;
@@ -1401,25 +1397,25 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
     },
 
     extractDataStructures: function
-      partialEvaluatorExtractDataStructures(dict, baseDict,
-                                            xref, properties) {
+    partialEvaluatorExtractDataStructures(dict, baseDict,
+        xref, properties) {
       // 9.10.2
-      var toUnicode = (dict.get('ToUnicode') || baseDict.get('ToUnicode'));
+      const toUnicode = (dict.get('ToUnicode') || baseDict.get('ToUnicode'));
       if (toUnicode) {
         properties.toUnicode = this.readToUnicode(toUnicode);
       }
       if (properties.composite) {
         // CIDSystemInfo helps to match CID to glyphs
-        var cidSystemInfo = dict.get('CIDSystemInfo');
+        const cidSystemInfo = dict.get('CIDSystemInfo');
         if (isDict(cidSystemInfo)) {
           properties.cidSystemInfo = {
             registry: cidSystemInfo.get('Registry'),
             ordering: cidSystemInfo.get('Ordering'),
-            supplement: cidSystemInfo.get('Supplement')
+            supplement: cidSystemInfo.get('Supplement'),
           };
         }
 
-        var cidToGidMap = dict.get('CIDToGIDMap');
+        const cidToGidMap = dict.get('CIDToGIDMap');
         if (isStream(cidToGidMap)) {
           properties.cidToGidMap = this.readCidToGidMap(cidToGidMap);
         }
@@ -1431,21 +1427,21 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
       // glyph mapping in the font.
       // TODO: Loading the built in encoding in the font would allow the
       // differences to be merged in here not require us to hold on to it.
-      var differences = [];
-      var baseEncodingName = null;
-      var encoding;
+      const differences = [];
+      let baseEncodingName = null;
+      let encoding;
       if (dict.has('Encoding')) {
         encoding = dict.get('Encoding');
         if (isDict(encoding)) {
           baseEncodingName = encoding.get('BaseEncoding');
-          baseEncodingName = (isName(baseEncodingName) ?
-                              baseEncodingName.name : null);
+          baseEncodingName = (isName(baseEncodingName)
+            ? baseEncodingName.name : null);
           // Load the differences between the base and original
           if (encoding.has('Differences')) {
-            var diffEncoding = encoding.get('Differences');
-            var index = 0;
-            for (var j = 0, jj = diffEncoding.length; j < jj; j++) {
-              var data = diffEncoding[j];
+            const diffEncoding = encoding.get('Differences');
+            let index = 0;
+            for (let j = 0, jj = diffEncoding.length; j < jj; j++) {
+              const data = diffEncoding[j];
               if (isNum(data)) {
                 index = data;
               } else if (isName(data)) {
@@ -1454,7 +1450,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
                 diffEncoding[j--] = xref.fetch(data);
                 continue;
               } else {
-                error('Invalid entry in \'Differences\' array: ' + data);
+                error(`Invalid entry in 'Differences' array: ${data}`);
               }
             }
           }
@@ -1475,11 +1471,11 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
       if (baseEncodingName) {
         properties.defaultEncoding = Encodings[baseEncodingName].slice();
       } else {
-        encoding = (properties.type === 'TrueType' ?
-                    Encodings.WinAnsiEncoding : Encodings.StandardEncoding);
+        encoding = (properties.type === 'TrueType'
+          ? Encodings.WinAnsiEncoding : Encodings.StandardEncoding);
         // The Symbolic attribute can be misused for regular fonts
         // Heuristic: we have to check if the font is a standard one also
-        if (!!(properties.flags & FontFlags.Symbolic)) {
+        if (properties.flags & FontFlags.Symbolic) {
           encoding = Encodings.MacRomanEncoding;
           if (!properties.file) {
             if (/Symbol/i.test(properties.name)) {
@@ -1498,34 +1494,35 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
     },
 
     readToUnicode: function PartialEvaluator_readToUnicode(toUnicode) {
-      var cmap, cmapObj = toUnicode;
+      let cmap; const
+        cmapObj = toUnicode;
       if (isName(cmapObj)) {
         cmap = CMapFactory.create(cmapObj,
-          { url: PDFJS.cMapUrl, packed: PDFJS.cMapPacked }, null);
+            {url: PDFJS.cMapUrl, packed: PDFJS.cMapPacked}, null);
         if (cmap instanceof IdentityCMap) {
           return new IdentityToUnicodeMap(0, 0xFFFF);
         }
         return new ToUnicodeMap(cmap.getMap());
       } else if (isStream(cmapObj)) {
         cmap = CMapFactory.create(cmapObj,
-          { url: PDFJS.cMapUrl, packed: PDFJS.cMapPacked }, null);
+            {url: PDFJS.cMapUrl, packed: PDFJS.cMapPacked}, null);
         if (cmap instanceof IdentityCMap) {
           return new IdentityToUnicodeMap(0, 0xFFFF);
         }
-        var map = new Array(cmap.length);
+        const map = new Array(cmap.length);
         // Convert UTF-16BE
         // NOTE: cmap can be a sparse array, so use forEach instead of for(;;)
         // to iterate over all keys.
-        cmap.forEach(function(charCode, token) {
-          var str = [];
-          for (var k = 0; k < token.length; k += 2) {
-            var w1 = (token.charCodeAt(k) << 8) | token.charCodeAt(k + 1);
+        cmap.forEach((charCode, token) => {
+          const str = [];
+          for (let k = 0; k < token.length; k += 2) {
+            const w1 = (token.charCodeAt(k) << 8) | token.charCodeAt(k + 1);
             if ((w1 & 0xF800) !== 0xD800) { // w1 < 0xD800 || w1 > 0xDFFF
               str.push(w1);
               continue;
             }
             k += 2;
-            var w2 = (token.charCodeAt(k) << 8) | token.charCodeAt(k + 1);
+            const w2 = (token.charCodeAt(k) << 8) | token.charCodeAt(k + 1);
             str.push(((w1 & 0x3ff) << 10) + (w2 & 0x3ff) + 0x10000);
           }
           map[charCode] = String.fromCharCode.apply(String, str);
@@ -1537,29 +1534,29 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
 
     readCidToGidMap: function PartialEvaluator_readCidToGidMap(cidToGidStream) {
       // Extract the encoding from the CIDToGIDMap
-      var glyphsData = cidToGidStream.getBytes();
+      const glyphsData = cidToGidStream.getBytes();
 
       // Set encoding 0 to later verify the font has an encoding
-      var result = [];
-      for (var j = 0, jj = glyphsData.length; j < jj; j++) {
-        var glyphID = (glyphsData[j++] << 8) | glyphsData[j];
+      const result = [];
+      for (let j = 0, jj = glyphsData.length; j < jj; j++) {
+        const glyphID = (glyphsData[j++] << 8) | glyphsData[j];
         if (glyphID === 0) {
           continue;
         }
-        var code = j >> 1;
+        const code = j >> 1;
         result[code] = glyphID;
       }
       return result;
     },
 
     extractWidths: function PartialEvaluator_extractWidths(dict, xref,
-                                                           descriptor,
-                                                           properties) {
-      var glyphsWidths = [];
-      var defaultWidth = 0;
-      var glyphsVMetrics = [];
-      var defaultVMetrics;
-      var i, ii, j, jj, start, code, widths;
+        descriptor,
+        properties) {
+      let glyphsWidths = [];
+      let defaultWidth = 0;
+      const glyphsVMetrics = [];
+      let defaultVMetrics;
+      let i, ii, j, jj, start, code, widths;
       if (properties.composite) {
         defaultWidth = dict.get('DW') || 1000;
 
@@ -1573,7 +1570,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
                 glyphsWidths[start++] = code[j];
               }
             } else {
-              var width = widths[++i];
+              const width = widths[++i];
               for (j = start; j <= code; j++) {
                 glyphsWidths[j] = width;
               }
@@ -1582,7 +1579,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
         }
 
         if (properties.vertical) {
-          var vmetrics = (dict.get('DW2') || [880, -1000]);
+          let vmetrics = (dict.get('DW2') || [880, -1000]);
           defaultVMetrics = [vmetrics[1], defaultWidth * 0.5, vmetrics[0]];
           vmetrics = dict.get('W2');
           if (vmetrics) {
@@ -1594,7 +1591,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
                   glyphsVMetrics[start++] = [code[j++], code[j++], code[j]];
                 }
               } else {
-                var vmetric = [vmetrics[++i], vmetrics[++i], vmetrics[++i]];
+                const vmetric = [vmetrics[++i], vmetrics[++i], vmetrics[++i]];
                 for (j = start; j <= code; j++) {
                   glyphsVMetrics[j] = vmetric;
                 }
@@ -1603,7 +1600,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
           }
         }
       } else {
-        var firstChar = properties.firstChar;
+        const firstChar = properties.firstChar;
         widths = dict.get('Widths');
         if (widths) {
           j = firstChar;
@@ -1613,22 +1610,22 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
           defaultWidth = (parseFloat(descriptor.get('MissingWidth')) || 0);
         } else {
           // Trying get the BaseFont metrics (see comment above).
-          var baseFontName = dict.get('BaseFont');
+          const baseFontName = dict.get('BaseFont');
           if (isName(baseFontName)) {
-            var metrics = this.getBaseFontMetrics(baseFontName.name);
+            const metrics = this.getBaseFontMetrics(baseFontName.name);
 
             glyphsWidths = this.buildCharCodeToWidth(metrics.widths,
-                                                     properties);
+                properties);
             defaultWidth = metrics.defaultWidth;
           }
         }
       }
 
       // Heuristic: detection of monospace font by checking all non-zero widths
-      var isMonospace = true;
-      var firstWidth = defaultWidth;
-      for (var glyph in glyphsWidths) {
-        var glyphWidth = glyphsWidths[glyph];
+      let isMonospace = true;
+      let firstWidth = defaultWidth;
+      for (const glyph in glyphsWidths) {
+        const glyphWidth = glyphsWidths[glyph];
         if (!glyphWidth) {
           continue;
         }
@@ -1653,16 +1650,16 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
 
     isSerifFont: function PartialEvaluator_isSerifFont(baseFontName) {
       // Simulating descriptor flags attribute
-      var fontNameWoStyle = baseFontName.split('-')[0];
+      const fontNameWoStyle = baseFontName.split('-')[0];
       return (fontNameWoStyle in serifFonts) ||
               (fontNameWoStyle.search(/serif/gi) !== -1);
     },
 
     getBaseFontMetrics: function PartialEvaluator_getBaseFontMetrics(name) {
-      var defaultWidth = 0;
-      var widths = [];
-      var monospace = false;
-      var lookupName = (stdFontMap[name] || name);
+      let defaultWidth = 0;
+      let widths = [];
+      let monospace = false;
+      let lookupName = (stdFontMap[name] || name);
 
       if (!(lookupName in Metrics)) {
         // Use default fonts for looking up font metrics if the passed
@@ -1673,7 +1670,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
           lookupName = 'Helvetica';
         }
       }
-      var glyphWidths = Metrics[lookupName];
+      const glyphWidths = Metrics[lookupName];
 
       if (isNum(glyphWidths)) {
         defaultWidth = glyphWidths;
@@ -1683,45 +1680,45 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
       }
 
       return {
-        defaultWidth: defaultWidth,
-        monospace: monospace,
-        widths: widths
+        defaultWidth,
+        monospace,
+        widths,
       };
     },
 
     buildCharCodeToWidth:
         function PartialEvaluator_bulildCharCodeToWidth(widthsByGlyphName,
-                                                        properties) {
-      var widths = Object.create(null);
-      var differences = properties.differences;
-      var encoding = properties.defaultEncoding;
-      for (var charCode = 0; charCode < 256; charCode++) {
-        if (charCode in differences &&
+            properties) {
+          const widths = Object.create(null);
+          const differences = properties.differences;
+          const encoding = properties.defaultEncoding;
+          for (let charCode = 0; charCode < 256; charCode++) {
+            if (charCode in differences &&
             widthsByGlyphName[differences[charCode]]) {
-          widths[charCode] = widthsByGlyphName[differences[charCode]];
-          continue;
-        }
-        if (charCode in encoding && widthsByGlyphName[encoding[charCode]]) {
-          widths[charCode] = widthsByGlyphName[encoding[charCode]];
-          continue;
-        }
-      }
-      return widths;
-    },
+              widths[charCode] = widthsByGlyphName[differences[charCode]];
+              continue;
+            }
+            if (charCode in encoding && widthsByGlyphName[encoding[charCode]]) {
+              widths[charCode] = widthsByGlyphName[encoding[charCode]];
+              continue;
+            }
+          }
+          return widths;
+        },
 
     preEvaluateFont: function PartialEvaluator_preEvaluateFont(dict, xref) {
-      var baseDict = dict;
-      var type = dict.get('Subtype');
+      const baseDict = dict;
+      let type = dict.get('Subtype');
       assert(isName(type), 'invalid font Subtype');
 
-      var composite = false;
-      var uint8array;
+      let composite = false;
+      let uint8array;
       if (type.name === 'Type0') {
         // If font is a composite
         //  - get the descendant font
         //  - set the type according to the descendant font
         //  - get the FontDescriptor from the descendant font
-        var df = dict.get('DescendantFonts');
+        const df = dict.get('DescendantFonts');
         if (!df) {
           error('Descendant fonts are not specified');
         }
@@ -1732,22 +1729,22 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
         composite = true;
       }
 
-      var descriptor = dict.get('FontDescriptor');
+      const descriptor = dict.get('FontDescriptor');
       if (descriptor) {
         var hash = new MurmurHash3_64();
-        var encoding = baseDict.getRaw('Encoding');
+        const encoding = baseDict.getRaw('Encoding');
         if (isName(encoding)) {
           hash.update(encoding.name);
         } else if (isRef(encoding)) {
-          hash.update(encoding.num + '_' + encoding.gen);
+          hash.update(`${encoding.num}_${encoding.gen}`);
         } else if (isDict(encoding)) {
-          var keys = encoding.getKeys();
-          for (var i = 0, ii = keys.length; i < ii; i++) {
-            var entry = encoding.getRaw(keys[i]);
+          const keys = encoding.getKeys();
+          for (let i = 0, ii = keys.length; i < ii; i++) {
+            const entry = encoding.getRaw(keys[i]);
             if (isName(entry)) {
               hash.update(entry.name);
             } else if (isRef(entry)) {
-              hash.update(entry.num + '_' + entry.gen);
+              hash.update(`${entry.num}_${entry.gen}`);
             } else if (isArray(entry)) { // 'Differences' entry.
               // Ideally we should check the contents of the array, but to avoid
               // parsing it here and then again in |extractDataStructures|,
@@ -1757,20 +1754,19 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
           }
         }
 
-        var toUnicode = dict.get('ToUnicode') || baseDict.get('ToUnicode');
+        const toUnicode = dict.get('ToUnicode') || baseDict.get('ToUnicode');
         if (isStream(toUnicode)) {
-          var stream = toUnicode.str || toUnicode;
-          uint8array = stream.buffer ?
-            new Uint8Array(stream.buffer.buffer, 0, stream.bufferLength) :
-            new Uint8Array(stream.bytes.buffer,
-                           stream.start, stream.end - stream.start);
+          const stream = toUnicode.str || toUnicode;
+          uint8array = stream.buffer
+            ? new Uint8Array(stream.buffer.buffer, 0, stream.bufferLength)
+            : new Uint8Array(stream.bytes.buffer,
+                stream.start, stream.end - stream.start);
           hash.update(uint8array);
-
         } else if (isName(toUnicode)) {
           hash.update(toUnicode.name);
         }
 
-        var widths = dict.get('Widths') || baseDict.get('Widths');
+        const widths = dict.get('Widths') || baseDict.get('Widths');
         if (widths) {
           uint8array = new Uint8Array(new Uint32Array(widths).buffer);
           hash.update(uint8array);
@@ -1778,24 +1774,24 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
       }
 
       return {
-        descriptor: descriptor,
-        dict: dict,
-        baseDict: baseDict,
-        composite: composite,
+        descriptor,
+        dict,
+        baseDict,
+        composite,
         type: type.name,
-        hash: hash ? hash.hexdigest() : ''
+        hash: hash ? hash.hexdigest() : '',
       };
     },
 
     translateFont: function PartialEvaluator_translateFont(preEvaluatedFont,
-                                                           xref) {
-      var baseDict = preEvaluatedFont.baseDict;
-      var dict = preEvaluatedFont.dict;
-      var composite = preEvaluatedFont.composite;
-      var descriptor = preEvaluatedFont.descriptor;
-      var type = preEvaluatedFont.type;
-      var maxCharIndex = (composite ? 0xFFFF : 0xFF);
-      var properties;
+        xref) {
+      const baseDict = preEvaluatedFont.baseDict;
+      const dict = preEvaluatedFont.dict;
+      const composite = preEvaluatedFont.composite;
+      let descriptor = preEvaluatedFont.descriptor;
+      const type = preEvaluatedFont.type;
+      const maxCharIndex = (composite ? 0xFFFF : 0xFF);
+      let properties;
 
       if (!descriptor) {
         if (type === 'Type3') {
@@ -1808,35 +1804,35 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
           // Before PDF 1.5 if the font was one of the base 14 fonts, having a
           // FontDescriptor was not required.
           // This case is here for compatibility.
-          var baseFontName = dict.get('BaseFont');
+          let baseFontName = dict.get('BaseFont');
           if (!isName(baseFontName)) {
             error('Base font is not specified');
           }
 
           // Using base font name as a font name.
           baseFontName = baseFontName.name.replace(/[,_]/g, '-');
-          var metrics = this.getBaseFontMetrics(baseFontName);
+          const metrics = this.getBaseFontMetrics(baseFontName);
 
           // Simulating descriptor flags attribute
-          var fontNameWoStyle = baseFontName.split('-')[0];
-          var flags =
+          const fontNameWoStyle = baseFontName.split('-')[0];
+          const flags =
             (this.isSerifFont(fontNameWoStyle) ? FontFlags.Serif : 0) |
             (metrics.monospace ? FontFlags.FixedPitch : 0) |
-            (symbolsFonts[fontNameWoStyle] ? FontFlags.Symbolic :
-                                             FontFlags.Nonsymbolic);
+            (symbolsFonts[fontNameWoStyle] ? FontFlags.Symbolic
+            : FontFlags.Nonsymbolic);
 
           properties = {
-            type: type,
+            type,
             name: baseFontName,
             widths: metrics.widths,
             defaultWidth: metrics.defaultWidth,
-            flags: flags,
+            flags,
             firstChar: 0,
-            lastChar: maxCharIndex
+            lastChar: maxCharIndex,
           };
           this.extractDataStructures(dict, dict, xref, properties);
           properties.widths = this.buildCharCodeToWidth(metrics.widths,
-                                                        properties);
+              properties);
           return new Font(baseFontName, null, properties);
         }
       }
@@ -1846,11 +1842,11 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
       // to ignore this rule when a variant of a standart font is used.
       // TODO Fill the width array depending on which of the base font this is
       // a variant.
-      var firstChar = (dict.get('FirstChar') || 0);
-      var lastChar = (dict.get('LastChar') || maxCharIndex);
+      const firstChar = (dict.get('FirstChar') || 0);
+      const lastChar = (dict.get('LastChar') || maxCharIndex);
 
-      var fontName = descriptor.get('FontName');
-      var baseFont = dict.get('BaseFont');
+      let fontName = descriptor.get('FontName');
+      let baseFont = dict.get('BaseFont');
       // Some bad PDFs have a string as the font name.
       if (isString(fontName)) {
         fontName = Name.get(fontName);
@@ -1860,12 +1856,12 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
       }
 
       if (type !== 'Type3') {
-        var fontNameStr = fontName && fontName.name;
-        var baseFontStr = baseFont && baseFont.name;
+        const fontNameStr = fontName && fontName.name;
+        const baseFontStr = baseFont && baseFont.name;
         if (fontNameStr !== baseFontStr) {
-          info('The FontDescriptor\'s FontName is "' + fontNameStr +
-               '" but should be the same as the Font\'s BaseFont "' +
-               baseFontStr + '"');
+          info(`The FontDescriptor's FontName is "${fontNameStr
+          }" but should be the same as the Font's BaseFont "${
+            baseFontStr}"`);
           // Workaround for cases where e.g. fontNameStr = 'Arial' and
           // baseFontStr = 'Arial,Bold' (needed when no font file is embedded).
           if (fontNameStr && baseFontStr &&
@@ -1878,7 +1874,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
 
       assert(isName(fontName), 'invalid font name');
 
-      var fontFile = descriptor.get('FontFile', 'FontFile2', 'FontFile3');
+      const fontFile = descriptor.get('FontFile', 'FontFile2', 'FontFile3');
       if (fontFile) {
         if (fontFile.dict) {
           var subtype = fontFile.dict.get('Subtype');
@@ -1891,14 +1887,14 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
       }
 
       properties = {
-        type: type,
+        type,
         name: fontName.name,
-        subtype: subtype,
+        subtype,
         file: fontFile,
-        length1: length1,
-        length2: length2,
+        length1,
+        length2,
         loadedName: baseDict.loadedName,
-        composite: composite,
+        composite,
         wideChars: composite,
         fixedPitch: false,
         fontMatrix: (dict.get('FontMatrix') || FONT_IDENTITY_MATRIX),
@@ -1911,16 +1907,16 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
         capHeight: descriptor.get('CapHeight'),
         flags: descriptor.get('Flags'),
         italicAngle: descriptor.get('ItalicAngle'),
-        coded: false
+        coded: false,
       };
 
       if (composite) {
-        var cidEncoding = baseDict.get('Encoding');
+        const cidEncoding = baseDict.get('Encoding');
         if (isName(cidEncoding)) {
           properties.cidEncoding = cidEncoding.name;
         }
         properties.cMap = CMapFactory.create(cidEncoding,
-          { url: PDFJS.cMapUrl, packed: PDFJS.cMapPacked }, null);
+            {url: PDFJS.cMapUrl, packed: PDFJS.cMapPacked}, null);
         properties.vertical = properties.cMap.vertical;
       }
       this.extractDataStructures(dict, baseDict, xref, properties);
@@ -1931,7 +1927,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
       }
 
       return new Font(fontName.name, fontFile, properties);
-    }
+    },
   };
 
   return PartialEvaluator;
@@ -1946,66 +1942,67 @@ var TranslatedFont = (function TranslatedFontClosure() {
     this.sent = false;
   }
   TranslatedFont.prototype = {
-    send: function (handler) {
+    send(handler) {
       if (this.sent) {
         return;
       }
-      var fontData = this.font.exportData();
+      const fontData = this.font.exportData();
       handler.send('commonobj', [
         this.loadedName,
         'Font',
-        fontData
+        fontData,
       ]);
       this.sent = true;
     },
-    loadType3Data: function (evaluator, resources, parentOperatorList, task) {
+    loadType3Data(evaluator, resources, parentOperatorList, task) {
       assert(this.font.isType3Font);
 
       if (this.type3Loaded) {
         return this.type3Loaded;
       }
 
-      var translatedFont = this.font;
-      var loadCharProcsPromise = Promise.resolve();
-      var charProcs = this.dict.get('CharProcs').getAll();
-      var fontResources = this.dict.get('Resources') || resources;
-      var charProcKeys = Object.keys(charProcs);
-      var charProcOperatorList = {};
-      for (var i = 0, n = charProcKeys.length; i < n; ++i) {
-        loadCharProcsPromise = loadCharProcsPromise.then(function (key) {
-          var glyphStream = charProcs[key];
-          var operatorList = new OperatorList();
+      const translatedFont = this.font;
+      let loadCharProcsPromise = Promise.resolve();
+      const charProcs = this.dict.get('CharProcs').getAll();
+      const fontResources = this.dict.get('Resources') || resources;
+      const charProcKeys = Object.keys(charProcs);
+      const charProcOperatorList = {};
+      for (let i = 0, n = charProcKeys.length; i < n; ++i) {
+        loadCharProcsPromise = loadCharProcsPromise.then(((key) => {
+          const glyphStream = charProcs[key];
+          const operatorList = new OperatorList();
           return evaluator.getOperatorList(glyphStream, task, fontResources,
-                                           operatorList).then(function () {
+              operatorList).then(() => {
             charProcOperatorList[key] = operatorList.getIR();
 
             // Add the dependencies to the parent operator list so they are
             // resolved before sub operator list is executed synchronously.
             parentOperatorList.addDependencies(operatorList.dependencies);
-          }, function (reason) {
-            warn('Type3 font resource \"' + key + '\" is not available');
-            var operatorList = new OperatorList();
+          }, (reason) => {
+            warn(`Type3 font resource \"${key}\" is not available`);
+            const operatorList = new OperatorList();
             charProcOperatorList[key] = operatorList.getIR();
           });
-        }.bind(this, charProcKeys[i]));
+        }).bind(this, charProcKeys[i]));
       }
-      this.type3Loaded = loadCharProcsPromise.then(function () {
+      this.type3Loaded = loadCharProcsPromise.then(() => {
         translatedFont.charProcOperatorList = charProcOperatorList;
       });
       return this.type3Loaded;
-    }
+    },
   };
   return TranslatedFont;
 })();
 
 var OperatorList = (function OperatorListClosure() {
-  var CHUNK_SIZE = 1000;
-  var CHUNK_SIZE_ABOUT = CHUNK_SIZE - 5; // close to chunk size
+  const CHUNK_SIZE = 1000;
+  const CHUNK_SIZE_ABOUT = CHUNK_SIZE - 5; // close to chunk size
 
   function getTransfers(queue) {
-    var transfers = [];
-    var fnArray = queue.fnArray, argsArray = queue.argsArray;
-    for (var i = 0, ii = queue.length; i < ii; i++) {
+    const transfers = [];
+    const fnArray = queue.fnArray; const
+      argsArray = queue.argsArray;
+    for (let i = 0, ii = queue.length; i < ii; i++) {
       switch (fnArray[i]) {
         case OPS.paintInlineImageXObject:
         case OPS.paintInlineImageXObjectGroup:
@@ -2043,7 +2040,7 @@ var OperatorList = (function OperatorListClosure() {
       return (this._totalLength + this.length);
     },
 
-    addOp: function(fn, args) {
+    addOp(fn, args) {
       this.fnArray.push(fn);
       this.argsArray.push(args);
       if (this.messageHandler) {
@@ -2057,7 +2054,7 @@ var OperatorList = (function OperatorListClosure() {
       }
     },
 
-    addDependency: function(dependency) {
+    addDependency(dependency) {
       if (dependency in this.dependencies) {
         return;
       }
@@ -2065,49 +2062,49 @@ var OperatorList = (function OperatorListClosure() {
       this.addOp(OPS.dependency, [dependency]);
     },
 
-    addDependencies: function(dependencies) {
-      for (var key in dependencies) {
+    addDependencies(dependencies) {
+      for (const key in dependencies) {
         this.addDependency(key);
       }
     },
 
-    addOpList: function(opList) {
+    addOpList(opList) {
       Util.extendObj(this.dependencies, opList.dependencies);
-      for (var i = 0, ii = opList.length; i < ii; i++) {
+      for (let i = 0, ii = opList.length; i < ii; i++) {
         this.addOp(opList.fnArray[i], opList.argsArray[i]);
       }
     },
 
-    getIR: function() {
+    getIR() {
       return {
         fnArray: this.fnArray,
         argsArray: this.argsArray,
-        length: this.length
+        length: this.length,
       };
     },
 
-    flush: function(lastChunk) {
+    flush(lastChunk) {
       if (this.intent !== 'oplist') {
         new QueueOptimizer().optimize(this);
       }
-      var transfers = getTransfers(this);
-      var length = this.length;
+      const transfers = getTransfers(this);
+      const length = this.length;
       this._totalLength += length;
 
       this.messageHandler.send('RenderPageChunk', {
         operatorList: {
           fnArray: this.fnArray,
           argsArray: this.argsArray,
-          lastChunk: lastChunk,
-          length: length
+          lastChunk,
+          length,
         },
         pageIndex: this.pageIndex,
-        intent: this.intent
+        intent: this.intent,
       }, transfers);
       this.dependencies = {};
       this.fnArray.length = 0;
       this.argsArray.length = 0;
-    }
+    },
   };
 
   return OperatorList;
@@ -2119,20 +2116,20 @@ var StateManager = (function StateManagerClosure() {
     this.stateStack = [];
   }
   StateManager.prototype = {
-    save: function () {
-      var old = this.state;
+    save() {
+      const old = this.state;
       this.stateStack.push(this.state);
       this.state = old.clone();
     },
-    restore: function () {
-      var prev = this.stateStack.pop();
+    restore() {
+      const prev = this.stateStack.pop();
       if (prev) {
         this.state = prev;
       }
     },
-    transform: function (args) {
+    transform(args) {
       this.state.ctm = Util.transform(this.state.ctm, args);
-    }
+    },
   };
   return StateManager;
 })();
@@ -2154,28 +2151,31 @@ var TextState = (function TextStateClosure() {
 
   TextState.prototype = {
     setTextMatrix: function TextState_setTextMatrix(a, b, c, d, e, f) {
-      var m = this.textMatrix;
+      const m = this.textMatrix;
       m[0] = a; m[1] = b; m[2] = c; m[3] = d; m[4] = e; m[5] = f;
     },
     setTextLineMatrix: function TextState_setTextMatrix(a, b, c, d, e, f) {
-      var m = this.textLineMatrix;
+      const m = this.textLineMatrix;
       m[0] = a; m[1] = b; m[2] = c; m[3] = d; m[4] = e; m[5] = f;
     },
     translateTextMatrix: function TextState_translateTextMatrix(x, y) {
-      var m = this.textMatrix;
+      const m = this.textMatrix;
       m[4] = m[0] * x + m[2] * y + m[4];
       m[5] = m[1] * x + m[3] * y + m[5];
     },
     translateTextLineMatrix: function TextState_translateTextMatrix(x, y) {
-      var m = this.textLineMatrix;
+      const m = this.textLineMatrix;
       m[4] = m[0] * x + m[2] * y + m[4];
       m[5] = m[1] * x + m[3] * y + m[5];
     },
     calcRenderMatrix: function TextState_calcRendeMatrix(ctm) {
       // 9.4.4 Text Space Details
-      var tsm = [this.fontSize * this.textHScale, 0,
-                0, this.fontSize,
-                0, this.textRise];
+      const tsm = [this.fontSize * this.textHScale,
+        0,
+        0,
+        this.fontSize,
+        0,
+        this.textRise];
       return Util.transform(ctm, Util.transform(this.textMatrix, tsm));
     },
     carriageReturn: function TextState_carriageReturn() {
@@ -2183,12 +2183,12 @@ var TextState = (function TextStateClosure() {
       this.textMatrix = this.textLineMatrix.slice();
     },
     clone: function TextState_clone() {
-      var clone = Object.create(this);
+      const clone = Object.create(this);
       clone.textMatrix = this.textMatrix.slice();
       clone.textLineMatrix = this.textLineMatrix.slice();
       clone.fontMatrix = this.fontMatrix.slice();
       return clone;
-    }
+    },
   };
   return TextState;
 })();
@@ -2214,113 +2214,113 @@ var EvaluatorPreprocessor = (function EvaluatorPreprocessorClosure() {
   //
   // If variableArgs === true: [0, `numArgs`] expected
   // If variableArgs === false: exactly `numArgs` expected
-  var OP_MAP = {
+  const OP_MAP = {
     // Graphic state
-    w: { id: OPS.setLineWidth, numArgs: 1, variableArgs: false },
-    J: { id: OPS.setLineCap, numArgs: 1, variableArgs: false },
-    j: { id: OPS.setLineJoin, numArgs: 1, variableArgs: false },
-    M: { id: OPS.setMiterLimit, numArgs: 1, variableArgs: false },
-    d: { id: OPS.setDash, numArgs: 2, variableArgs: false },
-    ri: { id: OPS.setRenderingIntent, numArgs: 1, variableArgs: false },
-    i: { id: OPS.setFlatness, numArgs: 1, variableArgs: false },
-    gs: { id: OPS.setGState, numArgs: 1, variableArgs: false },
-    q: { id: OPS.save, numArgs: 0, variableArgs: false },
-    Q: { id: OPS.restore, numArgs: 0, variableArgs: false },
-    cm: { id: OPS.transform, numArgs: 6, variableArgs: false },
+    'w': {id: OPS.setLineWidth, numArgs: 1, variableArgs: false},
+    'J': {id: OPS.setLineCap, numArgs: 1, variableArgs: false},
+    'j': {id: OPS.setLineJoin, numArgs: 1, variableArgs: false},
+    'M': {id: OPS.setMiterLimit, numArgs: 1, variableArgs: false},
+    'd': {id: OPS.setDash, numArgs: 2, variableArgs: false},
+    'ri': {id: OPS.setRenderingIntent, numArgs: 1, variableArgs: false},
+    'i': {id: OPS.setFlatness, numArgs: 1, variableArgs: false},
+    'gs': {id: OPS.setGState, numArgs: 1, variableArgs: false},
+    'q': {id: OPS.save, numArgs: 0, variableArgs: false},
+    'Q': {id: OPS.restore, numArgs: 0, variableArgs: false},
+    'cm': {id: OPS.transform, numArgs: 6, variableArgs: false},
 
     // Path
-    m: { id: OPS.moveTo, numArgs: 2, variableArgs: false },
-    l: { id: OPS.lineTo, numArgs: 2, variableArgs: false },
-    c: { id: OPS.curveTo, numArgs: 6, variableArgs: false },
-    v: { id: OPS.curveTo2, numArgs: 4, variableArgs: false },
-    y: { id: OPS.curveTo3, numArgs: 4, variableArgs: false },
-    h: { id: OPS.closePath, numArgs: 0, variableArgs: false },
-    re: { id: OPS.rectangle, numArgs: 4, variableArgs: false },
-    S: { id: OPS.stroke, numArgs: 0, variableArgs: false },
-    s: { id: OPS.closeStroke, numArgs: 0, variableArgs: false },
-    f: { id: OPS.fill, numArgs: 0, variableArgs: false },
-    F: { id: OPS.fill, numArgs: 0, variableArgs: false },
-    'f*': { id: OPS.eoFill, numArgs: 0, variableArgs: false },
-    B: { id: OPS.fillStroke, numArgs: 0, variableArgs: false },
-    'B*': { id: OPS.eoFillStroke, numArgs: 0, variableArgs: false },
-    b: { id: OPS.closeFillStroke, numArgs: 0, variableArgs: false },
-    'b*': { id: OPS.closeEOFillStroke, numArgs: 0, variableArgs: false },
-    n: { id: OPS.endPath, numArgs: 0, variableArgs: false },
+    'm': {id: OPS.moveTo, numArgs: 2, variableArgs: false},
+    'l': {id: OPS.lineTo, numArgs: 2, variableArgs: false},
+    'c': {id: OPS.curveTo, numArgs: 6, variableArgs: false},
+    'v': {id: OPS.curveTo2, numArgs: 4, variableArgs: false},
+    'y': {id: OPS.curveTo3, numArgs: 4, variableArgs: false},
+    'h': {id: OPS.closePath, numArgs: 0, variableArgs: false},
+    're': {id: OPS.rectangle, numArgs: 4, variableArgs: false},
+    'S': {id: OPS.stroke, numArgs: 0, variableArgs: false},
+    's': {id: OPS.closeStroke, numArgs: 0, variableArgs: false},
+    'f': {id: OPS.fill, numArgs: 0, variableArgs: false},
+    'F': {id: OPS.fill, numArgs: 0, variableArgs: false},
+    'f*': {id: OPS.eoFill, numArgs: 0, variableArgs: false},
+    'B': {id: OPS.fillStroke, numArgs: 0, variableArgs: false},
+    'B*': {id: OPS.eoFillStroke, numArgs: 0, variableArgs: false},
+    'b': {id: OPS.closeFillStroke, numArgs: 0, variableArgs: false},
+    'b*': {id: OPS.closeEOFillStroke, numArgs: 0, variableArgs: false},
+    'n': {id: OPS.endPath, numArgs: 0, variableArgs: false},
 
     // Clipping
-    W: { id: OPS.clip, numArgs: 0, variableArgs: false },
-    'W*': { id: OPS.eoClip, numArgs: 0, variableArgs: false },
+    'W': {id: OPS.clip, numArgs: 0, variableArgs: false},
+    'W*': {id: OPS.eoClip, numArgs: 0, variableArgs: false},
 
     // Text
-    BT: { id: OPS.beginText, numArgs: 0, variableArgs: false },
-    ET: { id: OPS.endText, numArgs: 0, variableArgs: false },
-    Tc: { id: OPS.setCharSpacing, numArgs: 1, variableArgs: false },
-    Tw: { id: OPS.setWordSpacing, numArgs: 1, variableArgs: false },
-    Tz: { id: OPS.setHScale, numArgs: 1, variableArgs: false },
-    TL: { id: OPS.setLeading, numArgs: 1, variableArgs: false },
-    Tf: { id: OPS.setFont, numArgs: 2, variableArgs: false },
-    Tr: { id: OPS.setTextRenderingMode, numArgs: 1, variableArgs: false },
-    Ts: { id: OPS.setTextRise, numArgs: 1, variableArgs: false },
-    Td: { id: OPS.moveText, numArgs: 2, variableArgs: false },
-    TD: { id: OPS.setLeadingMoveText, numArgs: 2, variableArgs: false },
-    Tm: { id: OPS.setTextMatrix, numArgs: 6, variableArgs: false },
-    'T*': { id: OPS.nextLine, numArgs: 0, variableArgs: false },
-    Tj: { id: OPS.showText, numArgs: 1, variableArgs: false },
-    TJ: { id: OPS.showSpacedText, numArgs: 1, variableArgs: false },
-    '\'': { id: OPS.nextLineShowText, numArgs: 1, variableArgs: false },
-    '"': { id: OPS.nextLineSetSpacingShowText, numArgs: 3,
-           variableArgs: false },
+    'BT': {id: OPS.beginText, numArgs: 0, variableArgs: false},
+    'ET': {id: OPS.endText, numArgs: 0, variableArgs: false},
+    'Tc': {id: OPS.setCharSpacing, numArgs: 1, variableArgs: false},
+    'Tw': {id: OPS.setWordSpacing, numArgs: 1, variableArgs: false},
+    'Tz': {id: OPS.setHScale, numArgs: 1, variableArgs: false},
+    'TL': {id: OPS.setLeading, numArgs: 1, variableArgs: false},
+    'Tf': {id: OPS.setFont, numArgs: 2, variableArgs: false},
+    'Tr': {id: OPS.setTextRenderingMode, numArgs: 1, variableArgs: false},
+    'Ts': {id: OPS.setTextRise, numArgs: 1, variableArgs: false},
+    'Td': {id: OPS.moveText, numArgs: 2, variableArgs: false},
+    'TD': {id: OPS.setLeadingMoveText, numArgs: 2, variableArgs: false},
+    'Tm': {id: OPS.setTextMatrix, numArgs: 6, variableArgs: false},
+    'T*': {id: OPS.nextLine, numArgs: 0, variableArgs: false},
+    'Tj': {id: OPS.showText, numArgs: 1, variableArgs: false},
+    'TJ': {id: OPS.showSpacedText, numArgs: 1, variableArgs: false},
+    '\'': {id: OPS.nextLineShowText, numArgs: 1, variableArgs: false},
+    '"': {id: OPS.nextLineSetSpacingShowText, numArgs: 3,
+      variableArgs: false},
 
     // Type3 fonts
-    d0: { id: OPS.setCharWidth, numArgs: 2, variableArgs: false },
-    d1: { id: OPS.setCharWidthAndBounds, numArgs: 6, variableArgs: false },
+    'd0': {id: OPS.setCharWidth, numArgs: 2, variableArgs: false},
+    'd1': {id: OPS.setCharWidthAndBounds, numArgs: 6, variableArgs: false},
 
     // Color
-    CS: { id: OPS.setStrokeColorSpace, numArgs: 1, variableArgs: false },
-    cs: { id: OPS.setFillColorSpace, numArgs: 1, variableArgs: false },
-    SC: { id: OPS.setStrokeColor, numArgs: 4, variableArgs: true },
-    SCN: { id: OPS.setStrokeColorN, numArgs: 33, variableArgs: true },
-    sc: { id: OPS.setFillColor, numArgs: 4, variableArgs: true },
-    scn: { id: OPS.setFillColorN, numArgs: 33, variableArgs: true },
-    G: { id: OPS.setStrokeGray, numArgs: 1, variableArgs: false },
-    g: { id: OPS.setFillGray, numArgs: 1, variableArgs: false },
-    RG: { id: OPS.setStrokeRGBColor, numArgs: 3, variableArgs: false },
-    rg: { id: OPS.setFillRGBColor, numArgs: 3, variableArgs: false },
-    K: { id: OPS.setStrokeCMYKColor, numArgs: 4, variableArgs: false },
-    k: { id: OPS.setFillCMYKColor, numArgs: 4, variableArgs: false },
+    'CS': {id: OPS.setStrokeColorSpace, numArgs: 1, variableArgs: false},
+    'cs': {id: OPS.setFillColorSpace, numArgs: 1, variableArgs: false},
+    'SC': {id: OPS.setStrokeColor, numArgs: 4, variableArgs: true},
+    'SCN': {id: OPS.setStrokeColorN, numArgs: 33, variableArgs: true},
+    'sc': {id: OPS.setFillColor, numArgs: 4, variableArgs: true},
+    'scn': {id: OPS.setFillColorN, numArgs: 33, variableArgs: true},
+    'G': {id: OPS.setStrokeGray, numArgs: 1, variableArgs: false},
+    'g': {id: OPS.setFillGray, numArgs: 1, variableArgs: false},
+    'RG': {id: OPS.setStrokeRGBColor, numArgs: 3, variableArgs: false},
+    'rg': {id: OPS.setFillRGBColor, numArgs: 3, variableArgs: false},
+    'K': {id: OPS.setStrokeCMYKColor, numArgs: 4, variableArgs: false},
+    'k': {id: OPS.setFillCMYKColor, numArgs: 4, variableArgs: false},
 
     // Shading
-    sh: { id: OPS.shadingFill, numArgs: 1, variableArgs: false },
+    'sh': {id: OPS.shadingFill, numArgs: 1, variableArgs: false},
 
     // Images
-    BI: { id: OPS.beginInlineImage, numArgs: 0, variableArgs: false },
-    ID: { id: OPS.beginImageData, numArgs: 0, variableArgs: false },
-    EI: { id: OPS.endInlineImage, numArgs: 1, variableArgs: false },
+    'BI': {id: OPS.beginInlineImage, numArgs: 0, variableArgs: false},
+    'ID': {id: OPS.beginImageData, numArgs: 0, variableArgs: false},
+    'EI': {id: OPS.endInlineImage, numArgs: 1, variableArgs: false},
 
     // XObjects
-    Do: { id: OPS.paintXObject, numArgs: 1, variableArgs: false },
-    MP: { id: OPS.markPoint, numArgs: 1, variableArgs: false },
-    DP: { id: OPS.markPointProps, numArgs: 2, variableArgs: false },
-    BMC: { id: OPS.beginMarkedContent, numArgs: 1, variableArgs: false },
-    BDC: { id: OPS.beginMarkedContentProps, numArgs: 2,
-           variableArgs: false },
-    EMC: { id: OPS.endMarkedContent, numArgs: 0, variableArgs: false },
+    'Do': {id: OPS.paintXObject, numArgs: 1, variableArgs: false},
+    'MP': {id: OPS.markPoint, numArgs: 1, variableArgs: false},
+    'DP': {id: OPS.markPointProps, numArgs: 2, variableArgs: false},
+    'BMC': {id: OPS.beginMarkedContent, numArgs: 1, variableArgs: false},
+    'BDC': {id: OPS.beginMarkedContentProps, numArgs: 2,
+      variableArgs: false},
+    'EMC': {id: OPS.endMarkedContent, numArgs: 0, variableArgs: false},
 
     // Compatibility
-    BX: { id: OPS.beginCompat, numArgs: 0, variableArgs: false },
-    EX: { id: OPS.endCompat, numArgs: 0, variableArgs: false },
+    'BX': {id: OPS.beginCompat, numArgs: 0, variableArgs: false},
+    'EX': {id: OPS.endCompat, numArgs: 0, variableArgs: false},
 
     // (reserved partial commands for the lexer)
-    BM: null,
-    BD: null,
+    'BM': null,
+    'BD': null,
     'true': null,
-    fa: null,
-    fal: null,
-    fals: null,
+    'fa': null,
+    'fal': null,
+    'fals': null,
     'false': null,
-    nu: null,
-    nul: null,
-    'null': null
+    'nu': null,
+    'nul': null,
+    'null': null,
   };
 
   function EvaluatorPreprocessor(stream, xref, stateManager) {
@@ -2358,26 +2358,26 @@ var EvaluatorPreprocessor = (function EvaluatorPreprocessorClosure() {
     // avoiding allocations where possible is worthwhile.
     //
     read: function EvaluatorPreprocessor_read(operation) {
-      var args = operation.args;
+      let args = operation.args;
       while (true) {
-        var obj = this.parser.getObj();
+        const obj = this.parser.getObj();
         if (isCmd(obj)) {
-          var cmd = obj.cmd;
+          const cmd = obj.cmd;
           // Check that the command is valid
-          var opSpec = OP_MAP[cmd];
+          const opSpec = OP_MAP[cmd];
           if (!opSpec) {
-            warn('Unknown command "' + cmd + '"');
+            warn(`Unknown command "${cmd}"`);
             continue;
           }
 
-          var fn = opSpec.id;
-          var numArgs = opSpec.numArgs;
-          var argsLength = args !== null ? args.length : 0;
+          const fn = opSpec.id;
+          const numArgs = opSpec.numArgs;
+          let argsLength = args !== null ? args.length : 0;
 
           if (!opSpec.variableArgs) {
             // Postscript commands can be nested, e.g. /F2 /GS2 gs 5.711 Tf
             if (argsLength !== numArgs) {
-              var nonProcessedArgs = this.nonProcessedArgs;
+              const nonProcessedArgs = this.nonProcessedArgs;
               while (argsLength > numArgs) {
                 nonProcessedArgs.push(args.shift());
                 argsLength--;
@@ -2394,15 +2394,15 @@ var EvaluatorPreprocessor = (function EvaluatorPreprocessorClosure() {
             if (argsLength < numArgs) {
               // If we receive too few args, it's not possible to possible
               // to execute the command, so skip the command
-              info('Command ' + fn + ': because expected ' +
-                   numArgs + ' args, but received ' + argsLength +
-                   ' args; skipping');
+              info(`Command ${fn}: because expected ${
+                numArgs} args, but received ${argsLength
+              } args; skipping`);
               args = null;
               continue;
             }
           } else if (argsLength > numArgs) {
-            info('Command ' + fn + ': expected [0,' + numArgs +
-                 '] args, but received ' + argsLength + ' args');
+            info(`Command ${fn}: expected [0,${numArgs
+            }] args, but received ${argsLength} args`);
           }
 
           // TODO figure out how to type-check vararg functions
@@ -2429,42 +2429,42 @@ var EvaluatorPreprocessor = (function EvaluatorPreprocessorClosure() {
 
     preprocessCommand:
         function EvaluatorPreprocessor_preprocessCommand(fn, args) {
-      switch (fn | 0) {
-        case OPS.save:
-          this.stateManager.save();
-          break;
-        case OPS.restore:
-          this.stateManager.restore();
-          break;
-        case OPS.transform:
-          this.stateManager.transform(args);
-          break;
-      }
-    }
+          switch (fn | 0) {
+            case OPS.save:
+              this.stateManager.save();
+              break;
+            case OPS.restore:
+              this.stateManager.restore();
+              break;
+            case OPS.transform:
+              this.stateManager.transform(args);
+              break;
+          }
+        },
   };
   return EvaluatorPreprocessor;
 })();
 
 var QueueOptimizer = (function QueueOptimizerClosure() {
   function addState(parentState, pattern, fn) {
-    var state = parentState;
-    for (var i = 0, ii = pattern.length - 1; i < ii; i++) {
-      var item = pattern[i];
+    let state = parentState;
+    for (let i = 0, ii = pattern.length - 1; i < ii; i++) {
+      const item = pattern[i];
       state = (state[item] || (state[item] = []));
     }
     state[pattern[pattern.length - 1]] = fn;
   }
 
   function handlePaintSolidColorImageMask(iFirstSave, count, fnArray,
-                                          argsArray) {
+      argsArray) {
     // Handles special case of mainly LaTeX documents which use image masks to
     // draw lines with the current fill style.
     // 'count' groups of (save, transform, paintImageMaskXObject, restore)+
     // have been found at iFirstSave.
-    var iFirstPIMXO = iFirstSave + 2;
+    const iFirstPIMXO = iFirstSave + 2;
     for (var i = 0; i < count; i++) {
-      var arg = argsArray[iFirstPIMXO + 4 * i];
-      var imageMask = arg.length === 1 && arg[0];
+      const arg = argsArray[iFirstPIMXO + 4 * i];
+      const imageMask = arg.length === 1 && arg[0];
       if (imageMask && imageMask.width === 1 && imageMask.height === 1 &&
           (!imageMask.data.length ||
            (imageMask.data.length === 1 && imageMask.data[0] === 0))) {
@@ -2476,360 +2476,370 @@ var QueueOptimizer = (function QueueOptimizerClosure() {
     return count - i;
   }
 
-  var InitialState = [];
+  const InitialState = [];
 
   // This replaces (save, transform, paintInlineImageXObject, restore)+
   // sequences with one |paintInlineImageXObjectGroup| operation.
   addState(InitialState,
-    [OPS.save, OPS.transform, OPS.paintInlineImageXObject, OPS.restore],
-    function foundInlineImageGroup(context) {
-      var MIN_IMAGES_IN_INLINE_IMAGES_BLOCK = 10;
-      var MAX_IMAGES_IN_INLINE_IMAGES_BLOCK = 200;
-      var MAX_WIDTH = 1000;
-      var IMAGE_PADDING = 1;
+      [OPS.save, OPS.transform, OPS.paintInlineImageXObject, OPS.restore],
+      (context) => {
+        const MIN_IMAGES_IN_INLINE_IMAGES_BLOCK = 10;
+        const MAX_IMAGES_IN_INLINE_IMAGES_BLOCK = 200;
+        const MAX_WIDTH = 1000;
+        const IMAGE_PADDING = 1;
 
-      var fnArray = context.fnArray, argsArray = context.argsArray;
-      var curr = context.iCurr;
-      var iFirstSave = curr - 3;
-      var iFirstTransform = curr - 2;
-      var iFirstPIIXO = curr - 1;
+        const fnArray = context.fnArray; const
+          argsArray = context.argsArray;
+        const curr = context.iCurr;
+        const iFirstSave = curr - 3;
+        const iFirstTransform = curr - 2;
+        const iFirstPIIXO = curr - 1;
 
-      // Look for the quartets.
-      var i = iFirstSave + 4;
-      var ii = fnArray.length;
-      while (i + 3 < ii) {
-        if (fnArray[i] !== OPS.save ||
+        // Look for the quartets.
+        let i = iFirstSave + 4;
+        const ii = fnArray.length;
+        while (i + 3 < ii) {
+          if (fnArray[i] !== OPS.save ||
             fnArray[i + 1] !== OPS.transform ||
             fnArray[i + 2] !== OPS.paintInlineImageXObject ||
             fnArray[i + 3] !== OPS.restore) {
-          break;    // ops don't match
+            break; // ops don't match
+          }
+          i += 4;
         }
-        i += 4;
-      }
 
-      // At this point, i is the index of the first op past the last valid
-      // quartet.
-      var count = Math.min((i - iFirstSave) / 4,
-                           MAX_IMAGES_IN_INLINE_IMAGES_BLOCK);
-      if (count < MIN_IMAGES_IN_INLINE_IMAGES_BLOCK) {
-        return i;
-      }
+        // At this point, i is the index of the first op past the last valid
+        // quartet.
+        const count = Math.min((i - iFirstSave) / 4,
+            MAX_IMAGES_IN_INLINE_IMAGES_BLOCK);
+        if (count < MIN_IMAGES_IN_INLINE_IMAGES_BLOCK) {
+          return i;
+        }
 
-      // assuming that heights of those image is too small (~1 pixel)
-      // packing as much as possible by lines
-      var maxX = 0;
-      var map = [], maxLineHeight = 0;
-      var currentX = IMAGE_PADDING, currentY = IMAGE_PADDING;
-      var q;
-      for (q = 0; q < count; q++) {
-        var transform = argsArray[iFirstTransform + (q << 2)];
-        var img = argsArray[iFirstPIIXO + (q << 2)][0];
-        if (currentX + img.width > MAX_WIDTH) {
-          // starting new line
-          maxX = Math.max(maxX, currentX);
-          currentY += maxLineHeight + 2 * IMAGE_PADDING;
-          currentX = 0;
+        // assuming that heights of those image is too small (~1 pixel)
+        // packing as much as possible by lines
+        let maxX = 0;
+        const map = []; let
           maxLineHeight = 0;
+        let currentX = IMAGE_PADDING; let
+          currentY = IMAGE_PADDING;
+        let q;
+        for (q = 0; q < count; q++) {
+          const transform = argsArray[iFirstTransform + (q << 2)];
+          const img = argsArray[iFirstPIIXO + (q << 2)][0];
+          if (currentX + img.width > MAX_WIDTH) {
+          // starting new line
+            maxX = Math.max(maxX, currentX);
+            currentY += maxLineHeight + 2 * IMAGE_PADDING;
+            currentX = 0;
+            maxLineHeight = 0;
+          }
+          map.push({
+            transform,
+            x: currentX, y: currentY,
+            w: img.width, h: img.height,
+          });
+          currentX += img.width + 2 * IMAGE_PADDING;
+          maxLineHeight = Math.max(maxLineHeight, img.height);
         }
-        map.push({
-          transform: transform,
-          x: currentX, y: currentY,
-          w: img.width, h: img.height
-        });
-        currentX += img.width + 2 * IMAGE_PADDING;
-        maxLineHeight = Math.max(maxLineHeight, img.height);
-      }
-      var imgWidth = Math.max(maxX, currentX) + IMAGE_PADDING;
-      var imgHeight = currentY + maxLineHeight + IMAGE_PADDING;
-      var imgData = new Uint8Array(imgWidth * imgHeight * 4);
-      var imgRowSize = imgWidth << 2;
-      for (q = 0; q < count; q++) {
-        var data = argsArray[iFirstPIIXO + (q << 2)][0].data;
-        // Copy image by lines and extends pixels into padding.
-        var rowSize = map[q].w << 2;
-        var dataOffset = 0;
-        var offset = (map[q].x + map[q].y * imgWidth) << 2;
-        imgData.set(data.subarray(0, rowSize), offset - imgRowSize);
-        for (var k = 0, kk = map[q].h; k < kk; k++) {
-          imgData.set(data.subarray(dataOffset, dataOffset + rowSize), offset);
-          dataOffset += rowSize;
-          offset += imgRowSize;
+        const imgWidth = Math.max(maxX, currentX) + IMAGE_PADDING;
+        const imgHeight = currentY + maxLineHeight + IMAGE_PADDING;
+        const imgData = new Uint8Array(imgWidth * imgHeight * 4);
+        const imgRowSize = imgWidth << 2;
+        for (q = 0; q < count; q++) {
+          const data = argsArray[iFirstPIIXO + (q << 2)][0].data;
+          // Copy image by lines and extends pixels into padding.
+          const rowSize = map[q].w << 2;
+          let dataOffset = 0;
+          let offset = (map[q].x + map[q].y * imgWidth) << 2;
+          imgData.set(data.subarray(0, rowSize), offset - imgRowSize);
+          for (let k = 0, kk = map[q].h; k < kk; k++) {
+            imgData.set(data.subarray(dataOffset, dataOffset + rowSize), offset);
+            dataOffset += rowSize;
+            offset += imgRowSize;
+          }
+          imgData.set(data.subarray(dataOffset - rowSize, dataOffset), offset);
+          while (offset >= 0) {
+            data[offset - 4] = data[offset];
+            data[offset - 3] = data[offset + 1];
+            data[offset - 2] = data[offset + 2];
+            data[offset - 1] = data[offset + 3];
+            data[offset + rowSize] = data[offset + rowSize - 4];
+            data[offset + rowSize + 1] = data[offset + rowSize - 3];
+            data[offset + rowSize + 2] = data[offset + rowSize - 2];
+            data[offset + rowSize + 3] = data[offset + rowSize - 1];
+            offset -= imgRowSize;
+          }
         }
-        imgData.set(data.subarray(dataOffset - rowSize, dataOffset), offset);
-        while (offset >= 0) {
-          data[offset - 4] = data[offset];
-          data[offset - 3] = data[offset + 1];
-          data[offset - 2] = data[offset + 2];
-          data[offset - 1] = data[offset + 3];
-          data[offset + rowSize] = data[offset + rowSize - 4];
-          data[offset + rowSize + 1] = data[offset + rowSize - 3];
-          data[offset + rowSize + 2] = data[offset + rowSize - 2];
-          data[offset + rowSize + 3] = data[offset + rowSize - 1];
-          offset -= imgRowSize;
-        }
-      }
 
-      // Replace queue items.
-      fnArray.splice(iFirstSave, count * 4, OPS.paintInlineImageXObjectGroup);
-      argsArray.splice(iFirstSave, count * 4,
-        [{ width: imgWidth, height: imgHeight, kind: ImageKind.RGBA_32BPP,
-           data: imgData }, map]);
+        // Replace queue items.
+        fnArray.splice(iFirstSave, count * 4, OPS.paintInlineImageXObjectGroup);
+        argsArray.splice(iFirstSave, count * 4,
+            [{width: imgWidth, height: imgHeight, kind: ImageKind.RGBA_32BPP,
+              data: imgData}, map]);
 
-      return iFirstSave + 1;
-    });
+        return iFirstSave + 1;
+      });
 
   // This replaces (save, transform, paintImageMaskXObject, restore)+
   // sequences with one |paintImageMaskXObjectGroup| or one
   // |paintImageMaskXObjectRepeat| operation.
   addState(InitialState,
-    [OPS.save, OPS.transform, OPS.paintImageMaskXObject, OPS.restore],
-    function foundImageMaskGroup(context) {
-      var MIN_IMAGES_IN_MASKS_BLOCK = 10;
-      var MAX_IMAGES_IN_MASKS_BLOCK = 100;
-      var MAX_SAME_IMAGES_IN_MASKS_BLOCK = 1000;
+      [OPS.save, OPS.transform, OPS.paintImageMaskXObject, OPS.restore],
+      (context) => {
+        const MIN_IMAGES_IN_MASKS_BLOCK = 10;
+        const MAX_IMAGES_IN_MASKS_BLOCK = 100;
+        const MAX_SAME_IMAGES_IN_MASKS_BLOCK = 1000;
 
-      var fnArray = context.fnArray, argsArray = context.argsArray;
-      var curr = context.iCurr;
-      var iFirstSave = curr - 3;
-      var iFirstTransform = curr - 2;
-      var iFirstPIMXO = curr - 1;
+        const fnArray = context.fnArray; const
+          argsArray = context.argsArray;
+        const curr = context.iCurr;
+        const iFirstSave = curr - 3;
+        const iFirstTransform = curr - 2;
+        const iFirstPIMXO = curr - 1;
 
-      // Look for the quartets.
-      var i = iFirstSave + 4;
-      var ii = fnArray.length;
-      while (i + 3 < ii) {
-        if (fnArray[i] !== OPS.save ||
+        // Look for the quartets.
+        let i = iFirstSave + 4;
+        const ii = fnArray.length;
+        while (i + 3 < ii) {
+          if (fnArray[i] !== OPS.save ||
             fnArray[i + 1] !== OPS.transform ||
             fnArray[i + 2] !== OPS.paintImageMaskXObject ||
             fnArray[i + 3] !== OPS.restore) {
-          break;    // ops don't match
+            break; // ops don't match
+          }
+          i += 4;
         }
-        i += 4;
-      }
 
-      // At this point, i is the index of the first op past the last valid
-      // quartet.
-      var count = (i - iFirstSave) / 4;
-      count = handlePaintSolidColorImageMask(iFirstSave, count, fnArray,
-                                             argsArray);
-      if (count < MIN_IMAGES_IN_MASKS_BLOCK) {
-        return i;
-      }
+        // At this point, i is the index of the first op past the last valid
+        // quartet.
+        let count = (i - iFirstSave) / 4;
+        count = handlePaintSolidColorImageMask(iFirstSave, count, fnArray,
+            argsArray);
+        if (count < MIN_IMAGES_IN_MASKS_BLOCK) {
+          return i;
+        }
 
-      var q;
-      var isSameImage = false;
-      var iTransform, transformArgs;
-      var firstPIMXOArg0 = argsArray[iFirstPIMXO][0];
-      if (argsArray[iFirstTransform][1] === 0 &&
+        let q;
+        let isSameImage = false;
+        let iTransform, transformArgs;
+        const firstPIMXOArg0 = argsArray[iFirstPIMXO][0];
+        if (argsArray[iFirstTransform][1] === 0 &&
           argsArray[iFirstTransform][2] === 0) {
-        isSameImage = true;
-        var firstTransformArg0 = argsArray[iFirstTransform][0];
-        var firstTransformArg3 = argsArray[iFirstTransform][3];
-        iTransform = iFirstTransform + 4;
-        var iPIMXO = iFirstPIMXO + 4;
-        for (q = 1; q < count; q++, iTransform += 4, iPIMXO += 4) {
-          transformArgs = argsArray[iTransform];
-          if (argsArray[iPIMXO][0] !== firstPIMXOArg0 ||
+          isSameImage = true;
+          var firstTransformArg0 = argsArray[iFirstTransform][0];
+          var firstTransformArg3 = argsArray[iFirstTransform][3];
+          iTransform = iFirstTransform + 4;
+          let iPIMXO = iFirstPIMXO + 4;
+          for (q = 1; q < count; q++, iTransform += 4, iPIMXO += 4) {
+            transformArgs = argsArray[iTransform];
+            if (argsArray[iPIMXO][0] !== firstPIMXOArg0 ||
               transformArgs[0] !== firstTransformArg0 ||
               transformArgs[1] !== 0 ||
               transformArgs[2] !== 0 ||
               transformArgs[3] !== firstTransformArg3) {
-            if (q < MIN_IMAGES_IN_MASKS_BLOCK) {
-              isSameImage = false;
-            } else {
-              count = q;
+              if (q < MIN_IMAGES_IN_MASKS_BLOCK) {
+                isSameImage = false;
+              } else {
+                count = q;
+              }
+              break; // different image or transform
             }
-            break; // different image or transform
           }
         }
-      }
 
-      if (isSameImage) {
-        count = Math.min(count, MAX_SAME_IMAGES_IN_MASKS_BLOCK);
-        var positions = new Float32Array(count * 2);
-        iTransform = iFirstTransform;
-        for (q = 0; q < count; q++, iTransform += 4) {
-          transformArgs = argsArray[iTransform];
-          positions[(q << 1)] = transformArgs[4];
-          positions[(q << 1) + 1] = transformArgs[5];
+        if (isSameImage) {
+          count = Math.min(count, MAX_SAME_IMAGES_IN_MASKS_BLOCK);
+          const positions = new Float32Array(count * 2);
+          iTransform = iFirstTransform;
+          for (q = 0; q < count; q++, iTransform += 4) {
+            transformArgs = argsArray[iTransform];
+            positions[(q << 1)] = transformArgs[4];
+            positions[(q << 1) + 1] = transformArgs[5];
+          }
+
+          // Replace queue items.
+          fnArray.splice(iFirstSave, count * 4, OPS.paintImageMaskXObjectRepeat);
+          argsArray.splice(iFirstSave, count * 4,
+              [firstPIMXOArg0, firstTransformArg0, firstTransformArg3, positions]);
+        } else {
+          count = Math.min(count, MAX_IMAGES_IN_MASKS_BLOCK);
+          const images = [];
+          for (q = 0; q < count; q++) {
+            transformArgs = argsArray[iFirstTransform + (q << 2)];
+            const maskParams = argsArray[iFirstPIMXO + (q << 2)][0];
+            images.push({data: maskParams.data, width: maskParams.width,
+              height: maskParams.height,
+              transform: transformArgs});
+          }
+
+          // Replace queue items.
+          fnArray.splice(iFirstSave, count * 4, OPS.paintImageMaskXObjectGroup);
+          argsArray.splice(iFirstSave, count * 4, [images]);
         }
 
-        // Replace queue items.
-        fnArray.splice(iFirstSave, count * 4, OPS.paintImageMaskXObjectRepeat);
-        argsArray.splice(iFirstSave, count * 4,
-          [firstPIMXOArg0, firstTransformArg0, firstTransformArg3, positions]);
-      } else {
-        count = Math.min(count, MAX_IMAGES_IN_MASKS_BLOCK);
-        var images = [];
-        for (q = 0; q < count; q++) {
-          transformArgs = argsArray[iFirstTransform + (q << 2)];
-          var maskParams = argsArray[iFirstPIMXO + (q << 2)][0];
-          images.push({ data: maskParams.data, width: maskParams.width,
-                        height: maskParams.height,
-                        transform: transformArgs });
-        }
-
-        // Replace queue items.
-        fnArray.splice(iFirstSave, count * 4, OPS.paintImageMaskXObjectGroup);
-        argsArray.splice(iFirstSave, count * 4, [images]);
-      }
-
-      return iFirstSave + 1;
-    });
+        return iFirstSave + 1;
+      });
 
   // This replaces (save, transform, paintImageXObject, restore)+ sequences
   // with one paintImageXObjectRepeat operation, if the |transform| and
   // |paintImageXObjectRepeat| ops are appropriate.
   addState(InitialState,
-    [OPS.save, OPS.transform, OPS.paintImageXObject, OPS.restore],
-    function (context) {
-      var MIN_IMAGES_IN_BLOCK = 3;
-      var MAX_IMAGES_IN_BLOCK = 1000;
+      [OPS.save, OPS.transform, OPS.paintImageXObject, OPS.restore],
+      (context) => {
+        const MIN_IMAGES_IN_BLOCK = 3;
+        const MAX_IMAGES_IN_BLOCK = 1000;
 
-      var fnArray = context.fnArray, argsArray = context.argsArray;
-      var curr = context.iCurr;
-      var iFirstSave = curr - 3;
-      var iFirstTransform = curr - 2;
-      var iFirstPIXO = curr - 1;
-      var iFirstRestore = curr;
+        const fnArray = context.fnArray; const
+          argsArray = context.argsArray;
+        const curr = context.iCurr;
+        const iFirstSave = curr - 3;
+        const iFirstTransform = curr - 2;
+        const iFirstPIXO = curr - 1;
+        const iFirstRestore = curr;
 
-      if (argsArray[iFirstTransform][1] !== 0 ||
+        if (argsArray[iFirstTransform][1] !== 0 ||
           argsArray[iFirstTransform][2] !== 0) {
-        return iFirstRestore + 1;   // transform has the wrong form
-      }
+          return iFirstRestore + 1; // transform has the wrong form
+        }
 
-      // Look for the quartets.
-      var firstPIXOArg0 = argsArray[iFirstPIXO][0];
-      var firstTransformArg0 = argsArray[iFirstTransform][0];
-      var firstTransformArg3 = argsArray[iFirstTransform][3];
-      var i = iFirstSave + 4;
-      var ii = fnArray.length;
-      while (i + 3 < ii) {
-        if (fnArray[i] !== OPS.save ||
+        // Look for the quartets.
+        const firstPIXOArg0 = argsArray[iFirstPIXO][0];
+        const firstTransformArg0 = argsArray[iFirstTransform][0];
+        const firstTransformArg3 = argsArray[iFirstTransform][3];
+        let i = iFirstSave + 4;
+        const ii = fnArray.length;
+        while (i + 3 < ii) {
+          if (fnArray[i] !== OPS.save ||
             fnArray[i + 1] !== OPS.transform ||
             fnArray[i + 2] !== OPS.paintImageXObject ||
             fnArray[i + 3] !== OPS.restore) {
-          break;    // ops don't match
-        }
-        if (argsArray[i + 1][0] !== firstTransformArg0 ||
+            break; // ops don't match
+          }
+          if (argsArray[i + 1][0] !== firstTransformArg0 ||
             argsArray[i + 1][1] !== 0 ||
             argsArray[i + 1][2] !== 0 ||
             argsArray[i + 1][3] !== firstTransformArg3) {
-          break;    // transforms don't match
+            break; // transforms don't match
+          }
+          if (argsArray[i + 2][0] !== firstPIXOArg0) {
+            break; // images don't match
+          }
+          i += 4;
         }
-        if (argsArray[i + 2][0] !== firstPIXOArg0) {
-          break;    // images don't match
+
+        // At this point, i is the index of the first op past the last valid
+        // quartet.
+        const count = Math.min((i - iFirstSave) / 4, MAX_IMAGES_IN_BLOCK);
+        if (count < MIN_IMAGES_IN_BLOCK) {
+          return i;
         }
-        i += 4;
-      }
 
-      // At this point, i is the index of the first op past the last valid
-      // quartet.
-      var count = Math.min((i - iFirstSave) / 4, MAX_IMAGES_IN_BLOCK);
-      if (count < MIN_IMAGES_IN_BLOCK) {
-        return i;
-      }
+        // Extract the (x,y) positions from all of the matching transforms.
+        const positions = new Float32Array(count * 2);
+        let iTransform = iFirstTransform;
+        for (let q = 0; q < count; q++, iTransform += 4) {
+          const transformArgs = argsArray[iTransform];
+          positions[(q << 1)] = transformArgs[4];
+          positions[(q << 1) + 1] = transformArgs[5];
+        }
 
-      // Extract the (x,y) positions from all of the matching transforms.
-      var positions = new Float32Array(count * 2);
-      var iTransform = iFirstTransform;
-      for (var q = 0; q < count; q++, iTransform += 4) {
-        var transformArgs = argsArray[iTransform];
-        positions[(q << 1)] = transformArgs[4];
-        positions[(q << 1) + 1] = transformArgs[5];
-      }
+        // Replace queue items.
+        const args = [firstPIXOArg0,
+          firstTransformArg0,
+          firstTransformArg3,
+          positions];
+        fnArray.splice(iFirstSave, count * 4, OPS.paintImageXObjectRepeat);
+        argsArray.splice(iFirstSave, count * 4, args);
 
-      // Replace queue items.
-      var args = [firstPIXOArg0, firstTransformArg0, firstTransformArg3,
-                  positions];
-      fnArray.splice(iFirstSave, count * 4, OPS.paintImageXObjectRepeat);
-      argsArray.splice(iFirstSave, count * 4, args);
-
-      return iFirstSave + 1;
-    });
+        return iFirstSave + 1;
+      });
 
   // This replaces (beginText, setFont, setTextMatrix, showText, endText)+
   // sequences with (beginText, setFont, (setTextMatrix, showText)+, endText)+
   // sequences, if the font for each one is the same.
   addState(InitialState,
-    [OPS.beginText, OPS.setFont, OPS.setTextMatrix, OPS.showText, OPS.endText],
-    function (context) {
-      var MIN_CHARS_IN_BLOCK = 3;
-      var MAX_CHARS_IN_BLOCK = 1000;
+      [OPS.beginText, OPS.setFont, OPS.setTextMatrix, OPS.showText, OPS.endText],
+      (context) => {
+        const MIN_CHARS_IN_BLOCK = 3;
+        const MAX_CHARS_IN_BLOCK = 1000;
 
-      var fnArray = context.fnArray, argsArray = context.argsArray;
-      var curr = context.iCurr;
-      var iFirstBeginText = curr - 4;
-      var iFirstSetFont = curr - 3;
-      var iFirstSetTextMatrix = curr - 2;
-      var iFirstShowText = curr - 1;
-      var iFirstEndText = curr;
+        const fnArray = context.fnArray; const
+          argsArray = context.argsArray;
+        const curr = context.iCurr;
+        const iFirstBeginText = curr - 4;
+        const iFirstSetFont = curr - 3;
+        const iFirstSetTextMatrix = curr - 2;
+        const iFirstShowText = curr - 1;
+        const iFirstEndText = curr;
 
-      // Look for the quintets.
-      var firstSetFontArg0 = argsArray[iFirstSetFont][0];
-      var firstSetFontArg1 = argsArray[iFirstSetFont][1];
-      var i = iFirstBeginText + 5;
-      var ii = fnArray.length;
-      while (i + 4 < ii) {
-        if (fnArray[i] !== OPS.beginText ||
+        // Look for the quintets.
+        const firstSetFontArg0 = argsArray[iFirstSetFont][0];
+        const firstSetFontArg1 = argsArray[iFirstSetFont][1];
+        let i = iFirstBeginText + 5;
+        const ii = fnArray.length;
+        while (i + 4 < ii) {
+          if (fnArray[i] !== OPS.beginText ||
             fnArray[i + 1] !== OPS.setFont ||
             fnArray[i + 2] !== OPS.setTextMatrix ||
             fnArray[i + 3] !== OPS.showText ||
             fnArray[i + 4] !== OPS.endText) {
-          break;    // ops don't match
-        }
-        if (argsArray[i + 1][0] !== firstSetFontArg0 ||
+            break; // ops don't match
+          }
+          if (argsArray[i + 1][0] !== firstSetFontArg0 ||
             argsArray[i + 1][1] !== firstSetFontArg1) {
-          break;    // fonts don't match
+            break; // fonts don't match
+          }
+          i += 5;
         }
-        i += 5;
-      }
 
-      // At this point, i is the index of the first op past the last valid
-      // quintet.
-      var count = Math.min(((i - iFirstBeginText) / 5), MAX_CHARS_IN_BLOCK);
-      if (count < MIN_CHARS_IN_BLOCK) {
-        return i;
-      }
+        // At this point, i is the index of the first op past the last valid
+        // quintet.
+        let count = Math.min(((i - iFirstBeginText) / 5), MAX_CHARS_IN_BLOCK);
+        if (count < MIN_CHARS_IN_BLOCK) {
+          return i;
+        }
 
-      // If the preceding quintet is (<something>, setFont, setTextMatrix,
-      // showText, endText), include that as well. (E.g. <something> might be
-      // |dependency|.)
-      var iFirst = iFirstBeginText;
-      if (iFirstBeginText >= 4 &&
+        // If the preceding quintet is (<something>, setFont, setTextMatrix,
+        // showText, endText), include that as well. (E.g. <something> might be
+        // |dependency|.)
+        let iFirst = iFirstBeginText;
+        if (iFirstBeginText >= 4 &&
           fnArray[iFirstBeginText - 4] === fnArray[iFirstSetFont] &&
           fnArray[iFirstBeginText - 3] === fnArray[iFirstSetTextMatrix] &&
           fnArray[iFirstBeginText - 2] === fnArray[iFirstShowText] &&
           fnArray[iFirstBeginText - 1] === fnArray[iFirstEndText] &&
           argsArray[iFirstBeginText - 4][0] === firstSetFontArg0 &&
           argsArray[iFirstBeginText - 4][1] === firstSetFontArg1) {
-        count++;
-        iFirst -= 5;
-      }
+          count++;
+          iFirst -= 5;
+        }
 
-      // Remove (endText, beginText, setFont) trios.
-      var iEndText = iFirst + 4;
-      for (var q = 1; q < count; q++) {
-        fnArray.splice(iEndText, 3);
-        argsArray.splice(iEndText, 3);
-        iEndText += 2;
-      }
+        // Remove (endText, beginText, setFont) trios.
+        let iEndText = iFirst + 4;
+        for (let q = 1; q < count; q++) {
+          fnArray.splice(iEndText, 3);
+          argsArray.splice(iEndText, 3);
+          iEndText += 2;
+        }
 
-      return iEndText + 1;
-    });
+        return iEndText + 1;
+      });
 
   function QueueOptimizer() {}
 
   QueueOptimizer.prototype = {
     optimize: function QueueOptimizer_optimize(queue) {
-      var fnArray = queue.fnArray, argsArray = queue.argsArray;
-      var context = {
+      const fnArray = queue.fnArray; const
+        argsArray = queue.argsArray;
+      const context = {
         iCurr: 0,
-        fnArray: fnArray,
-        argsArray: argsArray
+        fnArray,
+        argsArray,
       };
-      var state;
-      var i = 0, ii = fnArray.length;
+      let state;
+      let i = 0; let
+        ii = fnArray.length;
       while (i < ii) {
         state = (state || InitialState)[fnArray[i]];
         if (typeof state === 'function') { // we found some handler
@@ -2838,13 +2848,13 @@ var QueueOptimizer = (function QueueOptimizerClosure() {
           // didn't match) or the first op past the modified ops (if we did
           // match and replace).
           i = state(context);
-          state = undefined;    // reset the state machine
+          state = undefined; // reset the state machine
           ii = context.fnArray.length;
         } else {
           i++;
         }
       }
-    }
+    },
   };
   return QueueOptimizer;
 })();

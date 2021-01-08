@@ -1,9 +1,8 @@
-
 'use strict';
 
-var TestReporter = function(browser, appPath) {
+const TestReporter = function (browser, appPath) {
   function send(action, json, cb) {
-    var r = new XMLHttpRequest();
+    const r = new XMLHttpRequest();
     // (The POST URI is ignored atm.)
     r.open('POST', action, true);
     r.setRequestHeader('Content-Type', 'application/json');
@@ -12,68 +11,66 @@ var TestReporter = function(browser, appPath) {
         // Retry until successful
         if (r.status !== 200) {
           send(action, json, cb);
-        } else {
-          if (cb) {
-            cb();
-          }
+        } else if (cb) {
+          cb();
         }
       }
     };
-    json['browser'] = browser;
+    json.browser = browser;
     r.send(JSON.stringify(json));
   }
 
   function sendInfo(message) {
-    send('/info', {message: message});
+    send('/info', {message});
   }
 
   function sendResult(status, description, error) {
-    var message = {
-      status: status,
-      description: description
+    const message = {
+      status,
+      description,
     };
     if (typeof error !== 'undefined') {
-      message['error'] = error;
+      message.error = error;
     }
     send('/submit_task_results', message);
   }
 
   function sendQuitRequest() {
-    send('/tellMeToQuit?path=' + escape(appPath), {});
+    send(`/tellMeToQuit?path=${escape(appPath)}`, {});
   }
 
-  this.now = function() {
+  this.now = function () {
     return new Date().getTime();
   };
 
-  this.reportRunnerStarting = function() {
+  this.reportRunnerStarting = function () {
     this.runnerStartTime = this.now();
-    sendInfo('Started unit tests for ' + browser + '.');
+    sendInfo(`Started unit tests for ${browser}.`);
   };
 
-  this.reportSpecStarting = function() { };
+  this.reportSpecStarting = function () { };
 
-  this.reportSpecResults = function(spec) {
-    var results = spec.results();
+  this.reportSpecResults = function (spec) {
+    const results = spec.results();
     if (results.skipped) {
       sendResult('TEST-SKIPPED', results.description);
     } else if (results.passed()) {
       sendResult('TEST-PASSED', results.description);
     } else {
-      var failedMessages = '';
-      var items = results.getItems();
-      for (var i = 0, ii = items.length; i < ii; i++) {
+      let failedMessages = '';
+      const items = results.getItems();
+      for (let i = 0, ii = items.length; i < ii; i++) {
         if (!items[i].passed()) {
-          failedMessages += items[i].message + ' ';
+          failedMessages += `${items[i].message} `;
         }
       }
       sendResult('TEST-UNEXPECTED-FAIL', results.description, failedMessages);
     }
   };
 
-  this.reportSuiteResults = function(suite) { };
+  this.reportSuiteResults = function (suite) { };
 
-  this.reportRunnerResults = function(runner) {
+  this.reportRunnerResults = function (runner) {
     // Give the test.py some time process any queued up requests
     setTimeout(sendQuitRequest, 500);
   };

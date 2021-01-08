@@ -13,27 +13,25 @@ DOMNodeMock.prototype = {
     return this.childNodes[0];
   },
   get nextSibling() {
-    var index = this.parentNode.childNodes.indexOf(this);
+    const index = this.parentNode.childNodes.indexOf(this);
     return this.parentNode.childNodes[index + 1];
   },
   get textContent() {
     if (!this.childNodes) {
       return this.nodeValue || '';
     }
-    return this.childNodes.map(function (child) {
-      return child.textContent;
-    }).join('');
+    return this.childNodes.map((child) => child.textContent).join('');
   },
-  hasChildNodes: function () {
+  hasChildNodes() {
     return this.childNodes && this.childNodes.length > 0;
-  }
+  },
 };
 
 function decodeXML(text) {
   if (text.indexOf('&') < 0) {
     return text;
   }
-  return text.replace(/&(#(x[0-9a-f]+|\d+)|\w+);/gi, function (all, entityName, number) {
+  return text.replace(/&(#(x[0-9a-f]+|\d+)|\w+);/gi, (all, entityName, number) => {
     if (number) {
       return String.fromCharCode(number[0] === 'x' ? parseInt(number.substring(1), 16) : +number);
     }
@@ -49,57 +47,56 @@ function decodeXML(text) {
       case 'apos':
         return '\'';
     }
-    return '&' + entityName + ';';
+    return `&${entityName};`;
   });
 }
 
-function DOMParserMock() {};
+function DOMParserMock() {}
 DOMParserMock.prototype = {
-  parseFromString: function (content) {
+  parseFromString(content) {
     content = content.replace(/<\?[\s\S]*?\?>|<!--[\s\S]*?-->/g, '').trim();
-    var nodes = [];
-    content = content.replace(/>([\s\S]+?)</g, function (all, text) {
-      var i = nodes.length;
-      var node = new DOMNodeMock('#text', decodeXML(text));
+    const nodes = [];
+    content = content.replace(/>([\s\S]+?)</g, (all, text) => {
+      const i = nodes.length;
+      const node = new DOMNodeMock('#text', decodeXML(text));
       nodes.push(node);
       if (node.textContent.trim().length === 0) {
         return '><'; // ignoring whitespaces
       }
-      return '>' + i + ',<';
+      return `>${i},<`;
     });
-    content = content.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, function (all, text) {
-      var i = nodes.length;
-      var node = new DOMNodeMock('#text', text);
+    content = content.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, (all, text) => {
+      const i = nodes.length;
+      const node = new DOMNodeMock('#text', text);
       nodes.push(node);
-      return i + ',';
+      return `${i},`;
     });
-    var lastLength;
+    let lastLength;
     do {
       lastLength = nodes.length;
       content = content.replace(/<([\w\:]+)((?:[\s\w:=]|'[^']*'|"[^"]*")*)(?:\/>|>([\d,]*)<\/[^>]+>)/g,
-        function (all, name, attrs, content) {
-        var i = nodes.length;
-        var node = new DOMNodeMock(name);
-        var children = [];
-        if (content) {
-          content = content.split(',');
-          content.pop();
-          content.forEach(function (child) {
-            var childNode = nodes[+child];
-            childNode.parentNode = node;
-            children.push(childNode);
-          })
-        }
-        node.childNodes = children;
-        nodes.push(node);
-        return i + ',';
-
-      });
-    } while(lastLength < nodes.length);
+          (all, name, attrs, content) => {
+            const i = nodes.length;
+            const node = new DOMNodeMock(name);
+            const children = [];
+            if (content) {
+              content = content.split(',');
+              content.pop();
+              content.forEach((child) => {
+                const childNode = nodes[+child];
+                childNode.parentNode = node;
+                children.push(childNode);
+              });
+            }
+            node.childNodes = children;
+            nodes.push(node);
+            return `${i},`;
+          });
+    } while (lastLength < nodes.length);
     return {
-      documentElement: nodes.pop()
+      documentElement: nodes.pop(),
     };
-  }
+  },
 };
 
 exports.DOMParserMock = DOMParserMock;

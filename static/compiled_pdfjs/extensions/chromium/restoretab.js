@@ -22,8 +22,8 @@ limitations under the License.
  */
 'use strict';
 
-var url = decodeURIComponent(location.search.slice(1));
-var historyState = decodeURIComponent(location.hash.slice(1));
+const url = decodeURIComponent(location.search.slice(1));
+let historyState = decodeURIComponent(location.hash.slice(1));
 
 historyState = historyState === 'undefined' ? null : JSON.parse(historyState);
 

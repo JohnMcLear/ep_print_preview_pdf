@@ -16,7 +16,7 @@
 
 'use strict';
 
-var FirefoxCom = (function FirefoxComClosure() {
+const FirefoxCom = (function FirefoxComClosure() {
   return {
     /**
      * Creates an event that the extension is listening for and will
@@ -27,15 +27,15 @@ var FirefoxCom = (function FirefoxComClosure() {
      * @param {String} data Optional data to send.
      * @return {*} The response.
      */
-    requestSync: function(action, data) {
-      var request = document.createTextNode('');
+    requestSync(action, data) {
+      const request = document.createTextNode('');
       document.documentElement.appendChild(request);
 
-      var sender = document.createEvent('CustomEvent');
+      const sender = document.createEvent('CustomEvent');
       sender.initCustomEvent('pdf.js.message', true, false,
-                             {action: action, data: data, sync: true});
+          {action, data, sync: true});
       request.dispatchEvent(sender);
-      var response = sender.detail.response;
+      const response = sender.detail.response;
       document.documentElement.removeChild(request);
       return response;
     },
@@ -47,12 +47,12 @@ var FirefoxCom = (function FirefoxComClosure() {
      * @param {Function} callback Optional response callback that will be called
      * with one data argument.
      */
-    request: function(action, data, callback) {
-      var request = document.createTextNode('');
+    request(action, data, callback) {
+      const request = document.createTextNode('');
       if (callback) {
         document.addEventListener('pdf.js.response', function listener(event) {
-          var node = event.target;
-          var response = event.detail.response;
+          const node = event.target;
+          const response = event.detail.response;
 
           document.documentElement.removeChild(node);
 
@@ -62,72 +62,72 @@ var FirefoxCom = (function FirefoxComClosure() {
       }
       document.documentElement.appendChild(request);
 
-      var sender = document.createEvent('CustomEvent');
+      const sender = document.createEvent('CustomEvent');
       sender.initCustomEvent('pdf.js.message', true, false, {
-        action: action,
-        data: data,
+        action,
+        data,
         sync: false,
-        responseExpected: !!callback
+        responseExpected: !!callback,
       });
       return request.dispatchEvent(sender);
-    }
+    },
   };
 })();
 
-var DownloadManager = (function DownloadManagerClosure() {
+const DownloadManager = (function DownloadManagerClosure() {
   function DownloadManager() {}
 
   DownloadManager.prototype = {
     downloadUrl: function DownloadManager_downloadUrl(url, filename) {
       FirefoxCom.request('download', {
         originalUrl: url,
-        filename: filename
+        filename,
       });
     },
 
     downloadData: function DownloadManager_downloadData(data, filename,
-                                                        contentType) {
-      var blobUrl = PDFJS.createObjectURL(data, contentType);
+        contentType) {
+      const blobUrl = PDFJS.createObjectURL(data, contentType);
 
       FirefoxCom.request('download', {
-        blobUrl: blobUrl,
+        blobUrl,
         originalUrl: blobUrl,
-        filename: filename,
-        isAttachment: true
+        filename,
+        isAttachment: true,
       });
     },
 
     download: function DownloadManager_download(blob, url, filename) {
-      var blobUrl = window.URL.createObjectURL(blob);
+      const blobUrl = window.URL.createObjectURL(blob);
 
       FirefoxCom.request('download', {
-        blobUrl: blobUrl,
+        blobUrl,
         originalUrl: url,
-        filename: filename
+        filename,
       },
-        function response(err) {
-          if (err && this.onerror) {
-            this.onerror(err);
-          }
-          window.URL.revokeObjectURL(blobUrl);
-        }.bind(this)
+      (err) => {
+        if (err && this.onerror) {
+          this.onerror(err);
+        }
+        window.URL.revokeObjectURL(blobUrl);
+      }
       );
-    }
+    },
   };
 
   return DownloadManager;
 })();
 
 Preferences._writeToStorage = function (prefObj) {
-  return new Promise(function (resolve) {
+  return new Promise((resolve) => {
     FirefoxCom.request('setPreferences', prefObj, resolve);
   });
 };
 
 Preferences._readFromStorage = function (prefObj) {
-  return new Promise(function (resolve) {
-    FirefoxCom.request('getPreferences', prefObj, function (prefStr) {
-      var readPrefs = JSON.parse(prefStr);
+  return new Promise((resolve) => {
+    FirefoxCom.request('getPreferences', prefObj, (prefStr) => {
+      const readPrefs = JSON.parse(prefStr);
       resolve(readPrefs);
     });
   });

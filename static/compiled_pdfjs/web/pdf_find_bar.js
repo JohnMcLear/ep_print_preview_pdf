@@ -22,7 +22,7 @@
  * also sets up the appropriate events for the controls. Actual searching
  * is done by PDFFindController.
  */
-var PDFFindBar = (function PDFFindBarClosure() {
+const PDFFindBar = (function PDFFindBarClosure() {
   function PDFFindBar(options) {
     this.opened = false;
     this.bar = options.bar || null;
@@ -43,16 +43,16 @@ var PDFFindBar = (function PDFFindBarClosure() {
     }
 
     // Add event listeners to the DOM elements.
-    var self = this;
-    this.toggleButton.addEventListener('click', function() {
+    const self = this;
+    this.toggleButton.addEventListener('click', () => {
       self.toggle();
     });
 
-    this.findField.addEventListener('input', function() {
+    this.findField.addEventListener('input', () => {
       self.dispatchEvent('');
     });
 
-    this.bar.addEventListener('keydown', function(evt) {
+    this.bar.addEventListener('keydown', (evt) => {
       switch (evt.keyCode) {
         case 13: // Enter
           if (evt.target === self.findField) {
@@ -65,78 +65,78 @@ var PDFFindBar = (function PDFFindBarClosure() {
       }
     });
 
-    this.findPreviousButton.addEventListener('click', function() {
+    this.findPreviousButton.addEventListener('click', () => {
       self.dispatchEvent('again', true);
     });
 
-    this.findNextButton.addEventListener('click', function() {
+    this.findNextButton.addEventListener('click', () => {
       self.dispatchEvent('again', false);
     });
 
-    this.highlightAll.addEventListener('click', function() {
+    this.highlightAll.addEventListener('click', () => {
       self.dispatchEvent('highlightallchange');
     });
 
-    this.caseSensitive.addEventListener('click', function() {
+    this.caseSensitive.addEventListener('click', () => {
       self.dispatchEvent('casesensitivitychange');
     });
   }
 
   PDFFindBar.prototype = {
     dispatchEvent: function PDFFindBar_dispatchEvent(type, findPrev) {
-      var event = document.createEvent('CustomEvent');
-      event.initCustomEvent('find' + type, true, true, {
+      const event = document.createEvent('CustomEvent');
+      event.initCustomEvent(`find${type}`, true, true, {
         query: this.findField.value,
         caseSensitive: this.caseSensitive.checked,
         highlightAll: this.highlightAll.checked,
-        findPrevious: findPrev
+        findPrevious: findPrev,
       });
       return window.dispatchEvent(event);
     },
 
     updateUIState:
         function PDFFindBar_updateUIState(state, previous, matchCount) {
-      var notFound = false;
-      var findMsg = '';
-      var status = '';
+          let notFound = false;
+          let findMsg = '';
+          let status = '';
 
-      switch (state) {
-        case FindStates.FIND_FOUND:
-          break;
+          switch (state) {
+            case FindStates.FIND_FOUND:
+              break;
 
-        case FindStates.FIND_PENDING:
-          status = 'pending';
-          break;
+            case FindStates.FIND_PENDING:
+              status = 'pending';
+              break;
 
-        case FindStates.FIND_NOTFOUND:
-          findMsg = mozL10n.get('find_not_found', null, 'Phrase not found');
-          notFound = true;
-          break;
+            case FindStates.FIND_NOTFOUND:
+              findMsg = mozL10n.get('find_not_found', null, 'Phrase not found');
+              notFound = true;
+              break;
 
-        case FindStates.FIND_WRAPPED:
-          if (previous) {
-            findMsg = mozL10n.get('find_reached_top', null,
-              'Reached top of document, continued from bottom');
-          } else {
-            findMsg = mozL10n.get('find_reached_bottom', null,
-              'Reached end of document, continued from top');
+            case FindStates.FIND_WRAPPED:
+              if (previous) {
+                findMsg = mozL10n.get('find_reached_top', null,
+                    'Reached top of document, continued from bottom');
+              } else {
+                findMsg = mozL10n.get('find_reached_bottom', null,
+                    'Reached end of document, continued from top');
+              }
+              break;
           }
-          break;
-      }
 
-      if (notFound) {
-        this.findField.classList.add('notFound');
-      } else {
-        this.findField.classList.remove('notFound');
-      }
+          if (notFound) {
+            this.findField.classList.add('notFound');
+          } else {
+            this.findField.classList.remove('notFound');
+          }
 
-      this.findField.setAttribute('data-status', status);
-      this.findMsg.textContent = findMsg;
+          this.findField.setAttribute('data-status', status);
+          this.findMsg.textContent = findMsg;
 
-      this.updateResultsCount(matchCount);
-    },
+          this.updateResultsCount(matchCount);
+        },
 
-    updateResultsCount: function(matchCount) {
+    updateResultsCount(matchCount) {
       if (!this.findResultsCount) {
         return; // no UI control is provided
       }
@@ -180,7 +180,7 @@ var PDFFindBar = (function PDFFindBarClosure() {
       } else {
         this.open();
       }
-    }
+    },
   };
   return PDFFindBar;
 })();

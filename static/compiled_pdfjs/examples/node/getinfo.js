@@ -7,30 +7,30 @@
 // `node make singlefile` before running the example.
 //
 
-var fs = require('fs');
+const fs = require('fs');
 
 // HACK few hacks to let PDF.js be loaded not as a module in global space.
 global.window = global;
-global.navigator = { userAgent: "node" };
+global.navigator = {userAgent: 'node'};
 global.PDFJS = {};
 global.DOMParser = require('./domparsermock.js').DOMParserMock;
 
 require('../../build/singlefile/build/pdf.combined.js');
 
 // Loading file from file system into typed array
-var pdfPath = process.argv[2] || '../../web/compressed.tracemonkey-pldi-09.pdf';
-var data = new Uint8Array(fs.readFileSync(pdfPath));
+const pdfPath = process.argv[2] || '../../web/compressed.tracemonkey-pldi-09.pdf';
+const data = new Uint8Array(fs.readFileSync(pdfPath));
 
 // Will be using promises to load document, pages and misc data instead of
 // callback.
-PDFJS.getDocument(data).then(function (doc) {
-  var numPages = doc.numPages;
+PDFJS.getDocument(data).then((doc) => {
+  const numPages = doc.numPages;
   console.log('# Document Loaded');
-  console.log('Number of Pages: ' + numPages);
+  console.log(`Number of Pages: ${numPages}`);
   console.log();
 
-  var lastPromise; // will be used to chain promises
-  lastPromise = doc.getMetadata().then(function (data) {
+  let lastPromise; // will be used to chain promises
+  lastPromise = doc.getMetadata().then((data) => {
     console.log('# Metadata Is Loaded');
     console.log('## Info');
     console.log(JSON.stringify(data.info, null, 2));
@@ -42,33 +42,31 @@ PDFJS.getDocument(data).then(function (doc) {
     }
   });
 
-  var loadPage = function (pageNum) {
-    return doc.getPage(pageNum).then(function (page) {
-      console.log('# Page ' + pageNum);
-      var viewport = page.getViewport(1.0 /* scale */);
-      console.log('Size: ' + viewport.width + 'x' + viewport.height);
+  const loadPage = function (pageNum) {
+    return doc.getPage(pageNum).then((page) => {
+      console.log(`# Page ${pageNum}`);
+      const viewport = page.getViewport(1.0 /* scale */);
+      console.log(`Size: ${viewport.width}x${viewport.height}`);
       console.log();
-      return page.getTextContent().then(function (content) {
+      return page.getTextContent().then((content) => {
         // Content contains lots of information about the text layout and
         // styles, but we need only strings at the moment
-        var strings = content.items.map(function (item) {
-          return item.str;
-        });
+        const strings = content.items.map((item) => item.str);
         console.log('## Text Content');
         console.log(strings.join(' '));
-      }).then(function () {
+      }).then(() => {
         console.log();
       });
-    })
+    });
   };
   // Loading of the first page will wait on metadata and subsequent loadings
   // will wait on the previous pages.
-  for (var i = 1; i <= numPages; i++) {
+  for (let i = 1; i <= numPages; i++) {
     lastPromise = lastPromise.then(loadPage.bind(null, i));
   }
   return lastPromise;
-}).then(function () {
+}).then(() => {
   console.log('# End of Document');
-}, function (err) {
-  console.error('Error: ' + err);
+}, (err) => {
+  console.error(`Error: ${err}`);
 });

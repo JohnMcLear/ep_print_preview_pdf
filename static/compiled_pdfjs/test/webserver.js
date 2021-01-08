@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*jslint node: true */
+/* jslint node: true */
 
 'use strict';
 
-var http = require('http');
-var path = require('path');
-var fs = require('fs');
+const http = require('http');
+const path = require('path');
+const fs = require('fs');
 
-var mimeTypes = {
+const mimeTypes = {
   '.css': 'text/css',
   '.html': 'text/html',
   '.js': 'application/javascript',
@@ -34,10 +34,10 @@ var mimeTypes = {
   '.png': 'image/png',
   '.log': 'text/plain',
   '.bcmap': 'application/octet-stream',
-  '.properties': 'text/plain'
+  '.properties': 'text/plain',
 };
 
-var defaultMimeType = 'application/octet-stream';
+const defaultMimeType = 'application/octet-stream';
 
 function WebServer() {
   this.root = '.';
@@ -48,28 +48,28 @@ function WebServer() {
   this.cacheExpirationTime = 0;
   this.disableRangeRequests = false;
   this.hooks = {
-    'GET': [],
-    'POST': []
+    GET: [],
+    POST: [],
   };
 }
 WebServer.prototype = {
-  start: function (callback) {
+  start(callback) {
     this._ensureNonZeroPort();
     this.server = http.createServer(this._handler.bind(this));
     this.server.listen(this.port, this.host, callback);
     console.log(
-      'Server running at http://' + this.host + ':' + this.port + '/');
+        `Server running at http://${this.host}:${this.port}/`);
   },
-  stop: function (callback) {
+  stop(callback) {
     this.server.close(callback);
     this.server = null;
   },
-  _ensureNonZeroPort: function () {
+  _ensureNonZeroPort() {
     if (!this.port) {
       // If port is 0, a random port will be chosen instead. Do not set a host
       // name to make sure that the port is synchronously set by .listen().
-      var server = http.createServer().listen(0);
-      var address = server.address();
+      const server = http.createServer().listen(0);
+      const address = server.address();
       // .address().port being available synchronously is merely an
       // implementation detail. So we are defensive here and fall back to some
       // fixed port when the address is not available yet.
@@ -77,35 +77,34 @@ WebServer.prototype = {
       server.close();
     }
   },
-  _handler: function (req, res) {
-    var url = req.url.replace(/\/\//g, '/');
-    var urlParts = /([^?]*)((?:\?(.*))?)/.exec(url);
-    var pathPart = decodeURI(urlParts[1]), queryPart = urlParts[3];
-    var verbose = this.verbose;
+  _handler(req, res) {
+    const url = req.url.replace(/\/\//g, '/');
+    const urlParts = /([^?]*)((?:\?(.*))?)/.exec(url);
+    const pathPart = decodeURI(urlParts[1]); const
+      queryPart = urlParts[3];
+    const verbose = this.verbose;
 
-    var methodHooks = this.hooks[req.method];
+    const methodHooks = this.hooks[req.method];
     if (!methodHooks) {
       res.writeHead(405);
       res.end('Unsupported request method', 'utf8');
       return;
     }
-    var handled = methodHooks.some(function (hook) {
-      return hook(req, res);
-    });
+    const handled = methodHooks.some((hook) => hook(req, res));
     if (handled) {
       return;
     }
 
     if (pathPart === '/favicon.ico') {
       fs.realpath(path.join(this.root, 'test/resources/favicon.ico'),
-                  checkFile);
+          checkFile);
       return;
     }
 
-    var disableRangeRequests = this.disableRangeRequests;
-    var cacheExpirationTime = this.cacheExpirationTime;
+    const disableRangeRequests = this.disableRangeRequests;
+    const cacheExpirationTime = this.cacheExpirationTime;
 
-    var filePath;
+    let filePath;
     fs.realpath(path.join(this.root, pathPart), checkFile);
 
     function checkFile(err, file) {
@@ -113,7 +112,7 @@ WebServer.prototype = {
         res.writeHead(404);
         res.end();
         if (verbose) {
-          console.error(url + ': not found');
+          console.error(`${url}: not found`);
         }
         return;
       }
@@ -121,7 +120,7 @@ WebServer.prototype = {
       fs.stat(filePath, statFile);
     }
 
-    var fileSize;
+    let fileSize;
 
     function statFile(err, stats) {
       if (err) {
@@ -131,9 +130,9 @@ WebServer.prototype = {
       }
 
       fileSize = stats.size;
-      var isDir = stats.isDirectory();
+      const isDir = stats.isDirectory();
       if (isDir && !/\/$/.test(pathPart)) {
-        res.setHeader('Location', pathPart + '/' + urlParts[2]);
+        res.setHeader('Location', `${pathPart}/${urlParts[2]}`);
         res.writeHead(301);
         res.end('Redirected', 'utf8');
         return;
@@ -143,25 +142,25 @@ WebServer.prototype = {
         return;
       }
 
-      var range = req.headers['range'];
+      const range = req.headers.range;
       if (range && !disableRangeRequests) {
-        var rangesMatches = /^bytes=(\d+)\-(\d+)?/.exec(range);
+        const rangesMatches = /^bytes=(\d+)\-(\d+)?/.exec(range);
         if (!rangesMatches) {
           res.writeHead(501);
           res.end('Bad range', 'utf8');
           if (verbose) {
-            console.error(url + ': bad range: "' + range + '"');
+            console.error(`${url}: bad range: "${range}"`);
           }
           return;
         }
-        var start = +rangesMatches[1];
-        var end = +rangesMatches[2];
+        const start = +rangesMatches[1];
+        const end = +rangesMatches[2];
         if (verbose) {
-          console.log(url + ': range ' + start + ' - ' + end);
+          console.log(`${url}: range ${start} - ${end}`);
         }
         serveRequestedFileRange(filePath,
-                                start,
-                                isNaN(end) ? fileSize : (end + 1));
+            start,
+            isNaN(end) ? fileSize : (end + 1));
         return;
       }
       if (verbose) {
@@ -174,11 +173,11 @@ WebServer.prototype = {
       // Escape untrusted input so that it can safely be used in a HTML response
       // in HTML and in HTML attributes.
       return untrusted
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
     }
 
     function serveDirectoryIndex(dir) {
@@ -186,33 +185,33 @@ WebServer.prototype = {
       res.writeHead(200);
 
       if (queryPart === 'frame') {
-        res.end('<html><frameset cols=*,200><frame name=pdf>' +
-          '<frame src=\"' + encodeURI(pathPart) +
-          '?side\"></frameset></html>', 'utf8');
+        res.end(`${'<html><frameset cols=*,200><frame name=pdf>' +
+          '<frame src=\"'}${encodeURI(pathPart)
+        }?side\"></frameset></html>`, 'utf8');
         return;
       }
-      var all = queryPart === 'all';
-      fs.readdir(dir, function (err, files) {
+      const all = queryPart === 'all';
+      fs.readdir(dir, (err, files) => {
         if (err) {
           res.end();
           return;
         }
-        res.write('<html><head><meta charset=\"utf-8\"></head><body>' +
-                  '<h1>PDFs of ' + pathPart + '</h1>\n');
+        res.write(`${'<html><head><meta charset=\"utf-8\"></head><body>' +
+                  '<h1>PDFs of '}${pathPart}</h1>\n`);
         if (pathPart !== '/') {
           res.write('<a href=\"..\">..</a><br>\n');
         }
-        files.forEach(function (file) {
-          var stat;
-          var item = pathPart + file;
-          var href = '';
-          var label = '';
-          var extraAttributes = '';
+        files.forEach((file) => {
+          let stat;
+          const item = pathPart + file;
+          let href = '';
+          let label = '';
+          let extraAttributes = '';
           try {
             stat = fs.statSync(path.join(dir, file));
           } catch (e) {
             href = encodeURI(item);
-            label = file + ' (' + e + ')';
+            label = `${file} (${e})`;
             extraAttributes = ' style="color:red"';
           }
           if (stat) {
@@ -220,7 +219,7 @@ WebServer.prototype = {
               href = encodeURI(item);
               label = file;
             } else if (path.extname(file).toLowerCase() === '.pdf') {
-              href = '/web/viewer.html?file=' + encodeURIComponent(item);
+              href = `/web/viewer.html?file=${encodeURIComponent(item)}`;
               label = file;
               extraAttributes = ' target="pdf"';
             } else if (all) {
@@ -229,8 +228,8 @@ WebServer.prototype = {
             }
           }
           if (label) {
-            res.write('<a href=\"' + escapeHTML(href) + '\"' +
-              extraAttributes + '>' + escapeHTML(label) + '</a><br>\n');
+            res.write(`<a href=\"${escapeHTML(href)}\"${
+              extraAttributes}>${escapeHTML(label)}</a><br>\n`);
           }
         });
         if (files.length === 0) {
@@ -245,15 +244,15 @@ WebServer.prototype = {
     }
 
     function serveRequestedFile(filePath) {
-      var stream = fs.createReadStream(filePath, {flags: 'rs'});
+      const stream = fs.createReadStream(filePath, {flags: 'rs'});
 
-      stream.on('error', function (error) {
+      stream.on('error', (error) => {
         res.writeHead(500);
         res.end();
       });
 
-      var ext = path.extname(filePath).toLowerCase();
-      var contentType = mimeTypes[ext] || defaultMimeType;
+      const ext = path.extname(filePath).toLowerCase();
+      const contentType = mimeTypes[ext] || defaultMimeType;
 
       if (!disableRangeRequests) {
         res.setHeader('Accept-Ranges', 'bytes');
@@ -261,7 +260,7 @@ WebServer.prototype = {
       res.setHeader('Content-Type', contentType);
       res.setHeader('Content-Length', fileSize);
       if (cacheExpirationTime > 0) {
-        var expireTime = new Date();
+        const expireTime = new Date();
         expireTime.setSeconds(expireTime.getSeconds() + cacheExpirationTime);
         res.setHeader('Expires', expireTime.toUTCString());
       }
@@ -271,28 +270,26 @@ WebServer.prototype = {
     }
 
     function serveRequestedFileRange(filePath, start, end) {
-      var stream = fs.createReadStream(filePath, {
-        flags: 'rs', start: start, end: end - 1});
+      const stream = fs.createReadStream(filePath, {flags: 'rs', start, end: end - 1});
 
-      stream.on('error', function (error) {
+      stream.on('error', (error) => {
         res.writeHead(500);
         res.end();
       });
 
-      var ext = path.extname(filePath).toLowerCase();
-      var contentType = mimeTypes[ext] || defaultMimeType;
+      const ext = path.extname(filePath).toLowerCase();
+      const contentType = mimeTypes[ext] || defaultMimeType;
 
       res.setHeader('Accept-Ranges', 'bytes');
       res.setHeader('Content-Type', contentType);
       res.setHeader('Content-Length', (end - start));
       res.setHeader('Content-Range',
-        'bytes ' + start + '-' + (end - 1) + '/' + fileSize);
+          `bytes ${start}-${end - 1}/${fileSize}`);
       res.writeHead(206);
 
       stream.pipe(res);
     }
-
-  }
+  },
 };
 
 exports.WebServer = WebServer;

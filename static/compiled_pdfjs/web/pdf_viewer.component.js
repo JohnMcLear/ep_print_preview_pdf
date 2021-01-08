@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*jshint globalstrict: false */
+/* jshint globalstrict: false */
 /* globals PDFJS, PDFViewer, PDFPageView, TextLayerBuilder, PDFLinkService,
            DefaultTextLayerFactory, AnnotationsLayerBuilder, PDFHistory,
            DefaultAnnotationsLayerFactory, getFileName, ProgressBar */
@@ -25,10 +25,10 @@ if (typeof PDFJS === 'undefined') {
 (function pdfViewerWrapper() {
   'use strict';
 
-//#include ui_utils.js
-//#include pdf_link_service.js
-//#include pdf_viewer.js
-//#include pdf_history.js
+  // #include ui_utils.js
+  // #include pdf_link_service.js
+  // #include pdf_viewer.js
+  // #include pdf_history.js
 
   PDFJS.PDFViewer = PDFViewer;
   PDFJS.PDFPageView = PDFPageView;

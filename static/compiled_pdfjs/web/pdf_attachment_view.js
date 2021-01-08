@@ -26,7 +26,7 @@
 /**
  * @class
  */
-var PDFAttachmentView = (function PDFAttachmentViewClosure() {
+const PDFAttachmentView = (function PDFAttachmentViewClosure() {
   /**
    * @constructs PDFAttachmentView
    * @param {PDFAttachmentViewOptions} options
@@ -39,7 +39,7 @@ var PDFAttachmentView = (function PDFAttachmentViewClosure() {
 
   PDFAttachmentView.prototype = {
     reset: function PDFAttachmentView_reset() {
-      var container = this.container;
+      const container = this.container;
       while (container.firstChild) {
         container.removeChild(container.firstChild);
       }
@@ -49,9 +49,9 @@ var PDFAttachmentView = (function PDFAttachmentViewClosure() {
      * @private
      */
     _dispatchEvent: function PDFAttachmentView_dispatchEvent(attachmentsCount) {
-      var event = document.createEvent('CustomEvent');
+      const event = document.createEvent('CustomEvent');
       event.initCustomEvent('attachmentsloaded', true, true, {
-        attachmentsCount: attachmentsCount
+        attachmentsCount,
       });
       this.container.dispatchEvent(event);
     },
@@ -67,8 +67,8 @@ var PDFAttachmentView = (function PDFAttachmentViewClosure() {
     },
 
     render: function PDFAttachmentView_render() {
-      var attachments = this.attachments;
-      var attachmentsCount = 0;
+      const attachments = this.attachments;
+      let attachmentsCount = 0;
 
       this.reset();
 
@@ -77,17 +77,15 @@ var PDFAttachmentView = (function PDFAttachmentViewClosure() {
         return;
       }
 
-      var names = Object.keys(attachments).sort(function(a, b) {
-        return a.toLowerCase().localeCompare(b.toLowerCase());
-      });
+      const names = Object.keys(attachments).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
       attachmentsCount = names.length;
 
-      for (var i = 0; i < attachmentsCount; i++) {
-        var item = attachments[names[i]];
-        var filename = getFileName(item.filename);
-        var div = document.createElement('div');
+      for (let i = 0; i < attachmentsCount; i++) {
+        const item = attachments[names[i]];
+        const filename = getFileName(item.filename);
+        const div = document.createElement('div');
         div.className = 'attachmentsItem';
-        var button = document.createElement('button');
+        const button = document.createElement('button');
         this._bindLink(button, item.content, filename);
         button.textContent = removeNullCharacters(filename);
         div.appendChild(button);
@@ -95,7 +93,7 @@ var PDFAttachmentView = (function PDFAttachmentViewClosure() {
       }
 
       this._dispatchEvent(attachmentsCount);
-    }
+    },
   };
 
   return PDFAttachmentView;

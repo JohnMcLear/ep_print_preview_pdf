@@ -15,20 +15,20 @@
 
 'use strict';
 
-var CLEANUP_TIMEOUT = 30000;
+const CLEANUP_TIMEOUT = 30000;
 
-var RenderingStates = {
+const RenderingStates = {
   INITIAL: 0,
   RUNNING: 1,
   PAUSED: 2,
-  FINISHED: 3
+  FINISHED: 3,
 };
 
 /**
  * Controls rendering of the views for pages and thumbnails.
  * @class
  */
-var PDFRenderingQueue = (function PDFRenderingQueueClosure() {
+const PDFRenderingQueue = (function PDFRenderingQueueClosure() {
   /**
    * @constructs
    */
@@ -56,8 +56,8 @@ var PDFRenderingQueue = (function PDFRenderingQueueClosure() {
      */
     setThumbnailViewer:
         function PDFRenderingQueue_setThumbnailViewer(pdfThumbnailViewer) {
-      this.pdfThumbnailViewer = pdfThumbnailViewer;
-    },
+          this.pdfThumbnailViewer = pdfThumbnailViewer;
+        },
 
     /**
      * @param {IRenderableView} view
@@ -68,7 +68,7 @@ var PDFRenderingQueue = (function PDFRenderingQueueClosure() {
     },
 
     renderHighestPriority: function
-        PDFRenderingQueue_renderHighestPriority(currentlyVisiblePages) {
+    PDFRenderingQueue_renderHighestPriority(currentlyVisiblePages) {
       if (this.idleTimeout) {
         clearTimeout(this.idleTimeout);
         this.idleTimeout = null;
@@ -96,21 +96,21 @@ var PDFRenderingQueue = (function PDFRenderingQueueClosure() {
     },
 
     getHighestPriority: function
-        PDFRenderingQueue_getHighestPriority(visible, views, scrolledDown) {
+    PDFRenderingQueue_getHighestPriority(visible, views, scrolledDown) {
       // The state has changed figure out which page has the highest priority to
       // render next (if any).
       // Priority:
       // 1 visible pages
       // 2 if last scrolled down page after the visible pages
       // 2 if last scrolled up page before the visible pages
-      var visibleViews = visible.views;
+      const visibleViews = visible.views;
 
-      var numVisible = visibleViews.length;
+      const numVisible = visibleViews.length;
       if (numVisible === 0) {
         return false;
       }
-      for (var i = 0; i < numVisible; ++i) {
-        var view = visibleViews[i].view;
+      for (let i = 0; i < numVisible; ++i) {
+        const view = visibleViews[i].view;
         if (!this.isViewFinished(view)) {
           return view;
         }
@@ -118,14 +118,14 @@ var PDFRenderingQueue = (function PDFRenderingQueueClosure() {
 
       // All the visible views have rendered, try to render next/previous pages.
       if (scrolledDown) {
-        var nextPageIndex = visible.last.id;
+        const nextPageIndex = visible.last.id;
         // ID's start at 1 so no need to add 1.
         if (views[nextPageIndex] &&
             !this.isViewFinished(views[nextPageIndex])) {
           return views[nextPageIndex];
         }
       } else {
-        var previousPageIndex = visible.first.id - 2;
+        const previousPageIndex = visible.first.id - 2;
         if (views[previousPageIndex] &&
           !this.isViewFinished(views[previousPageIndex])) {
           return views[previousPageIndex];
@@ -150,7 +150,7 @@ var PDFRenderingQueue = (function PDFRenderingQueueClosure() {
      * @param {IRenderableView} view
      */
     renderView: function PDFRenderingQueue_renderView(view) {
-      var state = view.renderingState;
+      const state = view.renderingState;
       switch (state) {
         case RenderingStates.FINISHED:
           return false;

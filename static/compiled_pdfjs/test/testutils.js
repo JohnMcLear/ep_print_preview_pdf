@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*jslint node: true */
+/* jslint node: true */
 
 'use strict';
 
-var fs = require('fs');
-var path = require('path');
-var rimrafSync = require('rimraf').sync;
+const fs = require('fs');
+const path = require('path');
+const rimrafSync = require('rimraf').sync;
 
 exports.removeDirSync = function removeDirSync(dir) {
   fs.readdirSync(dir); // Will throw if dir is not a directory
@@ -29,14 +29,14 @@ exports.removeDirSync = function removeDirSync(dir) {
 };
 
 exports.copySubtreeSync = function copySubtreeSync(src, dest) {
-  var files = fs.readdirSync(src);
+  const files = fs.readdirSync(src);
   if (!fs.existsSync(dest)) {
     fs.mkdirSync(dest);
   }
-  files.forEach(function (filename) {
-    var srcFile = path.join(src, filename);
-    var file = path.join(dest, filename);
-    var stats = fs.statSync(srcFile);
+  files.forEach((filename) => {
+    const srcFile = path.join(src, filename);
+    const file = path.join(dest, filename);
+    const stats = fs.statSync(srcFile);
     if (stats.isDirectory()) {
       copySubtreeSync(srcFile, file);
     } else {
@@ -49,7 +49,8 @@ exports.ensureDirSync = function ensureDirSync(dir) {
   if (fs.existsSync(dir)) {
     return;
   }
-  var parts = dir.split(path.sep), i = parts.length;
+  const parts = dir.split(path.sep); let
+    i = parts.length;
   while (i > 1 && !fs.existsSync(parts.slice(0, i - 1).join(path.sep))) {
     i--;
   }
@@ -63,11 +64,12 @@ exports.ensureDirSync = function ensureDirSync(dir) {
   }
 };
 
-var stdinBuffer = '', endOfStdin = false, stdinInitialized = false;
-var stdinOnLineCallbacks = [];
+let stdinBuffer = ''; let endOfStdin = false; let
+  stdinInitialized = false;
+const stdinOnLineCallbacks = [];
 
 function handleStdinBuffer() {
-  var callback;
+  let callback;
   if (endOfStdin) {
     if (stdinBuffer && stdinOnLineCallbacks.length > 0) {
       callback = stdinOnLineCallbacks.shift();
@@ -81,12 +83,12 @@ function handleStdinBuffer() {
     return;
   }
   while (stdinOnLineCallbacks.length > 0) {
-    var i = stdinBuffer.indexOf('\n');
+    const i = stdinBuffer.indexOf('\n');
     if (i < 0) {
       return;
     }
     callback = stdinOnLineCallbacks.shift();
-    var result = stdinBuffer.substring(0, i + 1);
+    const result = stdinBuffer.substring(0, i + 1);
     stdinBuffer = stdinBuffer.substring(i + 1);
     callback(result);
   }
@@ -97,12 +99,12 @@ function handleStdinBuffer() {
 function initStdin() {
   process.stdin.setEncoding('utf8');
 
-  process.stdin.on('data', function(chunk) {
+  process.stdin.on('data', (chunk) => {
     stdinBuffer += chunk;
     handleStdinBuffer();
   });
 
-  process.stdin.on('end', function() {
+  process.stdin.on('end', () => {
     endOfStdin = true;
     handleStdinBuffer();
   });
@@ -123,7 +125,7 @@ exports.prompt = function prompt(message, callback) {
 };
 
 exports.confirm = function confirm(message, callback) {
-  exports.prompt(message, function (answer) {
+  exports.prompt(message, (answer) => {
     if (answer === undefined) {
       callback();
       return;

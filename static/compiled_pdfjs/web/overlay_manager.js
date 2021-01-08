@@ -34,21 +34,21 @@ var OverlayManager = {
    *                    registered.
    */
   register: function overlayManagerRegister(name,
-                                            callerCloseMethod, canForceClose) {
-    return new Promise(function (resolve) {
-      var element, container;
+      callerCloseMethod, canForceClose) {
+    return new Promise((resolve) => {
+      let element, container;
       if (!name || !(element = document.getElementById(name)) ||
           !(container = element.parentNode)) {
         throw new Error('Not enough parameters.');
       } else if (this.overlays[name]) {
         throw new Error('The overlay is already registered.');
       }
-      this.overlays[name] = { element: element,
-                              container: container,
-                              callerCloseMethod: (callerCloseMethod || null),
-                              canForceClose: (canForceClose || false) };
+      this.overlays[name] = {element,
+        container,
+        callerCloseMethod: (callerCloseMethod || null),
+        canForceClose: (canForceClose || false)};
       resolve();
-    }.bind(this));
+    });
   },
 
   /**
@@ -57,7 +57,7 @@ var OverlayManager = {
    *                    unregistered.
    */
   unregister: function overlayManagerUnregister(name) {
-    return new Promise(function (resolve) {
+    return new Promise((resolve) => {
       if (!this.overlays[name]) {
         throw new Error('The overlay does not exist.');
       } else if (this.active === name) {
@@ -66,7 +66,7 @@ var OverlayManager = {
       delete this.overlays[name];
 
       resolve();
-    }.bind(this));
+    });
   },
 
   /**
@@ -75,7 +75,7 @@ var OverlayManager = {
    *                    opened.
    */
   open: function overlayManagerOpen(name) {
-    return new Promise(function (resolve) {
+    return new Promise((resolve) => {
       if (!this.overlays[name]) {
         throw new Error('The overlay does not exist.');
       } else if (this.active) {
@@ -93,7 +93,7 @@ var OverlayManager = {
 
       window.addEventListener('keydown', this._keyDown);
       resolve();
-    }.bind(this));
+    });
   },
 
   /**
@@ -102,7 +102,7 @@ var OverlayManager = {
    *                    closed.
    */
   close: function overlayManagerClose(name) {
-    return new Promise(function (resolve) {
+    return new Promise((resolve) => {
       if (!this.overlays[name]) {
         throw new Error('The overlay does not exist.');
       } else if (!this.active) {
@@ -116,14 +116,14 @@ var OverlayManager = {
 
       window.removeEventListener('keydown', this._keyDown);
       resolve();
-    }.bind(this));
+    });
   },
 
   /**
    * @private
    */
   _keyDown: function overlayManager_keyDown(evt) {
-    var self = OverlayManager;
+    const self = OverlayManager;
     if (self.active && evt.keyCode === 27) { // Esc key.
       self._closeThroughCaller();
       evt.preventDefault();
@@ -140,5 +140,5 @@ var OverlayManager = {
     if (this.active) {
       this.close(this.active);
     }
-  }
+  },
 };

@@ -16,13 +16,13 @@
 
 'use strict';
 
-//#include default_preferences.js
+// #include default_preferences.js
 
-var SidebarView = {
+const SidebarView = {
   NONE: 0,
   THUMBS: 1,
   OUTLINE: 2,
-  ATTACHMENTS: 3
+  ATTACHMENTS: 3,
 };
 
 /**
@@ -30,7 +30,7 @@ var SidebarView = {
  *   Used for settings that should be applied to all opened documents,
  *   or every time the viewer is loaded.
  */
-var Preferences = {
+const Preferences = {
   prefs: Object.create(DEFAULT_PREFERENCES),
   isInitializedPromiseResolved: false,
   initializedPromise: null,
@@ -42,12 +42,12 @@ var Preferences = {
    */
   initialize: function preferencesInitialize() {
     return this.initializedPromise =
-        this._readFromStorage(DEFAULT_PREFERENCES).then(function(prefObj) {
-      this.isInitializedPromiseResolved = true;
-      if (prefObj) {
-        this.prefs = prefObj;
-      }
-    }.bind(this));
+        this._readFromStorage(DEFAULT_PREFERENCES).then((prefObj) => {
+          this.isInitializedPromiseResolved = true;
+          if (prefObj) {
+            this.prefs = prefObj;
+          }
+        });
   },
 
   /**
@@ -78,10 +78,10 @@ var Preferences = {
    *                   have been reset.
    */
   reset: function preferencesReset() {
-    return this.initializedPromise.then(function() {
+    return this.initializedPromise.then(() => {
       this.prefs = Object.create(DEFAULT_PREFERENCES);
       return this._writeToStorage(DEFAULT_PREFERENCES);
-    }.bind(this));
+    });
   },
 
   /**
@@ -90,13 +90,13 @@ var Preferences = {
    *                   have been updated.
    */
   reload: function preferencesReload() {
-    return this.initializedPromise.then(function () {
-      this._readFromStorage(DEFAULT_PREFERENCES).then(function(prefObj) {
+    return this.initializedPromise.then(() => {
+      this._readFromStorage(DEFAULT_PREFERENCES).then((prefObj) => {
         if (prefObj) {
           this.prefs = prefObj;
         }
-      }.bind(this));
-    }.bind(this));
+      });
+    });
   },
 
   /**
@@ -107,31 +107,29 @@ var Preferences = {
    *                   provided that the preference exists and the types match.
    */
   set: function preferencesSet(name, value) {
-    return this.initializedPromise.then(function () {
+    return this.initializedPromise.then(() => {
       if (DEFAULT_PREFERENCES[name] === undefined) {
-        throw new Error('preferencesSet: \'' + name + '\' is undefined.');
+        throw new Error(`preferencesSet: '${name}' is undefined.`);
       } else if (value === undefined) {
         throw new Error('preferencesSet: no value is specified.');
       }
-      var valueType = typeof value;
-      var defaultType = typeof DEFAULT_PREFERENCES[name];
+      const valueType = typeof value;
+      const defaultType = typeof DEFAULT_PREFERENCES[name];
 
       if (valueType !== defaultType) {
         if (valueType === 'number' && defaultType === 'string') {
           value = value.toString();
         } else {
-          throw new Error('Preferences_set: \'' + value + '\' is a \"' +
-                          valueType + '\", expected \"' + defaultType + '\".');
+          throw new Error(`Preferences_set: '${value}' is a \"${
+            valueType}\", expected \"${defaultType}\".`);
         }
-      } else {
-        if (valueType === 'number' && (value | 0) !== value) {
-          throw new Error('Preferences_set: \'' + value +
-                          '\' must be an \"integer\".');
-        }
+      } else if (valueType === 'number' && (value | 0) !== value) {
+        throw new Error(`Preferences_set: '${value
+        }' must be an \"integer\".`);
       }
       this.prefs[name] = value;
       return this._writeToStorage(this.prefs);
-    }.bind(this));
+    });
   },
 
   /**
@@ -141,25 +139,25 @@ var Preferences = {
    *                   containing the value of the preference.
    */
   get: function preferencesGet(name) {
-    return this.initializedPromise.then(function () {
-      var defaultValue = DEFAULT_PREFERENCES[name];
+    return this.initializedPromise.then(() => {
+      const defaultValue = DEFAULT_PREFERENCES[name];
 
       if (defaultValue === undefined) {
-        throw new Error('preferencesGet: \'' + name + '\' is undefined.');
+        throw new Error(`preferencesGet: '${name}' is undefined.`);
       } else {
-        var prefValue = this.prefs[name];
+        const prefValue = this.prefs[name];
 
         if (prefValue !== undefined) {
           return prefValue;
         }
       }
       return defaultValue;
-    }.bind(this));
-  }
+    });
+  },
 };
 
-//#if CHROME
-//Preferences._writeToStorage = function (prefObj) {
+// #if CHROME
+// Preferences._writeToStorage = function (prefObj) {
 //  return new Promise(function (resolve) {
 //    if (prefObj == DEFAULT_PREFERENCES) {
 //      var keysToRemove = Object.keys(DEFAULT_PREFERENCES);
@@ -174,9 +172,9 @@ var Preferences = {
 //      });
 //    }
 //  });
-//};
+// };
 //
-//Preferences._readFromStorage = function (prefObj) {
+// Preferences._readFromStorage = function (prefObj) {
 //  return new Promise(function (resolve) {
 //    if (chrome.storage.managed) {
 //      // Get preferences as set by the system administrator.
@@ -198,21 +196,21 @@ var Preferences = {
 //      });
 //    }
 //  });
-//};
-//#endif
+// };
+// #endif
 
-//#if !(FIREFOX || MOZCENTRAL || CHROME)
+// #if !(FIREFOX || MOZCENTRAL || CHROME)
 Preferences._writeToStorage = function (prefObj) {
-  return new Promise(function (resolve) {
+  return new Promise((resolve) => {
     localStorage.setItem('pdfjs.preferences', JSON.stringify(prefObj));
     resolve();
   });
 };
 
 Preferences._readFromStorage = function (prefObj) {
-  return new Promise(function (resolve) {
-    var readPrefs = JSON.parse(localStorage.getItem('pdfjs.preferences'));
+  return new Promise((resolve) => {
+    const readPrefs = JSON.parse(localStorage.getItem('pdfjs.preferences'));
     resolve(readPrefs);
   });
 };
-//#endif
+// #endif

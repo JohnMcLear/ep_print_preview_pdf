@@ -17,7 +17,7 @@ limitations under the License.
 
 'use strict';
 
-var Features = {
+let Features = {
   featureDetectLastUA: '',
   // Whether ftp: in XMLHttpRequest is allowed
   extensionSupportsFTP: false,
@@ -25,7 +25,7 @@ var Features = {
   webRequestRedirectUrl: false,
 };
 
-chrome.storage.local.get(Features, function(features) {
+chrome.storage.local.get(Features, (features) => {
   Features = features;
   if (features.featureDetectLastUA === navigator.userAgent) {
     // Browser not upgraded, so the features did probably not change.
@@ -33,12 +33,12 @@ chrome.storage.local.get(Features, function(features) {
   }
 
   // In case of a downgrade, the features must be tested again.
-  var lastVersion = /Chrome\/\d+\.0\.(\d+)/.exec(features.featureDetectLastUA);
+  let lastVersion = /Chrome\/\d+\.0\.(\d+)/.exec(features.featureDetectLastUA);
   lastVersion = lastVersion ? parseInt(lastVersion[1], 10) : 0;
-  var newVersion = /Chrome\/\d+\.0\.(\d+)/.exec(navigator.userAgent);
-  var isDowngrade = newVersion && parseInt(newVersion[1], 10) < lastVersion;
+  const newVersion = /Chrome\/\d+\.0\.(\d+)/.exec(navigator.userAgent);
+  const isDowngrade = newVersion && parseInt(newVersion[1], 10) < lastVersion;
 
-  var inconclusiveTestCount = 0;
+  let inconclusiveTestCount = 0;
 
   if (isDowngrade || !features.extensionSupportsFTP) {
     features.extensionSupportsFTP = featureTestFTP();
@@ -47,7 +47,7 @@ chrome.storage.local.get(Features, function(features) {
   if (isDowngrade || !features.webRequestRedirectUrl) {
     ++inconclusiveTestCount;
     // Relatively expensive (and asynchronous) test:
-    featureTestRedirectOnHeadersReceived(function(result) {
+    featureTestRedirectOnHeadersReceived((result) => {
       // result = 'yes', 'no' or 'maybe'.
       if (result !== 'maybe') {
         --inconclusiveTestCount;
@@ -71,7 +71,7 @@ chrome.storage.local.get(Features, function(features) {
 // Tests whether the extension can perform a FTP request.
 // Feature is supported since Chromium 35.0.1888.0 (r256810).
 function featureTestFTP() {
-  var x = new XMLHttpRequest();
+  const x = new XMLHttpRequest();
   // The URL does not need to exist, as long as the scheme is ftp:.
   x.open('GET', 'ftp://ftp.mozilla.org/');
   try {
@@ -91,22 +91,22 @@ function featureTestRedirectOnHeadersReceived(callback) {
   // The following URL is really going to be accessed via the network.
   // It is the only way to feature-detect this feature, because the
   // onHeadersReceived event is only triggered for http(s) requests.
-  var url = 'http://example.com/?feature-detect-' + chrome.runtime.id;
+  const url = `http://example.com/?feature-detect-${chrome.runtime.id}`;
   function onHeadersReceived(details) {
     // If supported, the request is redirected.
     // If not supported, the return value is ignored.
     return {
-      redirectUrl: chrome.runtime.getURL('/manifest.json')
+      redirectUrl: chrome.runtime.getURL('/manifest.json'),
     };
   }
   chrome.webRequest.onHeadersReceived.addListener(onHeadersReceived, {
     types: ['xmlhttprequest'],
-    urls: [url]
+    urls: [url],
   }, ['blocking']);
 
-  var x = new XMLHttpRequest();
+  const x = new XMLHttpRequest();
   x.open('get', url);
-  x.onloadend = function() {
+  x.onloadend = function () {
     chrome.webRequest.onHeadersReceived.removeListener(onHeadersReceived);
     if (!x.responseText) {
       // Network error? Anyway, can't tell with certainty whether the feature

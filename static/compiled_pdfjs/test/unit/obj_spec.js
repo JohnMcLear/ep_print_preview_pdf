@@ -3,41 +3,40 @@
 
 'use strict';
 
-describe('obj', function() {
-
-  describe('Name', function() {
-    it('should retain the given name', function() {
-      var givenName = 'Font';
-      var name = Name.get(givenName);
+describe('obj', () => {
+  describe('Name', () => {
+    it('should retain the given name', () => {
+      const givenName = 'Font';
+      const name = Name.get(givenName);
       expect(name.name).toEqual(givenName);
     });
   });
 
-  describe('Cmd', function() {
-    it('should retain the given cmd name', function() {
-      var givenCmd = 'BT';
-      var cmd = new Cmd(givenCmd);
+  describe('Cmd', () => {
+    it('should retain the given cmd name', () => {
+      const givenCmd = 'BT';
+      const cmd = new Cmd(givenCmd);
       expect(cmd.cmd).toEqual(givenCmd);
     });
 
-    it('should create only one object for a command and cache it', function() {
-      var firstBT = Cmd.get('BT');
-      var secondBT = Cmd.get('BT');
-      var firstET = Cmd.get('ET');
-      var secondET = Cmd.get('ET');
+    it('should create only one object for a command and cache it', () => {
+      const firstBT = Cmd.get('BT');
+      const secondBT = Cmd.get('BT');
+      const firstET = Cmd.get('ET');
+      const secondET = Cmd.get('ET');
       expect(firstBT).toBe(secondBT);
       expect(firstET).toBe(secondET);
       expect(firstBT).not.toBe(firstET);
     });
   });
 
-  describe('Dict', function() {
-    var checkInvalidHasValues = function(dict) {
+  describe('Dict', () => {
+    const checkInvalidHasValues = function (dict) {
       expect(dict.has()).toBeFalsy();
       expect(dict.has('Prev')).toBeFalsy();
     };
 
-    var checkInvalidKeyValues = function(dict) {
+    const checkInvalidKeyValues = function (dict) {
       expect(dict.get()).toBeUndefined();
       expect(dict.get('Prev')).toBeUndefined();
       expect(dict.get('Decode', 'D')).toBeUndefined();
@@ -46,13 +45,13 @@ describe('obj', function() {
       expect(dict.get('FontFile', 'FontFile2', 'FontFile3')).toBeNull();
     };
 
-    var emptyDict, dictWithSizeKey, dictWithManyKeys;
-    var storedSize = 42;
-    var testFontFile = 'file1';
-    var testFontFile2 = 'file2';
-    var testFontFile3 = 'file3';
+    let emptyDict, dictWithSizeKey, dictWithManyKeys;
+    const storedSize = 42;
+    const testFontFile = 'file1';
+    const testFontFile2 = 'file2';
+    const testFontFile3 = 'file3';
 
-    beforeEach(function() {
+    beforeEach(() => {
       emptyDict = new Dict();
 
       dictWithSizeKey = new Dict();
@@ -64,12 +63,12 @@ describe('obj', function() {
       dictWithManyKeys.set('FontFile3', testFontFile3);
     });
 
-    it('should return invalid values for unknown keys', function() {
+    it('should return invalid values for unknown keys', () => {
       checkInvalidHasValues(emptyDict);
       checkInvalidKeyValues(emptyDict);
     });
 
-    it('should return correct value for stored Size key', function() {
+    it('should return correct value for stored Size key', () => {
       expect(dictWithSizeKey.has('Size')).toBeTruthy();
 
       expect(dictWithSizeKey.get('Size')).toEqual(storedSize);
@@ -78,35 +77,35 @@ describe('obj', function() {
     });
 
     it('should return invalid values for unknown keys when Size key is stored',
-       function() {
-      checkInvalidHasValues(dictWithSizeKey);
-      checkInvalidKeyValues(dictWithSizeKey);
-    });
+        () => {
+          checkInvalidHasValues(dictWithSizeKey);
+          checkInvalidKeyValues(dictWithSizeKey);
+        });
 
     it('should return correct value for stored Size key with undefined value',
-       function() {
-      var dict = new Dict();
-      dict.set('Size');
+        () => {
+          const dict = new Dict();
+          dict.set('Size');
 
-      expect(dict.has('Size')).toBeTruthy();
+          expect(dict.has('Size')).toBeTruthy();
 
-      checkInvalidKeyValues(dict);
-    });
+          checkInvalidKeyValues(dict);
+        });
 
-    it('should return correct values for multiple stored keys', function() {
+    it('should return correct values for multiple stored keys', () => {
       expect(dictWithManyKeys.has('FontFile')).toBeTruthy();
       expect(dictWithManyKeys.has('FontFile2')).toBeTruthy();
       expect(dictWithManyKeys.has('FontFile3')).toBeTruthy();
 
       expect(dictWithManyKeys.get('FontFile3')).toEqual(testFontFile3);
       expect(dictWithManyKeys.get('FontFile2', 'FontFile3'))
-                             .toEqual(testFontFile2);
+          .toEqual(testFontFile2);
       expect(dictWithManyKeys.get('FontFile', 'FontFile2', 'FontFile3'))
-                             .toEqual(testFontFile);
+          .toEqual(testFontFile);
     });
 
-    it('should callback for each stored key', function() {
-      var callbackSpy = jasmine.createSpy('spy on callback in dictionary');
+    it('should callback for each stored key', () => {
+      const callbackSpy = jasmine.createSpy('spy on callback in dictionary');
 
       dictWithManyKeys.forEach(callbackSpy);
 
@@ -118,30 +117,30 @@ describe('obj', function() {
     });
   });
 
-  describe('Ref', function() {
-    it('should retain the stored values', function() {
-      var storedNum = 4;
-      var storedGen = 2;
-      var ref = new Ref(storedNum, storedGen);
+  describe('Ref', () => {
+    it('should retain the stored values', () => {
+      const storedNum = 4;
+      const storedGen = 2;
+      const ref = new Ref(storedNum, storedGen);
       expect(ref.num).toEqual(storedNum);
       expect(ref.gen).toEqual(storedGen);
     });
   });
 
-  describe('RefSet', function() {
-    it('should have a stored value', function() {
-      var ref = new Ref(4, 2);
-      var refset = new RefSet();
+  describe('RefSet', () => {
+    it('should have a stored value', () => {
+      const ref = new Ref(4, 2);
+      const refset = new RefSet();
       refset.put(ref);
       expect(refset.has(ref)).toBeTruthy();
     });
-    it('should not have an unknown value', function() {
-      var ref = new Ref(4, 2);
-      var refset = new RefSet();
+    it('should not have an unknown value', () => {
+      const ref = new Ref(4, 2);
+      const refset = new RefSet();
       expect(refset.has(ref)).toBeFalsy();
 
       refset.put(ref);
-      var anotherRef = new Ref(2, 4);
+      const anotherRef = new Ref(2, 4);
       expect(refset.has(anotherRef)).toBeFalsy();
     });
   });

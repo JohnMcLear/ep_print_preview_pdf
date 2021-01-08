@@ -19,26 +19,25 @@
 'use strict';
 
 
-//#if (FIREFOX || MOZCENTRAL)
+// #if (FIREFOX || MOZCENTRAL)
 //
-//Components.utils.import('resource://gre/modules/Services.jsm');
+// Components.utils.import('resource://gre/modules/Services.jsm');
 //
-//var EXPORTED_SYMBOLS = ['NetworkManager'];
+// var EXPORTED_SYMBOLS = ['NetworkManager'];
 //
-//var console = {
+// var console = {
 //  log: function console_log(aMsg) {
 //    var msg = 'network.js: ' + (aMsg.join ? aMsg.join('') : aMsg);
 //    Services.console.logStringMessage(msg);
 //    // TODO(mack): dump() doesn't seem to work here...
 //    dump(msg + '\n');
 //  }
-//}
-//#endif
+// }
+// #endif
 
-var NetworkManager = (function NetworkManagerClosure() {
-
-  var OK_RESPONSE = 200;
-  var PARTIAL_CONTENT_RESPONSE = 206;
+const NetworkManager = (function NetworkManagerClosure() {
+  const OK_RESPONSE = 200;
+  const PARTIAL_CONTENT_RESPONSE = 206;
 
   function NetworkManager(url, args) {
     this.url = url;
@@ -57,22 +56,22 @@ var NetworkManager = (function NetworkManagerClosure() {
   }
 
   function getArrayBuffer(xhr) {
-    var data = xhr.response;
+    const data = xhr.response;
     if (typeof data !== 'string') {
       return data;
     }
-    var length = data.length;
-    var array = new Uint8Array(length);
-    for (var i = 0; i < length; i++) {
+    const length = data.length;
+    const array = new Uint8Array(length);
+    for (let i = 0; i < length; i++) {
       array[i] = data.charCodeAt(i) & 0xFF;
     }
     return array.buffer;
   }
 
-//#if !(CHROME || FIREFOX || MOZCENTRAL)
-  var supportsMozChunked = (function supportsMozChunkedClosure() {
+  // #if !(CHROME || FIREFOX || MOZCENTRAL)
+  const supportsMozChunked = (function supportsMozChunkedClosure() {
     try {
-      var x = new XMLHttpRequest();
+      const x = new XMLHttpRequest();
       // Firefox 37- required .open() to be called before setting responseType.
       // https://bugzilla.mozilla.org/show_bug.cgi?id=707484
       // Even though the URL is not visited, .open() could fail if the URL is
@@ -86,15 +85,15 @@ var NetworkManager = (function NetworkManagerClosure() {
       return false;
     }
   })();
-//#endif
+  // #endif
 
   NetworkManager.prototype = {
     requestRange: function NetworkManager_requestRange(begin, end, listeners) {
-      var args = {
-        begin: begin,
-        end: end
+      const args = {
+        begin,
+        end,
       };
-      for (var prop in listeners) {
+      for (const prop in listeners) {
         args[prop] = listeners[prop];
       }
       return this.request(args);
@@ -105,38 +104,38 @@ var NetworkManager = (function NetworkManagerClosure() {
     },
 
     request: function NetworkManager_request(args) {
-      var xhr = this.getXhr();
-      var xhrId = this.currXhrId++;
-      var pendingRequest = this.pendingRequests[xhrId] = {
-        xhr: xhr
+      const xhr = this.getXhr();
+      const xhrId = this.currXhrId++;
+      const pendingRequest = this.pendingRequests[xhrId] = {
+        xhr,
       };
 
       xhr.open('GET', this.url);
       xhr.withCredentials = this.withCredentials;
-      for (var property in this.httpHeaders) {
-        var value = this.httpHeaders[property];
+      for (const property in this.httpHeaders) {
+        const value = this.httpHeaders[property];
         if (typeof value === 'undefined') {
           continue;
         }
         xhr.setRequestHeader(property, value);
       }
       if (this.isHttp && 'begin' in args && 'end' in args) {
-        var rangeStr = args.begin + '-' + (args.end - 1);
-        xhr.setRequestHeader('Range', 'bytes=' + rangeStr);
+        const rangeStr = `${args.begin}-${args.end - 1}`;
+        xhr.setRequestHeader('Range', `bytes=${rangeStr}`);
         pendingRequest.expectedStatus = 206;
       } else {
         pendingRequest.expectedStatus = 200;
       }
 
-//#if CHROME
-//    var useMozChunkedLoading = false;
-//#endif
-//#if (FIREFOX || MOZCENTRAL)
-//    var useMozChunkedLoading = !!args.onProgressiveData;
-//#endif
-//#if !(CHROME || FIREFOX || MOZCENTRAL)
-      var useMozChunkedLoading = supportsMozChunked && !!args.onProgressiveData;
-//#endif
+      // #if CHROME
+      //    var useMozChunkedLoading = false;
+      // #endif
+      // #if (FIREFOX || MOZCENTRAL)
+      //    var useMozChunkedLoading = !!args.onProgressiveData;
+      // #endif
+      // #if !(CHROME || FIREFOX || MOZCENTRAL)
+      const useMozChunkedLoading = supportsMozChunked && !!args.onProgressiveData;
+      // #endif
       if (useMozChunkedLoading) {
         xhr.responseType = 'moz-chunked-arraybuffer';
         pendingRequest.onProgressiveData = args.onProgressiveData;
@@ -146,7 +145,7 @@ var NetworkManager = (function NetworkManagerClosure() {
       }
 
       if (args.onError) {
-        xhr.onerror = function(evt) {
+        xhr.onerror = function (evt) {
           args.onError(xhr.status);
         };
       }
@@ -164,31 +163,31 @@ var NetworkManager = (function NetworkManagerClosure() {
     },
 
     onProgress: function NetworkManager_onProgress(xhrId, evt) {
-      var pendingRequest = this.pendingRequests[xhrId];
+      const pendingRequest = this.pendingRequests[xhrId];
       if (!pendingRequest) {
         // Maybe abortRequest was called...
         return;
       }
 
       if (pendingRequest.mozChunked) {
-        var chunk = getArrayBuffer(pendingRequest.xhr);
+        const chunk = getArrayBuffer(pendingRequest.xhr);
         pendingRequest.onProgressiveData(chunk);
       }
 
-      var onProgress = pendingRequest.onProgress;
+      const onProgress = pendingRequest.onProgress;
       if (onProgress) {
         onProgress(evt);
       }
     },
 
     onStateChange: function NetworkManager_onStateChange(xhrId, evt) {
-      var pendingRequest = this.pendingRequests[xhrId];
+      const pendingRequest = this.pendingRequests[xhrId];
       if (!pendingRequest) {
         // Maybe abortRequest was called...
         return;
       }
 
-      var xhr = pendingRequest.xhr;
+      const xhr = pendingRequest.xhr;
       if (xhr.readyState >= 2 && pendingRequest.onHeadersReceived) {
         pendingRequest.onHeadersReceived();
         delete pendingRequest.onHeadersReceived;
@@ -213,12 +212,12 @@ var NetworkManager = (function NetworkManagerClosure() {
         }
         return;
       }
-      var xhrStatus = xhr.status || OK_RESPONSE;
+      const xhrStatus = xhr.status || OK_RESPONSE;
 
       // From http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.35.2:
       // "A server MAY ignore the Range header". This means it's possible to
       // get a 200 rather than a 206 response from a range request.
-      var ok_response_on_range_request =
+      const ok_response_on_range_request =
           xhrStatus === OK_RESPONSE &&
           pendingRequest.expectedStatus === PARTIAL_CONTENT_RESPONSE;
 
@@ -232,21 +231,21 @@ var NetworkManager = (function NetworkManagerClosure() {
 
       this.loadedRequests[xhrId] = true;
 
-      var chunk = getArrayBuffer(xhr);
+      const chunk = getArrayBuffer(xhr);
       if (xhrStatus === PARTIAL_CONTENT_RESPONSE) {
-        var rangeHeader = xhr.getResponseHeader('Content-Range');
-        var matches = /bytes (\d+)-(\d+)\/(\d+)/.exec(rangeHeader);
-        var begin = parseInt(matches[1], 10);
+        const rangeHeader = xhr.getResponseHeader('Content-Range');
+        const matches = /bytes (\d+)-(\d+)\/(\d+)/.exec(rangeHeader);
+        const begin = parseInt(matches[1], 10);
         pendingRequest.onDone({
-          begin: begin,
-          chunk: chunk
+          begin,
+          chunk,
         });
       } else if (pendingRequest.onProgressiveData) {
         pendingRequest.onDone(null);
       } else if (chunk) {
         pendingRequest.onDone({
           begin: 0,
-          chunk: chunk
+          chunk,
         });
       } else if (pendingRequest.onError) {
         pendingRequest.onError(xhr.status);
@@ -254,7 +253,7 @@ var NetworkManager = (function NetworkManagerClosure() {
     },
 
     hasPendingRequests: function NetworkManager_hasPendingRequests() {
-      for (var xhrId in this.pendingRequests) {
+      for (const xhrId in this.pendingRequests) {
         return true;
       }
       return false;
@@ -277,16 +276,16 @@ var NetworkManager = (function NetworkManagerClosure() {
     },
 
     abortAllRequests: function NetworkManager_abortAllRequests() {
-      for (var xhrId in this.pendingRequests) {
+      for (const xhrId in this.pendingRequests) {
         this.abortRequest(xhrId | 0);
       }
     },
 
     abortRequest: function NetworkManager_abortRequest(xhrId) {
-      var xhr = this.pendingRequests[xhrId].xhr;
+      const xhr = this.pendingRequests[xhrId].xhr;
       delete this.pendingRequests[xhrId];
       xhr.abort();
-    }
+    },
   };
 
   return NetworkManager;

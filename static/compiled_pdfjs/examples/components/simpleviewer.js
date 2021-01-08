@@ -29,26 +29,26 @@ PDFJS.workerSrc = '../../build/pdf.worker.js';
 // PDFJS.cMapUrl = '../../external/bcmaps/';
 // PDFJS.cMapPacked = true;
 
-var DEFAULT_URL = '../../web/compressed.tracemonkey-pldi-09.pdf';
+const DEFAULT_URL = '../../web/compressed.tracemonkey-pldi-09.pdf';
 
-var container = document.getElementById('viewerContainer');
+const container = document.getElementById('viewerContainer');
 
 // (Optionally) enable hyperlinks within PDF files.
-var pdfLinkService = new PDFJS.PDFLinkService();
+const pdfLinkService = new PDFJS.PDFLinkService();
 
-var pdfViewer = new PDFJS.PDFViewer({
-  container: container,
+const pdfViewer = new PDFJS.PDFViewer({
+  container,
   linkService: pdfLinkService,
 });
 pdfLinkService.setViewer(pdfViewer);
 
-container.addEventListener('pagesinit', function () {
+container.addEventListener('pagesinit', () => {
   // We can use pdfViewer now, e.g. let's change default scale.
   pdfViewer.currentScaleValue = 'page-width';
 });
 
 // Loading document.
-PDFJS.getDocument(DEFAULT_URL).then(function (pdfDocument) {
+PDFJS.getDocument(DEFAULT_URL).then((pdfDocument) => {
   // Document loaded, specifying document for the viewer and
   // the (optional) linkService.
   pdfViewer.setDocument(pdfDocument);

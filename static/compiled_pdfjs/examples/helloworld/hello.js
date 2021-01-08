@@ -1,4 +1,3 @@
-
 //
 // See README for overview
 //
@@ -8,26 +7,26 @@
 //
 // Fetch the PDF document from the URL using promises
 //
-PDFJS.getDocument('helloworld.pdf').then(function(pdf) {
+PDFJS.getDocument('helloworld.pdf').then((pdf) => {
   // Using promise to fetch the page
-  pdf.getPage(1).then(function(page) {
-    var scale = 1.5;
-    var viewport = page.getViewport(scale);
+  pdf.getPage(1).then((page) => {
+    const scale = 1.5;
+    const viewport = page.getViewport(scale);
 
     //
     // Prepare canvas using PDF page dimensions
     //
-    var canvas = document.getElementById('the-canvas');
-    var context = canvas.getContext('2d');
+    const canvas = document.getElementById('the-canvas');
+    const context = canvas.getContext('2d');
     canvas.height = viewport.height;
     canvas.width = viewport.width;
 
     //
     // Render PDF page into canvas context
     //
-    var renderContext = {
+    const renderContext = {
       canvasContext: context,
-      viewport: viewport
+      viewport,
     };
     page.render(renderContext);
   });

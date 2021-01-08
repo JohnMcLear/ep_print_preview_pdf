@@ -1,4 +1,4 @@
 'use strict';
-  //var a;
-  var b;
-var c;
+// var a;
+let b;
+let c;

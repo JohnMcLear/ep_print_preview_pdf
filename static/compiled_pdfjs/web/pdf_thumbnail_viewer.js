@@ -17,9 +17,9 @@
 
 'use strict';
 
-var THUMBNAIL_SCROLL_MARGIN = -19;
+const THUMBNAIL_SCROLL_MARGIN = -19;
 
-//#include pdf_thumbnail_view.js
+// #include pdf_thumbnail_view.js
 
 /**
  * @typedef {Object} PDFThumbnailViewerOptions
@@ -34,7 +34,7 @@ var THUMBNAIL_SCROLL_MARGIN = -19;
  * @class
  * @implements {IRenderableView}
  */
-var PDFThumbnailViewer = (function PDFThumbnailViewerClosure() {
+const PDFThumbnailViewer = (function PDFThumbnailViewerClosure() {
   /**
    * @constructs PDFThumbnailViewer
    * @param {PDFThumbnailViewerOptions} options
@@ -69,27 +69,27 @@ var PDFThumbnailViewer = (function PDFThumbnailViewerClosure() {
 
     scrollThumbnailIntoView:
         function PDFThumbnailViewer_scrollThumbnailIntoView(page) {
-      var selected = document.querySelector('.thumbnail.selected');
-      if (selected) {
-        selected.classList.remove('selected');
-      }
-      var thumbnail = document.getElementById('thumbnailContainer' + page);
-      if (thumbnail) {
-        thumbnail.classList.add('selected');
-      }
-      var visibleThumbs = this._getVisibleThumbs();
-      var numVisibleThumbs = visibleThumbs.views.length;
+          const selected = document.querySelector('.thumbnail.selected');
+          if (selected) {
+            selected.classList.remove('selected');
+          }
+          const thumbnail = document.getElementById(`thumbnailContainer${page}`);
+          if (thumbnail) {
+            thumbnail.classList.add('selected');
+          }
+          const visibleThumbs = this._getVisibleThumbs();
+          const numVisibleThumbs = visibleThumbs.views.length;
 
-      // If the thumbnail isn't currently visible, scroll it into view.
-      if (numVisibleThumbs > 0) {
-        var first = visibleThumbs.first.id;
-        // Account for only one thumbnail being visible.
-        var last = (numVisibleThumbs > 1 ? visibleThumbs.last.id : first);
-        if (page <= first || page >= last) {
-          scrollIntoView(thumbnail, { top: THUMBNAIL_SCROLL_MARGIN });
-        }
-      }
-    },
+          // If the thumbnail isn't currently visible, scroll it into view.
+          if (numVisibleThumbs > 0) {
+            const first = visibleThumbs.first.id;
+            // Account for only one thumbnail being visible.
+            const last = (numVisibleThumbs > 1 ? visibleThumbs.last.id : first);
+            if (page <= first || page >= last) {
+              scrollIntoView(thumbnail, {top: THUMBNAIL_SCROLL_MARGIN});
+            }
+          }
+        },
 
     get pagesRotation() {
       return this._pagesRotation;
@@ -97,14 +97,14 @@ var PDFThumbnailViewer = (function PDFThumbnailViewerClosure() {
 
     set pagesRotation(rotation) {
       this._pagesRotation = rotation;
-      for (var i = 0, l = this.thumbnails.length; i < l; i++) {
-        var thumb = this.thumbnails[i];
+      for (let i = 0, l = this.thumbnails.length; i < l; i++) {
+        const thumb = this.thumbnails[i];
         thumb.update(rotation);
       }
     },
 
     cleanup: function PDFThumbnailViewer_cleanup() {
-      var tempCanvas = PDFThumbnailView.tempImageCache;
+      const tempCanvas = PDFThumbnailView.tempImageCache;
       if (tempCanvas) {
         // Zeroing the width and height causes Firefox to release graphics
         // resources immediately, which can greatly reduce memory consumption.
@@ -126,7 +126,7 @@ var PDFThumbnailViewer = (function PDFThumbnailViewerClosure() {
     setDocument: function PDFThumbnailViewer_setDocument(pdfDocument) {
       if (this.pdfDocument) {
         // cleanup of the elements and views
-        var thumbsView = this.container;
+        const thumbsView = this.container;
         while (thumbsView.hasChildNodes()) {
           thumbsView.removeChild(thumbsView.lastChild);
         }
@@ -138,20 +138,20 @@ var PDFThumbnailViewer = (function PDFThumbnailViewerClosure() {
         return Promise.resolve();
       }
 
-      return pdfDocument.getPage(1).then(function (firstPage) {
-        var pagesCount = pdfDocument.numPages;
-        var viewport = firstPage.getViewport(1.0);
-        for (var pageNum = 1; pageNum <= pagesCount; ++pageNum) {
-          var thumbnail = new PDFThumbnailView({
+      return pdfDocument.getPage(1).then((firstPage) => {
+        const pagesCount = pdfDocument.numPages;
+        const viewport = firstPage.getViewport(1.0);
+        for (let pageNum = 1; pageNum <= pagesCount; ++pageNum) {
+          const thumbnail = new PDFThumbnailView({
             container: this.container,
             id: pageNum,
             defaultViewport: viewport.clone(),
             linkService: this.linkService,
-            renderingQueue: this.renderingQueue
+            renderingQueue: this.renderingQueue,
           });
           this.thumbnails.push(thumbnail);
         }
-      }.bind(this));
+      });
     },
 
     /**
@@ -161,43 +161,43 @@ var PDFThumbnailViewer = (function PDFThumbnailViewerClosure() {
      */
     _ensurePdfPageLoaded:
         function PDFThumbnailViewer_ensurePdfPageLoaded(thumbView) {
-      if (thumbView.pdfPage) {
-        return Promise.resolve(thumbView.pdfPage);
-      }
-      var pageNumber = thumbView.id;
-      if (this._pagesRequests[pageNumber]) {
-        return this._pagesRequests[pageNumber];
-      }
-      var promise = this.pdfDocument.getPage(pageNumber).then(
-        function (pdfPage) {
-          thumbView.setPdfPage(pdfPage);
-          this._pagesRequests[pageNumber] = null;
-          return pdfPage;
-        }.bind(this));
-      this._pagesRequests[pageNumber] = promise;
-      return promise;
-    },
+          if (thumbView.pdfPage) {
+            return Promise.resolve(thumbView.pdfPage);
+          }
+          const pageNumber = thumbView.id;
+          if (this._pagesRequests[pageNumber]) {
+            return this._pagesRequests[pageNumber];
+          }
+          const promise = this.pdfDocument.getPage(pageNumber).then(
+              (pdfPage) => {
+                thumbView.setPdfPage(pdfPage);
+                this._pagesRequests[pageNumber] = null;
+                return pdfPage;
+              });
+          this._pagesRequests[pageNumber] = promise;
+          return promise;
+        },
 
     ensureThumbnailVisible:
         function PDFThumbnailViewer_ensureThumbnailVisible(page) {
-      // Ensure that the thumbnail of the current page is visible
-      // when switching from another view.
-      scrollIntoView(document.getElementById('thumbnailContainer' + page));
-    },
+          // Ensure that the thumbnail of the current page is visible
+          // when switching from another view.
+          scrollIntoView(document.getElementById(`thumbnailContainer${page}`));
+        },
 
-    forceRendering: function () {
-      var visibleThumbs = this._getVisibleThumbs();
-      var thumbView = this.renderingQueue.getHighestPriority(visibleThumbs,
-                                                             this.thumbnails,
-                                                             this.scroll.down);
+    forceRendering() {
+      const visibleThumbs = this._getVisibleThumbs();
+      const thumbView = this.renderingQueue.getHighestPriority(visibleThumbs,
+          this.thumbnails,
+          this.scroll.down);
       if (thumbView) {
-        this._ensurePdfPageLoaded(thumbView).then(function () {
+        this._ensurePdfPageLoaded(thumbView).then(() => {
           this.renderingQueue.renderView(thumbView);
-        }.bind(this));
+        });
         return true;
       }
       return false;
-    }
+    },
   };
 
   return PDFThumbnailViewer;

@@ -16,25 +16,116 @@
 
 'use strict';
 
-var fs = require('fs');
-var http = require('http');
-var path = require('path');
+const fs = require('fs');
+const http = require('http');
+const path = require('path');
 
 // Defines all languages that have a translation at mozilla-aurora.
 // This is used in make.js for the importl10n command.
-var langCodes = [
-  'ach', 'af', 'ak', 'an', 'ar', 'as', 'ast', 'az', 'be', 'bg',
-  'bn-BD', 'bn-IN', 'br', 'bs', 'ca', 'cs', 'csb', 'cy', 'da',
-  'de', 'el', 'en-GB', 'en-ZA', 'eo', 'es-AR', 'es-CL', 'es-ES',
-  'es-MX', 'et', 'eu', 'fa', 'ff', 'fi', 'fr', 'fy-NL', 'ga-IE',
-  'gd', 'gl', 'gu-IN', 'he', 'hi-IN', 'hr', 'hu', 'hy-AM', 'id',
-  'is', 'it', 'ja', 'ka', 'kk', 'km', 'kn', 'ko', 'ku', 'lg',
-  'lij', 'lt', 'lv', 'mai', 'mk', 'ml', 'mn', 'mr', 'ms', 'my',
-  'nb-NO', 'nl', 'nn-NO', 'nso', 'oc', 'or', 'pa-IN', 'pl',
-  'pt-BR', 'pt-PT', 'rm', 'ro', 'ru', 'rw', 'sah', 'si', 'sk',
-  'sl', 'son', 'sq', 'sr', 'sv-SE', 'sw', 'ta', 'ta-LK', 'te',
-  'th', 'tl', 'tn', 'tr', 'uk', 'ur', 'vi', 'wo', 'xh', 'zh-CN',
-  'zh-TW', 'zu'
+const langCodes = [
+  'ach',
+  'af',
+  'ak',
+  'an',
+  'ar',
+  'as',
+  'ast',
+  'az',
+  'be',
+  'bg',
+  'bn-BD',
+  'bn-IN',
+  'br',
+  'bs',
+  'ca',
+  'cs',
+  'csb',
+  'cy',
+  'da',
+  'de',
+  'el',
+  'en-GB',
+  'en-ZA',
+  'eo',
+  'es-AR',
+  'es-CL',
+  'es-ES',
+  'es-MX',
+  'et',
+  'eu',
+  'fa',
+  'ff',
+  'fi',
+  'fr',
+  'fy-NL',
+  'ga-IE',
+  'gd',
+  'gl',
+  'gu-IN',
+  'he',
+  'hi-IN',
+  'hr',
+  'hu',
+  'hy-AM',
+  'id',
+  'is',
+  'it',
+  'ja',
+  'ka',
+  'kk',
+  'km',
+  'kn',
+  'ko',
+  'ku',
+  'lg',
+  'lij',
+  'lt',
+  'lv',
+  'mai',
+  'mk',
+  'ml',
+  'mn',
+  'mr',
+  'ms',
+  'my',
+  'nb-NO',
+  'nl',
+  'nn-NO',
+  'nso',
+  'oc',
+  'or',
+  'pa-IN',
+  'pl',
+  'pt-BR',
+  'pt-PT',
+  'rm',
+  'ro',
+  'ru',
+  'rw',
+  'sah',
+  'si',
+  'sk',
+  'sl',
+  'son',
+  'sq',
+  'sr',
+  'sv-SE',
+  'sw',
+  'ta',
+  'ta-LK',
+  'te',
+  'th',
+  'tl',
+  'tn',
+  'tr',
+  'uk',
+  'ur',
+  'vi',
+  'wo',
+  'xh',
+  'zh-CN',
+  'zh-TW',
+  'zu',
 ];
 
 function normalizeText(s) {
@@ -42,47 +133,47 @@ function normalizeText(s) {
 }
 
 function downloadLanguageFiles(langCode, callback) {
-  console.log('Downloading ' + langCode + '...');
+  console.log(`Downloading ${langCode}...`);
 
   // Constants for constructing the URLs. Translations are taken from the
   // Aurora channel as those are the most recent ones. The Nightly channel
   // does not provide all translations.
-  var MOZCENTRAL_ROOT = 'http://mxr.mozilla.org/l10n-mozilla-aurora/source/';
-  var MOZCENTRAL_PDFJS_DIR = '/browser/pdfviewer/';
-  var MOZCENTRAL_RAW_FLAG = '?raw=1';
+  const MOZCENTRAL_ROOT = 'http://mxr.mozilla.org/l10n-mozilla-aurora/source/';
+  const MOZCENTRAL_PDFJS_DIR = '/browser/pdfviewer/';
+  const MOZCENTRAL_RAW_FLAG = '?raw=1';
 
   // Defines which files to download for each language.
-  var files = ['chrome.properties', 'viewer.properties'];
-  var downloadsLeft = files.length;
+  const files = ['chrome.properties', 'viewer.properties'];
+  let downloadsLeft = files.length;
 
   if (!fs.existsSync(langCode)) {
     fs.mkdirSync(langCode);
   }
 
   // Download the necessary files for this language.
-  files.forEach(function(fileName) {
-    var outputPath = path.join(langCode, fileName);
-    var url = MOZCENTRAL_ROOT + langCode + MOZCENTRAL_PDFJS_DIR +
+  files.forEach((fileName) => {
+    const outputPath = path.join(langCode, fileName);
+    const url = MOZCENTRAL_ROOT + langCode + MOZCENTRAL_PDFJS_DIR +
               fileName + MOZCENTRAL_RAW_FLAG;
-    var request = http.get(url, function(response) {
-      var content = '';
+    const request = http.get(url, (response) => {
+      let content = '';
       response.setEncoding('utf8');
-      response.on("data", function(chunk) {
+      response.on('data', (chunk) => {
         content += chunk;
       });
-      response.on('end', function() {
+      response.on('end', () => {
         fs.writeFileSync(outputPath, normalizeText(content), 'utf8');
         downloadsLeft--;
         if (downloadsLeft === 0) {
           callback();
         }
-      })
+      });
     });
   });
 }
 
 function downloadL10n() {
-  var i = 0;
+  let i = 0;
   (function next() {
     if (i >= langCodes.length) {
       return;

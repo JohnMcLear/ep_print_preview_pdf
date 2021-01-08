@@ -18,7 +18,7 @@
 
 'use strict';
 
-var TEXT_LAYER_RENDER_DELAY = 200; // ms
+const TEXT_LAYER_RENDER_DELAY = 200; // ms
 
 /**
  * @typedef {Object} PDFPageViewOptions
@@ -35,24 +35,24 @@ var TEXT_LAYER_RENDER_DELAY = 200; // ms
  * @class
  * @implements {IRenderableView}
  */
-var PDFPageView = (function PDFPageViewClosure() {
-  var CustomStyle = PDFJS.CustomStyle;
+const PDFPageView = (function PDFPageViewClosure() {
+  const CustomStyle = PDFJS.CustomStyle;
 
   /**
    * @constructs PDFPageView
    * @param {PDFPageViewOptions} options
    */
   function PDFPageView(options) {
-    var container = options.container;
-    var id = options.id;
-    var scale = options.scale;
-    var defaultViewport = options.defaultViewport;
-    var renderingQueue = options.renderingQueue;
-    var textLayerFactory = options.textLayerFactory;
-    var annotationsLayerFactory = options.annotationsLayerFactory;
+    const container = options.container;
+    const id = options.id;
+    const scale = options.scale;
+    const defaultViewport = options.defaultViewport;
+    const renderingQueue = options.renderingQueue;
+    const textLayerFactory = options.textLayerFactory;
+    const annotationsLayerFactory = options.annotationsLayerFactory;
 
     this.id = id;
-    this.renderingId = 'page' + id;
+    this.renderingId = `page${id}`;
 
     this.rotation = 0;
     this.scale = scale || DEFAULT_SCALE;
@@ -76,11 +76,11 @@ var PDFPageView = (function PDFPageViewClosure() {
 
     this.annotationLayer = null;
 
-    var div = document.createElement('div');
-    div.id = 'pageContainer' + this.id;
+    const div = document.createElement('div');
+    div.id = `pageContainer${this.id}`;
     div.className = 'page';
-    div.style.width = Math.floor(this.viewport.width) + 'px';
-    div.style.height = Math.floor(this.viewport.height) + 'px';
+    div.style.width = `${Math.floor(this.viewport.width)}px`;
+    div.style.height = `${Math.floor(this.viewport.height)}px`;
     div.setAttribute('data-page-number', this.id);
     this.div = div;
 
@@ -91,9 +91,9 @@ var PDFPageView = (function PDFPageViewClosure() {
     setPdfPage: function PDFPageView_setPdfPage(pdfPage) {
       this.pdfPage = pdfPage;
       this.pdfPageRotate = pdfPage.rotate;
-      var totalRotation = (this.rotation + this.pdfPageRotate) % 360;
+      const totalRotation = (this.rotation + this.pdfPageRotate) % 360;
       this.viewport = pdfPage.getViewport(this.scale * CSS_UNITS,
-                                          totalRotation);
+          totalRotation);
       this.stats = pdfPage.stats;
       this.reset();
     },
@@ -113,16 +113,16 @@ var PDFPageView = (function PDFPageViewClosure() {
       this.resume = null;
       this.renderingState = RenderingStates.INITIAL;
 
-      var div = this.div;
-      div.style.width = Math.floor(this.viewport.width) + 'px';
-      div.style.height = Math.floor(this.viewport.height) + 'px';
+      const div = this.div;
+      div.style.width = `${Math.floor(this.viewport.width)}px`;
+      div.style.height = `${Math.floor(this.viewport.height)}px`;
 
-      var childNodes = div.childNodes;
-      var currentZoomLayerNode = (keepZoomLayer && this.zoomLayer) || null;
-      var currentAnnotationNode = (keepAnnotations && this.annotationLayer &&
+      const childNodes = div.childNodes;
+      const currentZoomLayerNode = (keepZoomLayer && this.zoomLayer) || null;
+      const currentAnnotationNode = (keepAnnotations && this.annotationLayer &&
                                    this.annotationLayer.div) || null;
-      for (var i = childNodes.length - 1; i >= 0; i--) {
-        var node = childNodes[i];
+      for (let i = childNodes.length - 1; i >= 0; i--) {
+        const node = childNodes[i];
         if (currentZoomLayerNode === node || currentAnnotationNode === node) {
           continue;
         }
@@ -158,17 +158,17 @@ var PDFPageView = (function PDFPageViewClosure() {
         this.rotation = rotation;
       }
 
-      var totalRotation = (this.rotation + this.pdfPageRotate) % 360;
+      const totalRotation = (this.rotation + this.pdfPageRotate) % 360;
       this.viewport = this.viewport.clone({
         scale: this.scale * CSS_UNITS,
-        rotation: totalRotation
+        rotation: totalRotation,
       });
 
-      var isScalingRestricted = false;
+      let isScalingRestricted = false;
       if (this.canvas && PDFJS.maxCanvasPixels > 0) {
-        var outputScale = this.outputScale;
-        var pixelsInViewport = this.viewport.width * this.viewport.height;
-        var maxScale = Math.sqrt(PDFJS.maxCanvasPixels / pixelsInViewport);
+        const outputScale = this.outputScale;
+        const pixelsInViewport = this.viewport.width * this.viewport.height;
+        const maxScale = Math.sqrt(PDFJS.maxCanvasPixels / pixelsInViewport);
         if (((Math.floor(this.viewport.width) * outputScale.sx) | 0) *
             ((Math.floor(this.viewport.height) * outputScale.sy) | 0) >
             PDFJS.maxCanvasPixels) {
@@ -181,7 +181,7 @@ var PDFPageView = (function PDFPageViewClosure() {
             (this.hasRestrictedScaling && isScalingRestricted)) {
           this.cssTransform(this.canvas, true);
 
-          var event = document.createEvent('CustomEvent');
+          const event = document.createEvent('CustomEvent');
           event.initCustomEvent('pagerendered', true, true, {
             pageNumber: this.id,
             cssTransform: true,
@@ -212,24 +212,25 @@ var PDFPageView = (function PDFPageViewClosure() {
 
     cssTransform: function PDFPageView_transform(canvas, redrawAnnotations) {
       // Scale canvas, canvas wrapper, and page container.
-      var width = this.viewport.width;
-      var height = this.viewport.height;
-      var div = this.div;
+      const width = this.viewport.width;
+      const height = this.viewport.height;
+      const div = this.div;
       canvas.style.width = canvas.parentNode.style.width = div.style.width =
-        Math.floor(width) + 'px';
+        `${Math.floor(width)}px`;
       canvas.style.height = canvas.parentNode.style.height = div.style.height =
-        Math.floor(height) + 'px';
+        `${Math.floor(height)}px`;
       // The canvas may have been originally rotated, rotate relative to that.
-      var relativeRotation = this.viewport.rotation - canvas._viewport.rotation;
-      var absRotation = Math.abs(relativeRotation);
-      var scaleX = 1, scaleY = 1;
+      const relativeRotation = this.viewport.rotation - canvas._viewport.rotation;
+      const absRotation = Math.abs(relativeRotation);
+      let scaleX = 1; let
+        scaleY = 1;
       if (absRotation === 90 || absRotation === 270) {
         // Scale x and y because of the rotation.
         scaleX = height / width;
         scaleY = width / height;
       }
-      var cssTransform = 'rotate(' + relativeRotation + 'deg) ' +
-        'scale(' + scaleX + ',' + scaleY + ')';
+      const cssTransform = `rotate(${relativeRotation}deg) ` +
+        `scale(${scaleX},${scaleY})`;
       CustomStyle.setProp('transform', canvas, cssTransform);
 
       if (this.textLayer) {
@@ -237,30 +238,30 @@ var PDFPageView = (function PDFPageViewClosure() {
         // the text layer are rotated.
         // TODO: This could probably be simplified by drawing the text layer in
         // one orientation then rotating overall.
-        var textLayerViewport = this.textLayer.viewport;
-        var textRelativeRotation = this.viewport.rotation -
+        const textLayerViewport = this.textLayer.viewport;
+        const textRelativeRotation = this.viewport.rotation -
           textLayerViewport.rotation;
-        var textAbsRotation = Math.abs(textRelativeRotation);
-        var scale = width / textLayerViewport.width;
+        const textAbsRotation = Math.abs(textRelativeRotation);
+        let scale = width / textLayerViewport.width;
         if (textAbsRotation === 90 || textAbsRotation === 270) {
           scale = width / textLayerViewport.height;
         }
-        var textLayerDiv = this.textLayer.textLayerDiv;
-        var transX, transY;
+        const textLayerDiv = this.textLayer.textLayerDiv;
+        let transX, transY;
         switch (textAbsRotation) {
           case 0:
             transX = transY = 0;
             break;
           case 90:
             transX = 0;
-            transY = '-' + textLayerDiv.style.height;
+            transY = `-${textLayerDiv.style.height}`;
             break;
           case 180:
-            transX = '-' + textLayerDiv.style.width;
-            transY = '-' + textLayerDiv.style.height;
+            transX = `-${textLayerDiv.style.width}`;
+            transY = `-${textLayerDiv.style.height}`;
             break;
           case 270:
-            transX = '-' + textLayerDiv.style.width;
+            transX = `-${textLayerDiv.style.width}`;
             transY = 0;
             break;
           default:
@@ -268,9 +269,9 @@ var PDFPageView = (function PDFPageViewClosure() {
             break;
         }
         CustomStyle.setProp('transform', textLayerDiv,
-            'rotate(' + textAbsRotation + 'deg) ' +
-            'scale(' + scale + ', ' + scale + ') ' +
-            'translate(' + transX + ', ' + transY + ')');
+            `rotate(${textAbsRotation}deg) ` +
+            `scale(${scale}, ${scale}) ` +
+            `translate(${transX}, ${transY})`);
         CustomStyle.setProp('transformOrigin', textLayerDiv, '0% 0%');
       }
 
@@ -298,22 +299,22 @@ var PDFPageView = (function PDFPageViewClosure() {
 
       this.renderingState = RenderingStates.RUNNING;
 
-      var pdfPage = this.pdfPage;
-      var viewport = this.viewport;
-      var div = this.div;
+      const pdfPage = this.pdfPage;
+      const viewport = this.viewport;
+      const div = this.div;
       // Wrap the canvas so if it has a css transform for highdpi the overflow
       // will be hidden in FF.
-      var canvasWrapper = document.createElement('div');
+      const canvasWrapper = document.createElement('div');
       canvasWrapper.style.width = div.style.width;
       canvasWrapper.style.height = div.style.height;
       canvasWrapper.classList.add('canvasWrapper');
 
-      var canvas = document.createElement('canvas');
-      canvas.id = 'page' + this.id;
+      const canvas = document.createElement('canvas');
+      canvas.id = `page${this.id}`;
       // Keep the canvas hidden until the first draw callback, or until drawing
       // is complete when `!this.renderingQueue`, to prevent black flickering.
       canvas.setAttribute('hidden', 'hidden');
-      var isCanvasHidden = true;
+      let isCanvasHidden = true;
 
       canvasWrapper.appendChild(canvas);
       if (this.annotationLayer && this.annotationLayer.div) {
@@ -324,15 +325,15 @@ var PDFPageView = (function PDFPageViewClosure() {
       }
       this.canvas = canvas;
 
-//#if MOZCENTRAL || FIREFOX || GENERIC
+      // #if MOZCENTRAL || FIREFOX || GENERIC
       canvas.mozOpaque = true;
-//#endif
-      var ctx = canvas.getContext('2d', {alpha: false});
-      var outputScale = getOutputScale(ctx);
+      // #endif
+      const ctx = canvas.getContext('2d', {alpha: false});
+      const outputScale = getOutputScale(ctx);
       this.outputScale = outputScale;
 
       if (PDFJS.useOnlyCssZoom) {
-        var actualSizeViewport = viewport.clone({scale: CSS_UNITS});
+        const actualSizeViewport = viewport.clone({scale: CSS_UNITS});
         // Use a scale that will make the canvas be the original intended size
         // of the page.
         outputScale.sx *= actualSizeViewport.width / viewport.width;
@@ -341,8 +342,8 @@ var PDFPageView = (function PDFPageViewClosure() {
       }
 
       if (PDFJS.maxCanvasPixels > 0) {
-        var pixelsInViewport = viewport.width * viewport.height;
-        var maxScale = Math.sqrt(PDFJS.maxCanvasPixels / pixelsInViewport);
+        const pixelsInViewport = viewport.width * viewport.height;
+        const maxScale = Math.sqrt(PDFJS.maxCanvasPixels / pixelsInViewport);
         if (outputScale.sx > maxScale || outputScale.sy > maxScale) {
           outputScale.sx = maxScale;
           outputScale.sy = maxScale;
@@ -353,17 +354,17 @@ var PDFPageView = (function PDFPageViewClosure() {
         }
       }
 
-      var sfx = approximateFraction(outputScale.sx);
-      var sfy = approximateFraction(outputScale.sy);
+      const sfx = approximateFraction(outputScale.sx);
+      const sfy = approximateFraction(outputScale.sy);
       canvas.width = roundToDivide(viewport.width * outputScale.sx, sfx[0]);
       canvas.height = roundToDivide(viewport.height * outputScale.sy, sfy[0]);
-      canvas.style.width = roundToDivide(viewport.width, sfx[1]) + 'px';
-      canvas.style.height = roundToDivide(viewport.height, sfy[1]) + 'px';
+      canvas.style.width = `${roundToDivide(viewport.width, sfx[1])}px`;
+      canvas.style.height = `${roundToDivide(viewport.height, sfy[1])}px`;
       // Add the viewport so it's known what it was originally drawn with.
       canvas._viewport = viewport;
 
-      var textLayerDiv = null;
-      var textLayer = null;
+      let textLayerDiv = null;
+      let textLayer = null;
       if (this.textLayerFactory) {
         textLayerDiv = document.createElement('div');
         textLayerDiv.className = 'textLayer';
@@ -377,20 +378,20 @@ var PDFPageView = (function PDFPageViewClosure() {
         }
 
         textLayer = this.textLayerFactory.createTextLayerBuilder(textLayerDiv,
-                                                                 this.id - 1,
-                                                                 this.viewport);
+            this.id - 1,
+            this.viewport);
       }
       this.textLayer = textLayer;
 
-      var resolveRenderPromise, rejectRenderPromise;
-      var promise = new Promise(function (resolve, reject) {
+      let resolveRenderPromise, rejectRenderPromise;
+      const promise = new Promise((resolve, reject) => {
         resolveRenderPromise = resolve;
         rejectRenderPromise = reject;
       });
 
       // Rendering area
 
-      var self = this;
+      const self = this;
       function pageViewDrawCallback(error) {
         // The renderTask may have been replaced by a new one, so only remove
         // the reference to the renderTask if it matches the one that is
@@ -419,7 +420,7 @@ var PDFPageView = (function PDFPageViewClosure() {
         if (self.zoomLayer) {
           // Zeroing the width and height causes Firefox to release graphics
           // resources immediately, which can greatly reduce memory consumption.
-          var zoomLayerCanvas = self.zoomLayer.firstChild;
+          const zoomLayerCanvas = self.zoomLayer.firstChild;
           zoomLayerCanvas.width = 0;
           zoomLayerCanvas.height = 0;
 
@@ -432,21 +433,21 @@ var PDFPageView = (function PDFPageViewClosure() {
         if (self.onAfterDraw) {
           self.onAfterDraw();
         }
-        var event = document.createEvent('CustomEvent');
+        const event = document.createEvent('CustomEvent');
         event.initCustomEvent('pagerendered', true, true, {
           pageNumber: self.id,
           cssTransform: false,
         });
         div.dispatchEvent(event);
-//#if GENERIC
+        // #if GENERIC
         // This custom event is deprecated, and will be removed in the future,
         // please use the |pagerendered| event instead.
-        var deprecatedEvent = document.createEvent('CustomEvent');
+        const deprecatedEvent = document.createEvent('CustomEvent');
         deprecatedEvent.initCustomEvent('pagerender', true, true, {
-          pageNumber: pdfPage.pageNumber
+          pageNumber: pdfPage.pageNumber,
         });
         div.dispatchEvent(deprecatedEvent);
-//#endif
+        // #endif
 
         if (!error) {
           resolveRenderPromise(undefined);
@@ -455,7 +456,7 @@ var PDFPageView = (function PDFPageViewClosure() {
         }
       }
 
-      var renderContinueCallback = null;
+      let renderContinueCallback = null;
       if (this.renderingQueue) {
         renderContinueCallback = function renderContinueCallback(cont) {
           if (!self.renderingQueue.isHighestPriority(self)) {
@@ -474,11 +475,11 @@ var PDFPageView = (function PDFPageViewClosure() {
         };
       }
 
-      var transform = !outputScale.scaled ? null :
-        [outputScale.sx, 0, 0, outputScale.sy, 0, 0];
-      var renderContext = {
+      const transform = !outputScale.scaled ? null
+        : [outputScale.sx, 0, 0, outputScale.sy, 0, 0];
+      const renderContext = {
         canvasContext: ctx,
-        transform: transform,
+        transform,
         viewport: this.viewport,
         // intent: 'default', // === 'display'
       };
@@ -486,26 +487,26 @@ var PDFPageView = (function PDFPageViewClosure() {
       renderTask.onContinue = renderContinueCallback;
 
       this.renderTask.promise.then(
-        function pdfPageRenderCallback() {
-          pageViewDrawCallback(null);
-          if (textLayer) {
-            self.pdfPage.getTextContent().then(
-              function textContentResolved(textContent) {
-                textLayer.setTextContent(textContent);
-                textLayer.render(TEXT_LAYER_RENDER_DELAY);
-              }
-            );
+          () => {
+            pageViewDrawCallback(null);
+            if (textLayer) {
+              self.pdfPage.getTextContent().then(
+                  (textContent) => {
+                    textLayer.setTextContent(textContent);
+                    textLayer.render(TEXT_LAYER_RENDER_DELAY);
+                  }
+              );
+            }
+          },
+          (error) => {
+            pageViewDrawCallback(error);
           }
-        },
-        function pdfPageRenderError(error) {
-          pageViewDrawCallback(error);
-        }
       );
 
       if (this.annotationsLayerFactory) {
         if (!this.annotationLayer) {
-          this.annotationLayer = this.annotationsLayerFactory.
-            createAnnotationsLayerBuilder(div, this.pdfPage);
+          this.annotationLayer = this.annotationsLayerFactory
+              .createAnnotationsLayerBuilder(div, this.pdfPage);
         }
         this.annotationLayer.setupAnnotations(this.viewport, 'display');
       }
@@ -518,58 +519,58 @@ var PDFPageView = (function PDFPageViewClosure() {
     },
 
     beforePrint: function PDFPageView_beforePrint() {
-      var pdfPage = this.pdfPage;
+      const pdfPage = this.pdfPage;
 
-      var viewport = pdfPage.getViewport(1);
+      const viewport = pdfPage.getViewport(1);
       // Use the same hack we use for high dpi displays for printing to get
       // better output until bug 811002 is fixed in FF.
-      var PRINT_OUTPUT_SCALE = 2;
-      var canvas = document.createElement('canvas');
+      const PRINT_OUTPUT_SCALE = 2;
+      const canvas = document.createElement('canvas');
 
       // The logical size of the canvas.
       canvas.width = Math.floor(viewport.width) * PRINT_OUTPUT_SCALE;
       canvas.height = Math.floor(viewport.height) * PRINT_OUTPUT_SCALE;
 
       // The rendered size of the canvas, relative to the size of canvasWrapper.
-      canvas.style.width = (PRINT_OUTPUT_SCALE * 100) + '%';
-      canvas.style.height = (PRINT_OUTPUT_SCALE * 100) + '%';
+      canvas.style.width = `${PRINT_OUTPUT_SCALE * 100}%`;
+      canvas.style.height = `${PRINT_OUTPUT_SCALE * 100}%`;
 
-      var cssScale = 'scale(' + (1 / PRINT_OUTPUT_SCALE) + ', ' +
-                                (1 / PRINT_OUTPUT_SCALE) + ')';
-      CustomStyle.setProp('transform' , canvas, cssScale);
-      CustomStyle.setProp('transformOrigin' , canvas, '0% 0%');
+      const cssScale = `scale(${1 / PRINT_OUTPUT_SCALE}, ${
+        1 / PRINT_OUTPUT_SCALE})`;
+      CustomStyle.setProp('transform', canvas, cssScale);
+      CustomStyle.setProp('transformOrigin', canvas, '0% 0%');
 
-      var printContainer = document.getElementById('printContainer');
-      var canvasWrapper = document.createElement('div');
-      canvasWrapper.style.width = viewport.width + 'pt';
-      canvasWrapper.style.height = viewport.height + 'pt';
+      const printContainer = document.getElementById('printContainer');
+      const canvasWrapper = document.createElement('div');
+      canvasWrapper.style.width = `${viewport.width}pt`;
+      canvasWrapper.style.height = `${viewport.height}pt`;
       canvasWrapper.appendChild(canvas);
       printContainer.appendChild(canvasWrapper);
 
-      canvas.mozPrintCallback = function(obj) {
-        var ctx = obj.context;
+      canvas.mozPrintCallback = function (obj) {
+        const ctx = obj.context;
 
         ctx.save();
         ctx.fillStyle = 'rgb(255, 255, 255)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.restore();
-//#if !(MOZCENTRAL || FIREFOX)
+        // #if !(MOZCENTRAL || FIREFOX)
         // Used by the mozCurrentTransform polyfill in src/display/canvas.js.
         ctx._transformMatrix =
           [PRINT_OUTPUT_SCALE, 0, 0, PRINT_OUTPUT_SCALE, 0, 0];
-//#endif
+        // #endif
         ctx.scale(PRINT_OUTPUT_SCALE, PRINT_OUTPUT_SCALE);
 
-        var renderContext = {
+        const renderContext = {
           canvasContext: ctx,
-          viewport: viewport,
-          intent: 'print'
+          viewport,
+          intent: 'print',
         };
 
-        pdfPage.render(renderContext).promise.then(function() {
+        pdfPage.render(renderContext).promise.then(() => {
           // Tell the printEngine that rendering this canvas/page has finished.
           obj.done();
-        }, function(error) {
+        }, (error) => {
           console.error(error);
           // Tell the printEngine that rendering this canvas/page has failed.
           // This will make the print proces stop.

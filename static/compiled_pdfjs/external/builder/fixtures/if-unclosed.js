@@ -1,3 +1,3 @@
 'use strict';
-//#if TRUE
-var a;
+// #if TRUE
+let a;

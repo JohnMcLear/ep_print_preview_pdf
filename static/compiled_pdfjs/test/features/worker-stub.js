@@ -14,24 +14,24 @@
  */
 
 onmessage = function (e) {
-  var data = e.data;
+  const data = e.data;
   switch (data.action) {
-  case 'test':
-    postMessage({action: 'test', result: data.data instanceof Uint8Array});
-    break;
-  case 'test-transfers':
-    postMessage({action: 'test-transfers', result: data.data[0] === 255});
-    break;
-  case 'xhr':
-    var xhr = new XMLHttpRequest();
-    var responseExists = 'response' in xhr;
-    // check if the property is actually implemented
-    try {
-      var dummy = xhr.responseType;
-    } catch (e) {
-      responseExists = false;
-    }
-    postMessage({action: 'xhr', result: responseExists});
-    break;
+    case 'test':
+      postMessage({action: 'test', result: data.data instanceof Uint8Array});
+      break;
+    case 'test-transfers':
+      postMessage({action: 'test-transfers', result: data.data[0] === 255});
+      break;
+    case 'xhr':
+      var xhr = new XMLHttpRequest();
+      var responseExists = 'response' in xhr;
+      // check if the property is actually implemented
+      try {
+        const dummy = xhr.responseType;
+      } catch (e) {
+        responseExists = false;
+      }
+      postMessage({action: 'xhr', result: responseExists});
+      break;
   }
 };

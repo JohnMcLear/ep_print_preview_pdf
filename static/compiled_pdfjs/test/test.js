@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*jslint node: true */
+/* jslint node: true */
 
 'use strict';
 
-var WebServer = require('./webserver.js').WebServer;
-var WebBrowser = require('./webbrowser.js').WebBrowser;
-var path = require('path');
-var fs = require('fs');
-var os = require('os');
-var url = require('url');
-var testUtils = require('./testutils.js');
+const WebServer = require('./webserver.js').WebServer;
+const WebBrowser = require('./webbrowser.js').WebBrowser;
+const path = require('path');
+const fs = require('fs');
+const os = require('os');
+const url = require('url');
+const testUtils = require('./testutils.js');
 
 function parseOptions() {
   function describeCheck(fn, text) {
@@ -33,71 +33,74 @@ function parseOptions() {
     return fn;
   }
 
-  var yargs = require('yargs')
-    .usage('Usage: $0')
-    .boolean(['help', 'masterMode', 'reftest', 'unitTest', 'fontTest',
-              'noPrompts', 'noDownload', 'downloadOnly'])
-    .string(['manifestFile', 'browser', 'browserManifestFile',
-             'port', 'statsFile', 'statsDelay', 'testfilter'])
-    .alias('browser', 'b').alias('help', 'h').alias('masterMode', 'm')
-    .alias('testfilter', 't')
-    .describe('help', 'Show this help message')
-    .describe('masterMode', 'Run the script in master mode.')
-    .describe('noPrompts',
-      'Uses default answers (intended for CLOUD TESTS only!).')
-    .describe('manifestFile',
-      'A path to JSON file in the form of test_manifest.json')
-    .default('manifestFile', 'test_manifest.json')
-    .describe('browser', 'The path to a single browser ')
-    .describe('browserManifestFile', 'A path to JSON file in the form of ' +
+  const yargs = require('yargs')
+      .usage('Usage: $0')
+      .boolean(['help',
+        'masterMode',
+        'reftest',
+        'unitTest',
+        'fontTest',
+        'noPrompts',
+        'noDownload',
+        'downloadOnly'])
+      .string(['manifestFile',
+        'browser',
+        'browserManifestFile',
+        'port',
+        'statsFile',
+        'statsDelay',
+        'testfilter'])
+      .alias('browser', 'b').alias('help', 'h').alias('masterMode', 'm')
+      .alias('testfilter', 't')
+      .describe('help', 'Show this help message')
+      .describe('masterMode', 'Run the script in master mode.')
+      .describe('noPrompts',
+          'Uses default answers (intended for CLOUD TESTS only!).')
+      .describe('manifestFile',
+          'A path to JSON file in the form of test_manifest.json')
+      .default('manifestFile', 'test_manifest.json')
+      .describe('browser', 'The path to a single browser ')
+      .describe('browserManifestFile', 'A path to JSON file in the form of ' +
       'those found in resources/browser_manifests/')
-    .describe('reftest', 'Automatically start reftest showing comparison ' +
+      .describe('reftest', 'Automatically start reftest showing comparison ' +
       'test failures, if there are any.')
-    .describe('testfilter', 'Run specific reftest(s).')
-    .default('testfilter', [])
-    .example('$0 --b=firefox -t=issue5567 -t=issue5909',
-      'Run the reftest identified by issue5567 and issue5909 in Firefox.')
-    .describe('port', 'The port the HTTP server should listen on.')
-    .default('port', 0)
-    .describe('unitTest', 'Run the unit tests.')
-    .describe('fontTest', 'Run the font tests.')
-    .describe('noDownload', 'Skips test PDFs downloading.')
-    .describe('downloadOnly', 'Download test PDFs without running the tests.')
-    .describe('statsFile', 'The file where to store stats.')
-    .describe('statsDelay', 'The amount of time in milliseconds the browser ' +
+      .describe('testfilter', 'Run specific reftest(s).')
+      .default('testfilter', [])
+      .example('$0 --b=firefox -t=issue5567 -t=issue5909',
+          'Run the reftest identified by issue5567 and issue5909 in Firefox.')
+      .describe('port', 'The port the HTTP server should listen on.')
+      .default('port', 0)
+      .describe('unitTest', 'Run the unit tests.')
+      .describe('fontTest', 'Run the font tests.')
+      .describe('noDownload', 'Skips test PDFs downloading.')
+      .describe('downloadOnly', 'Download test PDFs without running the tests.')
+      .describe('statsFile', 'The file where to store stats.')
+      .describe('statsDelay', 'The amount of time in milliseconds the browser ' +
       'should wait before starting stats.')
-    .default('statsDelay', 0)
-    .check(describeCheck(function (argv) {
-      return +argv.reftest + argv.unitTest + argv.fontTest +
-        argv.masterMode <= 1;
-    }, '--reftest, --unitTest, --fontTest and --masterMode must not be ' +
+      .default('statsDelay', 0)
+      .check(describeCheck((argv) => +argv.reftest + argv.unitTest + argv.fontTest +
+        argv.masterMode <= 1, '--reftest, --unitTest, --fontTest and --masterMode must not be ' +
       'specified at the same time.'))
-    .check(describeCheck(function (argv) {
-      return !argv.noDownload || !argv.downloadOnly;
-    }, '--noDownload and --downloadOnly cannot be used together.'))
-    .check(describeCheck(function (argv) {
-      return !argv.masterMode || argv.manifestFile === 'test_manifest.json';
-    }, 'when --masterMode is specified --manifestFile shall be equal ' +
+      .check(describeCheck((argv) => !argv.noDownload || !argv.downloadOnly, '--noDownload and --downloadOnly cannot be used together.'))
+      .check(describeCheck((argv) => !argv.masterMode || argv.manifestFile === 'test_manifest.json', 'when --masterMode is specified --manifestFile shall be equal ' +
       'test_manifest.json'))
-    .check(describeCheck(function (argv) {
-      return !argv.browser || !argv.browserManifestFile;
-    }, '--browser and --browserManifestFile must not be specified at the ' +'' +
+      .check(describeCheck((argv) => !argv.browser || !argv.browserManifestFile, '--browser and --browserManifestFile must not be specified at the ' + '' +
       'same time.'));
-  var result = yargs.argv;
+  const result = yargs.argv;
   if (result.help) {
     yargs.showHelp();
     process.exit(0);
   }
-  result.testfilter = Array.isArray(result.testfilter) ?
-    result.testfilter : [result.testfilter];
+  result.testfilter = Array.isArray(result.testfilter)
+    ? result.testfilter : [result.testfilter];
   return result;
 }
 
-var refsTmpDir = 'tmp';
-var testResultDir = 'test_snapshots';
-var refsDir = 'ref';
-var eqLog = 'eq.log';
-var browserTimeout = 120;
+const refsTmpDir = 'tmp';
+const testResultDir = 'test_snapshots';
+const refsDir = 'ref';
+const eqLog = 'eq.log';
+const browserTimeout = 120;
 
 function monitorBrowserTimeout(session, onTimeout) {
   if (session.timeoutMonitor) {
@@ -107,7 +110,7 @@ function monitorBrowserTimeout(session, onTimeout) {
     session.timeoutMonitor = null;
     return;
   }
-  session.timeoutMonitor = setTimeout(function () {
+  session.timeoutMonitor = setTimeout(() => {
     onTimeout(session);
   }, browserTimeout * 1000);
 }
@@ -127,54 +130,54 @@ function updateRefImages() {
     return;
   }
   testUtils.confirm('Would you like to update the master copy in ref/? [yn] ',
-    function (confirmed) {
-      if (confirmed) {
-        sync(true);
-      } else {
-        console.log('  OK, not updating.');
-      }
-    });
+      (confirmed) => {
+        if (confirmed) {
+          sync(true);
+        } else {
+          console.log('  OK, not updating.');
+        }
+      });
 }
 
 function examineRefImages() {
   startServer();
-  var startUrl = 'http://' + server.host + ':' + server.port +
-                 '/test/resources/reftest-analyzer.html#web=/test/eq.log';
-  var browser = WebBrowser.create(sessions[0].config);
+  const startUrl = `http://${server.host}:${server.port
+  }/test/resources/reftest-analyzer.html#web=/test/eq.log`;
+  const browser = WebBrowser.create(sessions[0].config);
   browser.start(startUrl);
 }
 
 function startRefTest(masterMode, showRefImages) {
   function finalize() {
     stopServer();
-    var numErrors = 0;
-    var numFBFFailures = 0;
-    var numEqFailures = 0;
-    var numEqNoSnapshot = 0;
-    sessions.forEach(function (session) {
+    let numErrors = 0;
+    let numFBFFailures = 0;
+    let numEqFailures = 0;
+    let numEqNoSnapshot = 0;
+    sessions.forEach((session) => {
       numErrors += session.numErrors;
       numFBFFailures += session.numFBFFailures;
       numEqFailures += session.numEqFailures;
       numEqNoSnapshot += session.numEqNoSnapshot;
     });
-    var numFatalFailures = numErrors + numFBFFailures;
+    const numFatalFailures = numErrors + numFBFFailures;
     console.log();
     if (numFatalFailures + numEqFailures > 0) {
       console.log('OHNOES!  Some tests failed!');
       if (numErrors > 0) {
-        console.log('  errors: ' + numErrors);
+        console.log(`  errors: ${numErrors}`);
       }
       if (numEqFailures > 0) {
-        console.log('  different ref/snapshot: ' + numEqFailures);
+        console.log(`  different ref/snapshot: ${numEqFailures}`);
       }
       if (numFBFFailures > 0) {
-        console.log('  different first/second rendering: ' + numFBFFailures);
+        console.log(`  different first/second rendering: ${numFBFFailures}`);
       }
     } else {
       console.log('All regression tests passed.');
     }
-    var runtime = (Date.now() - startTime) / 1000;
-    console.log('Runtime was ' + runtime.toFixed(1) + ' seconds');
+    const runtime = (Date.now() - startTime) / 1000;
+    console.log(`Runtime was ${runtime.toFixed(1)} seconds`);
 
     if (options.statsFile) {
       fs.writeFileSync(options.statsFile, JSON.stringify(stats, null, 2));
@@ -188,14 +191,14 @@ function startRefTest(masterMode, showRefImages) {
           console.log('  No.  Some non-eq tests failed.');
         } else {
           console.log(
-            '  Yes!  The references in tmp/ can be synced with ref/.');
+              '  Yes!  The references in tmp/ can be synced with ref/.');
           updateRefImages();
         }
       }
     } else if (showRefImages && numEqFailures > 0) {
       console.log();
-      console.log('Starting reftest harness to examine ' + numEqFailures +
-                  ' eq test failures.');
+      console.log(`Starting reftest harness to examine ${numEqFailures
+      } eq test failures.`);
       examineRefImages(numEqFailures);
     }
   }
@@ -215,17 +218,17 @@ function startRefTest(masterMode, showRefImages) {
 
     startTime = Date.now();
     startServer();
-    server.hooks['POST'].push(refTestPostHandler);
+    server.hooks.POST.push(refTestPostHandler);
     onAllSessionsClosed = finalize;
 
-    startBrowsers('/test/test_slave.html', function (session) {
+    startBrowsers('/test/test_slave.html', (session) => {
       session.masterMode = masterMode;
       session.taskResults = {};
       session.tasks = {};
       session.remaining = manifest.length;
-      manifest.forEach(function (item) {
-        var rounds = item.rounds || 1;
-        var roundsResults = [];
+      manifest.forEach((item) => {
+        const rounds = item.rounds || 1;
+        const roundsResults = [];
         roundsResults.length = rounds;
         session.taskResults[item.id] = roundsResults;
         session.tasks[item.id] = item;
@@ -247,18 +250,18 @@ function startRefTest(masterMode, showRefImages) {
       console.log('Temporary snapshot dir tmp/ is still around.');
       console.log('tmp/ can be removed if it has nothing you need.');
       testUtils.confirm('SHOULD THIS SCRIPT REMOVE tmp/? THINK CAREFULLY [yn] ',
-        function (confirmed) {
-          if (confirmed) {
-            testUtils.removeDirSync(refsTmpDir);
-          }
-          setup();
-        });
+          (confirmed) => {
+            if (confirmed) {
+              testUtils.removeDirSync(refsTmpDir);
+            }
+            setup();
+          });
     } else {
       setup();
     }
   }
 
-  var startTime;
+  let startTime;
   var manifest = getTestManifest();
   if (!manifest) {
     return;
@@ -274,28 +277,28 @@ function handleSessionTimeout(session) {
   if (session.closed) {
     return;
   }
-  var browser = session.name;
-  console.log('TEST-UNEXPECTED-FAIL | test failed ' + browser +
-              ' has not responded in ' + browserTimeout + 's');
+  const browser = session.name;
+  console.log(`TEST-UNEXPECTED-FAIL | test failed ${browser
+  } has not responded in ${browserTimeout}s`);
   session.numErrors += session.remaining;
   session.remaining = 0;
   closeSession(browser);
 }
 
 function getTestManifest() {
-  var manifest = JSON.parse(fs.readFileSync(options.manifestFile));
+  let manifest = JSON.parse(fs.readFileSync(options.manifestFile));
 
-  var testFilter = options.testfilter.slice(0);
+  const testFilter = options.testfilter.slice(0);
   if (testFilter.length) {
-    manifest = manifest.filter(function(item) {
-      var i = testFilter.indexOf(item.id);
+    manifest = manifest.filter((item) => {
+      const i = testFilter.indexOf(item.id);
       if (i !== -1) {
         testFilter.splice(i, 1);
         return true;
       }
     });
     if (testFilter.length) {
-      console.error('Unrecognized test IDs: ' + testFilter.join(' '));
+      console.error(`Unrecognized test IDs: ${testFilter.join(' ')}`);
       return;
     }
   }
@@ -303,94 +306,96 @@ function getTestManifest() {
 }
 
 function checkEq(task, results, browser, masterMode) {
-  var taskId = task.id;
-  var refSnapshotDir = path.join(refsDir, os.platform(), browser, taskId);
-  var testSnapshotDir = path.join(testResultDir, os.platform(), browser,
-                                  taskId);
+  const taskId = task.id;
+  const refSnapshotDir = path.join(refsDir, os.platform(), browser, taskId);
+  const testSnapshotDir = path.join(testResultDir, os.platform(), browser,
+      taskId);
 
-  var pageResults = results[0];
-  var taskType = task.type;
-  var numEqNoSnapshot = 0;
-  var numEqFailures = 0;
-  for (var page = 0; page < pageResults.length; page++) {
+  const pageResults = results[0];
+  const taskType = task.type;
+  let numEqNoSnapshot = 0;
+  let numEqFailures = 0;
+  for (let page = 0; page < pageResults.length; page++) {
     if (!pageResults[page]) {
       continue;
     }
-    var testSnapshot = pageResults[page].snapshot;
+    let testSnapshot = pageResults[page].snapshot;
     if (testSnapshot && testSnapshot.indexOf('data:image/png;base64,') === 0) {
       testSnapshot = new Buffer(testSnapshot.substring(22), 'base64');
     } else {
       console.error('Valid snapshot was not found.');
     }
 
-    var refSnapshot = null;
-    var eq = false;
-    var refPath = path.join(refSnapshotDir, (page + 1) + '.png');
+    let refSnapshot = null;
+    let eq = false;
+    const refPath = path.join(refSnapshotDir, `${page + 1}.png`);
     if (!fs.existsSync(refPath)) {
       numEqNoSnapshot++;
       if (!masterMode) {
-        console.log('WARNING: no reference snapshot ' + refPath);
+        console.log(`WARNING: no reference snapshot ${refPath}`);
       }
     } else {
       refSnapshot = fs.readFileSync(refPath);
       eq = (refSnapshot.toString('hex') === testSnapshot.toString('hex'));
       if (!eq) {
-        console.log('TEST-UNEXPECTED-FAIL | ' + taskType + ' ' + taskId +
-                    ' | in ' + browser + ' | rendering of page ' + (page + 1) +
-                    ' != reference rendering');
+        console.log(`TEST-UNEXPECTED-FAIL | ${taskType} ${taskId
+        } | in ${browser} | rendering of page ${page + 1
+        } != reference rendering`);
 
         testUtils.ensureDirSync(testSnapshotDir);
-        fs.writeFileSync(path.join(testSnapshotDir, (page + 1) + '.png'),
-                         testSnapshot);
-        fs.writeFileSync(path.join(testSnapshotDir, (page + 1) + '_ref.png'),
-                         refSnapshot);
+        fs.writeFileSync(path.join(testSnapshotDir, `${page + 1}.png`),
+            testSnapshot);
+        fs.writeFileSync(path.join(testSnapshotDir, `${page + 1}_ref.png`),
+            refSnapshot);
 
         // NB: this follows the format of Mozilla reftest output so that
         // we can reuse its reftest-analyzer script
-        fs.appendFileSync(eqLog, 'REFTEST TEST-UNEXPECTED-FAIL | ' + browser +
-          '-' + taskId + '-page' + (page + 1) + ' | image comparison (==)\n' +
-          'REFTEST   IMAGE 1 (TEST): ' +
-          path.join(testSnapshotDir, (page + 1) + '.png') + '\n' +
-          'REFTEST   IMAGE 2 (REFERENCE): ' +
-          path.join(testSnapshotDir, (page + 1) + '_ref.png') + '\n');
+        fs.appendFileSync(eqLog, `REFTEST TEST-UNEXPECTED-FAIL | ${browser
+        }-${taskId}-page${page + 1} | image comparison (==)\n` +
+          `REFTEST   IMAGE 1 (TEST): ${
+            path.join(testSnapshotDir, `${page + 1}.png`)}\n` +
+          `REFTEST   IMAGE 2 (REFERENCE): ${
+            path.join(testSnapshotDir, `${page + 1}_ref.png`)}\n`);
         numEqFailures++;
       }
     }
     if (masterMode && (!refSnapshot || !eq)) {
-      var tmpSnapshotDir = path.join(refsTmpDir, os.platform(), browser,
-                                     taskId);
+      const tmpSnapshotDir = path.join(refsTmpDir, os.platform(), browser,
+          taskId);
       testUtils.ensureDirSync(tmpSnapshotDir);
-      fs.writeFileSync(path.join(tmpSnapshotDir, (page + 1) + '.png'),
-                       testSnapshot);
+      fs.writeFileSync(path.join(tmpSnapshotDir, `${page + 1}.png`),
+          testSnapshot);
     }
   }
 
-  var session = getSession(browser);
+  const session = getSession(browser);
   session.numEqNoSnapshot += numEqNoSnapshot;
   if (numEqFailures > 0) {
     session.numEqFailures += numEqFailures;
   } else {
-    console.log('TEST-PASS | ' + taskType + ' test ' + taskId + ' | in ' +
-                browser);
+    console.log(`TEST-PASS | ${taskType} test ${taskId} | in ${
+      browser}`);
   }
 }
 
 function checkFBF(task, results, browser) {
-  var numFBFFailures = 0;
-  var round0 = results[0], round1 = results[1];
+  let numFBFFailures = 0;
+  const round0 = results[0]; const
+    round1 = results[1];
   if (round0.length !== round1.length) {
     console.error('round 1 and 2 sizes are different');
   }
 
-  for (var page = 0; page < round1.length; page++) {
-    var r0Page = round0[page], r1Page = round1[page];
+  for (let page = 0; page < round1.length; page++) {
+    const r0Page = round0[page]; const
+      r1Page = round1[page];
     if (!r0Page) {
       continue;
     }
     if (r0Page.snapshot !== r1Page.snapshot) {
-      console.log('TEST-UNEXPECTED-FAIL | forward-back-forward test ' +
-                  task.id + ' | in ' + browser + ' | first rendering of page ' +
-                  (page + 1) + ' != second');
+      console.log(`TEST-UNEXPECTED-FAIL | forward-back-forward test ${
+        task.id} | in ${browser} | first rendering of page ${
+        page + 1} != second`);
       numFBFFailures++;
     }
   }
@@ -398,37 +403,37 @@ function checkFBF(task, results, browser) {
   if (numFBFFailures > 0) {
     getSession(browser).numFBFFailures += numFBFFailures;
   } else {
-    console.log('TEST-PASS | forward-back-forward test ' + task.id +
-                ' | in ' + browser);
+    console.log(`TEST-PASS | forward-back-forward test ${task.id
+    } | in ${browser}`);
   }
 }
 
 function checkLoad(task, results, browser) {
   // Load just checks for absence of failure, so if we got here the
   // test has passed
-  console.log('TEST-PASS | load test ' + task.id + ' | in ' + browser);
+  console.log(`TEST-PASS | load test ${task.id} | in ${browser}`);
 }
 
 function checkRefTestResults(browser, id, results) {
-  var failed = false;
-  var session = getSession(browser);
-  var task = session.tasks[id];
-  results.forEach(function (roundResults, round) {
-    roundResults.forEach(function (pageResult, page) {
+  let failed = false;
+  const session = getSession(browser);
+  const task = session.tasks[id];
+  results.forEach((roundResults, round) => {
+    roundResults.forEach((pageResult, page) => {
       if (!pageResult) {
         return; // no results
       }
       if (pageResult.failure) {
         failed = true;
-        if (fs.existsSync(task.file + '.error')) {
-          console.log('TEST-SKIPPED | PDF was not downloaded ' + id + ' | in ' +
-                      browser + ' | page' + (page + 1) + ' round ' +
-                      (round + 1) + ' | ' + pageResult.failure);
+        if (fs.existsSync(`${task.file}.error`)) {
+          console.log(`TEST-SKIPPED | PDF was not downloaded ${id} | in ${
+            browser} | page${page + 1} round ${
+            round + 1} | ${pageResult.failure}`);
         } else {
           session.numErrors++;
-          console.log('TEST-UNEXPECTED-FAIL | test failed ' + id + ' | in ' +
-            browser + ' | page' + (page + 1) + ' round ' +
-            (round + 1) + ' | ' + pageResult.failure);
+          console.log(`TEST-UNEXPECTED-FAIL | test failed ${id} | in ${
+            browser} | page${page + 1} round ${
+            round + 1} | ${pageResult.failure}`);
         }
       }
     });
@@ -451,85 +456,83 @@ function checkRefTestResults(browser, id, results) {
       throw new Error('Unknown test type');
   }
   // clear memory
-  results.forEach(function (roundResults, round) {
-    roundResults.forEach(function (pageResult, page) {
+  results.forEach((roundResults, round) => {
+    roundResults.forEach((pageResult, page) => {
       pageResult.snapshot = null;
     });
   });
 }
 
 function refTestPostHandler(req, res) {
-  var parsedUrl = url.parse(req.url, true);
-  var pathname = parsedUrl.pathname;
+  const parsedUrl = url.parse(req.url, true);
+  const pathname = parsedUrl.pathname;
   if (pathname !== '/tellMeToQuit' &&
     pathname !== '/info' &&
     pathname !== '/submit_task_results') {
     return false;
   }
 
-  var body = '';
-  req.on('data', function (data) {
+  let body = '';
+  req.on('data', (data) => {
     body += data;
   });
-  req.on('end', function () {
+  req.on('end', () => {
     res.writeHead(200, {'Content-Type': 'text/plain'});
     res.end();
 
-    var session;
+    let session;
     if (pathname === '/tellMeToQuit') {
       // finding by path
-      var browserPath = parsedUrl.query.path;
-      session = sessions.filter(function (session) {
-        return session.config.path === browserPath;
-      })[0];
+      const browserPath = parsedUrl.query.path;
+      session = sessions.filter((session) => session.config.path === browserPath)[0];
       monitorBrowserTimeout(session, null);
       closeSession(session.name);
       return;
     }
 
-    var data = JSON.parse(body);
+    const data = JSON.parse(body);
     if (pathname === '/info') {
       console.log(data.message);
       return;
     }
 
-    var browser = data.browser;
-    var round = data.round;
-    var id = data.id;
-    var page = data.page - 1;
-    var failure = data.failure;
-    var snapshot = data.snapshot;
-    var lastPageNum = data.lastPageNum;
+    const browser = data.browser;
+    const round = data.round;
+    const id = data.id;
+    const page = data.page - 1;
+    const failure = data.failure;
+    const snapshot = data.snapshot;
+    const lastPageNum = data.lastPageNum;
 
     session = getSession(browser);
     monitorBrowserTimeout(session, handleSessionTimeout);
 
-    var taskResults = session.taskResults[id];
+    const taskResults = session.taskResults[id];
     if (!taskResults[round]) {
       taskResults[round] = [];
     }
 
     if (taskResults[round][page]) {
-      console.error('Results for ' + browser + ':' + id + ':' + round +
-                    ':' + page + ' were already submitted');
+      console.error(`Results for ${browser}:${id}:${round
+      }:${page} were already submitted`);
       // TODO abort testing here?
     }
 
     taskResults[round][page] = {
-      failure: failure,
-      snapshot: snapshot
+      failure,
+      snapshot,
     };
     if (stats) {
       stats.push({
-        'browser': browser,
-        'pdf': id,
-        'page': page,
-        'round': round,
-        'stats': data.stats
+        browser,
+        pdf: id,
+        page,
+        round,
+        stats: data.stats,
       });
     }
 
-    var isDone = taskResults[taskResults.length - 1] &&
+    const isDone = taskResults[taskResults.length - 1] &&
                  taskResults[taskResults.length - 1][lastPageNum - 1];
     if (isDone) {
       checkRefTestResults(browser, id, taskResults);
@@ -540,36 +543,37 @@ function refTestPostHandler(req, res) {
 }
 
 function startUnitTest(url, name) {
-  var startTime = Date.now();
+  const startTime = Date.now();
   startServer();
-  server.hooks['POST'].push(unitTestPostHandler);
+  server.hooks.POST.push(unitTestPostHandler);
   onAllSessionsClosed = function () {
     stopServer();
-    var numRuns = 0, numErrors = 0;
-    sessions.forEach(function (session) {
+    let numRuns = 0; let
+      numErrors = 0;
+    sessions.forEach((session) => {
       numRuns += session.numRuns;
       numErrors += session.numErrors;
     });
     console.log();
-    console.log('Run ' + numRuns + ' tests');
+    console.log(`Run ${numRuns} tests`);
     if (numErrors > 0) {
-      console.log('OHNOES!  Some ' + name + ' tests failed!');
-      console.log('  ' + numErrors + ' of ' + numRuns + ' failed');
+      console.log(`OHNOES!  Some ${name} tests failed!`);
+      console.log(`  ${numErrors} of ${numRuns} failed`);
     } else {
-      console.log('All ' + name + ' tests passed.');
+      console.log(`All ${name} tests passed.`);
     }
-    var runtime = (Date.now() - startTime) / 1000;
-    console.log(name + ' tests runtime was ' + runtime.toFixed(1) + ' seconds');
+    const runtime = (Date.now() - startTime) / 1000;
+    console.log(`${name} tests runtime was ${runtime.toFixed(1)} seconds`);
   };
-  startBrowsers(url, function (session) {
+  startBrowsers(url, (session) => {
     session.numRuns = 0;
     session.numErrors = 0;
   });
 }
 
 function unitTestPostHandler(req, res) {
-  var parsedUrl = url.parse(req.url);
-  var pathname = parsedUrl.pathname;
+  const parsedUrl = url.parse(req.url);
+  const pathname = parsedUrl.pathname;
   if (pathname !== '/tellMeToQuit' &&
       pathname !== '/info' &&
       pathname !== '/ttx' &&
@@ -577,33 +581,34 @@ function unitTestPostHandler(req, res) {
     return false;
   }
 
-  var body = '';
-  req.on('data', function (data) {
+  let body = '';
+  req.on('data', (data) => {
     body += data;
   });
-  req.on('end', function () {
+  req.on('end', () => {
     if (pathname === '/ttx') {
-      var translateFont = require('./font/ttxdriver.js').translateFont;
-      var onCancel = null, ttxTimeout = 10000;
-      var timeoutId = setTimeout(function () {
+      const translateFont = require('./font/ttxdriver.js').translateFont;
+      let onCancel = null; const
+        ttxTimeout = 10000;
+      const timeoutId = setTimeout(() => {
         if (onCancel) {
           onCancel('TTX timeout');
         }
       }, ttxTimeout);
-      translateFont(body, function (fn) {
-          onCancel = fn;
-        }, function (err, xml) {
-          clearTimeout(timeoutId);
-          res.writeHead(200, {'Content-Type': 'text/xml'});
-          res.end(err ? '<error>' + err + '</error>' : xml);
-        });
+      translateFont(body, (fn) => {
+        onCancel = fn;
+      }, (err, xml) => {
+        clearTimeout(timeoutId);
+        res.writeHead(200, {'Content-Type': 'text/xml'});
+        res.end(err ? `<error>${err}</error>` : xml);
+      });
       return;
     }
 
     res.writeHead(200, {'Content-Type': 'text/plain'});
     res.end();
 
-    var data = JSON.parse(body);
+    const data = JSON.parse(body);
     if (pathname === '/tellMeToQuit') {
       closeSession(data.browser);
       return;
@@ -612,14 +617,14 @@ function unitTestPostHandler(req, res) {
       console.log(data.message);
       return;
     }
-    var session = getSession(data.browser);
+    const session = getSession(data.browser);
     session.numRuns++;
-    var message = data.status + ' | ' + data.description;
+    let message = `${data.status} | ${data.description}`;
     if (data.status === 'TEST-UNEXPECTED-FAIL') {
       session.numErrors++;
     }
     if (data.error) {
-      message += ' | ' + data.error;
+      message += ` | ${data.error}`;
     }
     console.log(message);
   });
@@ -627,33 +632,33 @@ function unitTestPostHandler(req, res) {
 }
 
 function startBrowsers(url, initSessionCallback) {
-  var browsers;
+  let browsers;
   if (options.browserManifestFile) {
     browsers = JSON.parse(fs.readFileSync(options.browserManifestFile));
   } else if (options.browser) {
-    var browserPath = options.browser;
-    var name = path.basename(browserPath, path.extname(browserPath));
-    browsers = [{name: name, path: browserPath}];
+    const browserPath = options.browser;
+    const name = path.basename(browserPath, path.extname(browserPath));
+    browsers = [{name, path: browserPath}];
   } else {
     console.error('Specify either browser or browserManifestFile.');
     process.exit(1);
   }
   sessions = [];
-  browsers.forEach(function (b) {
-    var browser = WebBrowser.create(b);
-    var startUrl = getServerBaseAddress() + url +
-      '?browser=' + encodeURIComponent(b.name) +
-      '&manifestFile=' + encodeURIComponent('/test/' + options.manifestFile) +
-      '&testFilter=' + JSON.stringify(options.testfilter) +
-      '&path=' + encodeURIComponent(b.path) +
-      '&delay=' + options.statsDelay +
-      '&masterMode=' + options.masterMode;
+  browsers.forEach((b) => {
+    const browser = WebBrowser.create(b);
+    const startUrl = `${getServerBaseAddress() + url
+    }?browser=${encodeURIComponent(b.name)
+    }&manifestFile=${encodeURIComponent(`/test/${options.manifestFile}`)
+    }&testFilter=${JSON.stringify(options.testfilter)
+    }&path=${encodeURIComponent(b.path)
+    }&delay=${options.statsDelay
+    }&masterMode=${options.masterMode}`;
     browser.start(startUrl);
-    var session = {
+    const session = {
       name: b.name,
       config: b,
-      browser: browser,
-      closed: false
+      browser,
+      closed: false,
     };
     if (initSessionCallback) {
       initSessionCallback(session);
@@ -663,7 +668,7 @@ function startBrowsers(url, initSessionCallback) {
 }
 
 function getServerBaseAddress() {
-  return 'http://' + host + ':' + server.port;
+  return `http://${host}:${server.port}`;
 }
 
 function startServer() {
@@ -680,23 +685,19 @@ function stopServer() {
 }
 
 function getSession(browser) {
-  return sessions.filter(function (session) {
-    return session.name === browser;
-  })[0];
+  return sessions.filter((session) => session.name === browser)[0];
 }
 
 function closeSession(browser) {
-  var i = 0;
+  let i = 0;
   while (i < sessions.length && sessions[i].name !== browser) {
     i++;
   }
   if (i < sessions.length) {
-    var session = sessions[i];
-    session.browser.stop(function () {
+    const session = sessions[i];
+    session.browser.stop(() => {
       session.closed = true;
-      var allClosed = sessions.every(function (s) {
-        return s.closed;
-      });
+      const allClosed = sessions.every((s) => s.closed);
       if (allClosed && onAllSessionsClosed) {
         onAllSessionsClosed();
       }
@@ -705,10 +706,10 @@ function closeSession(browser) {
 }
 
 function ensurePDFsDownloaded(callback) {
-  var downloadUtils = require('./downloadutils.js');
-  var manifest = getTestManifest();
-  downloadUtils.downloadManifestFiles(manifest, function () {
-    downloadUtils.verifyManifestFiles(manifest, function (hasErrors) {
+  const downloadUtils = require('./downloadutils.js');
+  const manifest = getTestManifest();
+  downloadUtils.downloadManifestFiles(manifest, () => {
+    downloadUtils.verifyManifestFiles(manifest, (hasErrors) => {
       if (hasErrors) {
         console.log('Unable to verify the checksum for the files that are ' +
                     'used for testing.');
@@ -726,7 +727,7 @@ function main() {
   }
 
   if (options.downloadOnly) {
-    ensurePDFsDownloaded(function() {});
+    ensurePDFsDownloaded(() => {});
   } else if (!options.browser && !options.browserManifestFile) {
     startServer();
   } else if (options.unitTest) {
@@ -738,11 +739,11 @@ function main() {
   }
 }
 
-var server;
-var sessions;
-var onAllSessionsClosed;
+let server;
+let sessions;
+let onAllSessionsClosed;
 var host = '127.0.0.1';
 var options = parseOptions();
-var stats;
+let stats;
 
 main();

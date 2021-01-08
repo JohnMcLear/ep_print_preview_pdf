@@ -3,15 +3,15 @@
 'use strict';
 
 // Small subset of the webL10n API by Fabien Cazenave for pdf.js extension.
-(function(window) {
-  var gLanguage = '';
+(function (window) {
+  let gLanguage = '';
 
   // fetch an l10n objects
   function getL10nData(key) {
-    var response = FirefoxCom.requestSync('getStrings', key);
-    var data = JSON.parse(response);
+    const response = FirefoxCom.requestSync('getStrings', key);
+    const data = JSON.parse(response);
     if (!data) {
-      console.warn('[l10n] #' + key + ' missing for [' + gLanguage + ']');
+      console.warn(`[l10n] #${key} missing for [${gLanguage}]`);
     }
     return data;
   }
@@ -21,15 +21,13 @@
     if (!args) {
       return text;
     }
-    return text.replace(/\{\{\s*(\w+)\s*\}\}/g, function(all, name) {
-      return (name in args ? args[name] : '{{' + name + '}}');
-    });
+    return text.replace(/\{\{\s*(\w+)\s*\}\}/g, (all, name) => (name in args ? args[name] : `{{${name}}}`));
   }
 
   // translate a string
   function translateString(key, args, fallback) {
-    var i = key.lastIndexOf('.');
-    var name, property;
+    const i = key.lastIndexOf('.');
+    let name, property;
     if (i >= 0) {
       name = key.substring(0, i);
       property = key.substring(i + 1);
@@ -37,10 +35,10 @@
       name = key;
       property = 'textContent';
     }
-    var data = getL10nData(name);
-    var value = (data && data[property]) || fallback;
+    const data = getL10nData(name);
+    const value = (data && data[property]) || fallback;
     if (!value) {
-      return '{{' + key + '}}';
+      return `{{${key}}}`;
     }
     return substArguments(value, args);
   }
@@ -52,26 +50,26 @@
     }
 
     // get the related l10n object
-    var key = element.dataset.l10nId;
-    var data = getL10nData(key);
+    const key = element.dataset.l10nId;
+    const data = getL10nData(key);
     if (!data) {
       return;
     }
 
     // get arguments (if any)
     // TODO: more flexible parser?
-    var args;
+    let args;
     if (element.dataset.l10nArgs) {
       try {
         args = JSON.parse(element.dataset.l10nArgs);
       } catch (e) {
-        console.warn('[l10n] could not parse arguments for #' + key + '');
+        console.warn(`[l10n] could not parse arguments for #${key}`);
       }
     }
 
     // translate element
     // TODO: security check?
-    for (var k in data) {
+    for (const k in data) {
       element[k] = substArguments(data[k], args);
     }
   }
@@ -82,9 +80,9 @@
     element = element || document.querySelector('html');
 
     // check all translatable children (= w/ a `data-l10n-id' attribute)
-    var children = element.querySelectorAll('*[data-l10n-id]');
-    var elementCount = children.length;
-    for (var i = 0; i < elementCount; i++) {
+    const children = element.querySelectorAll('*[data-l10n-id]');
+    const elementCount = children.length;
+    for (let i = 0; i < elementCount; i++) {
       translateElement(children[i]);
     }
 
@@ -94,13 +92,13 @@
     }
   }
 
-  window.addEventListener('DOMContentLoaded', function() {
+  window.addEventListener('DOMContentLoaded', () => {
     gLanguage = FirefoxCom.requestSync('getLocale', null);
 
     translateFragment();
 
     // fire a 'localized' DOM event
-    var evtObject = document.createEvent('Event');
+    const evtObject = document.createEvent('Event');
     evtObject.initEvent('localized', false, false);
     evtObject.language = gLanguage;
     window.dispatchEvent(evtObject);
@@ -112,23 +110,23 @@
     get: translateString,
 
     // get the document language
-    getLanguage: function() {
+    getLanguage() {
       return gLanguage;
     },
 
     // get the direction (ltr|rtl) of the current language
-    getDirection: function() {
+    getDirection() {
       // http://www.w3.org/International/questions/qa-scripts
       // Arabic, Hebrew, Farsi, Pashto, Urdu
-      var rtlList = ['ar', 'he', 'fa', 'ps', 'ur'];
+      const rtlList = ['ar', 'he', 'fa', 'ps', 'ur'];
 
       // use the short language code for "full" codes like 'ar-sa' (issue 5440)
-      var shortCode = gLanguage.split('-')[0];
+      const shortCode = gLanguage.split('-')[0];
 
       return (rtlList.indexOf(shortCode) >= 0) ? 'rtl' : 'ltr';
     },
 
     // translate an element or document fragment
-    translate: translateFragment
+    translate: translateFragment,
   };
 })(this);

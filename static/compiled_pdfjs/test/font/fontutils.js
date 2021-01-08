@@ -16,19 +16,20 @@
 
 'use strict';
 
-var base64alphabet =
+const base64alphabet =
   'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
 
 function decodeFontData(base64) {
-  var result = [];
+  const result = [];
 
-  var bits = 0, bitsLength = 0;
-  for (var i = 0, ii = base64.length; i < ii; i++) {
-    var ch = base64[i];
+  let bits = 0; let
+    bitsLength = 0;
+  for (let i = 0, ii = base64.length; i < ii; i++) {
+    const ch = base64[i];
     if (ch <= ' ') {
       continue;
     }
-    var index = base64alphabet.indexOf(ch);
+    const index = base64alphabet.indexOf(ch);
     if (index < 0) {
       throw new Error('Invalid character');
     }
@@ -39,7 +40,7 @@ function decodeFontData(base64) {
     bitsLength += 6;
     if (bitsLength >= 8) {
       bitsLength -= 8;
-      var code = (bits >> bitsLength) & 0xFF;
+      const code = (bits >> bitsLength) & 0xFF;
       result.push(code);
     }
   }
@@ -47,15 +48,16 @@ function decodeFontData(base64) {
 }
 
 function encodeFontData(data) {
-  var buffer = '';
-  var i, n;
+  let buffer = '';
+  let i, n;
   for (i = 0, n = data.length; i < n; i += 3) {
-    var b1 = data[i] & 0xFF;
-    var b2 = data[i + 1] & 0xFF;
-    var b3 = data[i + 2] & 0xFF;
-    var d1 = b1 >> 2, d2 = ((b1 & 3) << 4) | (b2 >> 4);
-    var d3 = i + 1 < n ? ((b2 & 0xF) << 2) | (b3 >> 6) : 64;
-    var d4 = i + 2 < n ? (b3 & 0x3F) : 64;
+    const b1 = data[i] & 0xFF;
+    const b2 = data[i + 1] & 0xFF;
+    const b3 = data[i + 2] & 0xFF;
+    const d1 = b1 >> 2; const
+      d2 = ((b1 & 3) << 4) | (b2 >> 4);
+    const d3 = i + 1 < n ? ((b2 & 0xF) << 2) | (b3 >> 6) : 64;
+    const d4 = i + 2 < n ? (b3 & 0x3F) : 64;
     buffer += (base64alphabet.charAt(d1) + base64alphabet.charAt(d2) +
                 base64alphabet.charAt(d3) + base64alphabet.charAt(d4));
   }
@@ -63,10 +65,10 @@ function encodeFontData(data) {
 }
 
 function ttx(data, callback) {
-  var xhr = new XMLHttpRequest();
+  const xhr = new XMLHttpRequest();
   xhr.open('POST', '/ttx');
 
-  var encodedData = encodeFontData(data);
+  const encodedData = encodeFontData(data);
   xhr.setRequestHeader('Content-type', 'text/plain');
   xhr.setRequestHeader('Content-length', encodedData.length);
 
@@ -75,7 +77,7 @@ function ttx(data, callback) {
       if (xhr.status === 200) {
         callback(xhr.responseText);
       } else {
-        callback('<error>Transport error: ' + xhr.statusText + '</error>');
+        callback(`<error>Transport error: ${xhr.statusText}</error>`);
       }
     }
   };
@@ -83,7 +85,7 @@ function ttx(data, callback) {
 }
 
 function verifyTtxOutput(output) {
-  var m = /^<error>(.*?)<\/error>/.exec(output);
+  const m = /^<error>(.*?)<\/error>/.exec(output);
   if (m) {
     throw m[1];
   }

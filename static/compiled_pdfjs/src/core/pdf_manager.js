@@ -18,7 +18,7 @@
 'use strict';
 
 // TODO(mack): Make use of PDFJS.Util.inherit() when it becomes available
-var BasePdfManager = (function BasePdfManagerClosure() {
+const BasePdfManager = (function BasePdfManagerClosure() {
   function BasePdfManager() {
     throw new Error('Cannot initialize BaseManagerManager');
   }
@@ -78,15 +78,15 @@ var BasePdfManager = (function BasePdfManagerClosure() {
 
     terminate: function BasePdfManager_terminate() {
       return new NotImplementedException();
-    }
+    },
   };
 
   return BasePdfManager;
 })();
 
-var LocalPdfManager = (function LocalPdfManagerClosure() {
+const LocalPdfManager = (function LocalPdfManagerClosure() {
   function LocalPdfManager(data, password) {
-    var stream = new Stream(data);
+    const stream = new Stream(data);
     this.pdfDocument = new PDFDocument(this, stream, password);
     this._loadedStreamCapability = createPromiseCapability();
     this._loadedStreamCapability.resolve(stream);
@@ -97,63 +97,62 @@ var LocalPdfManager = (function LocalPdfManagerClosure() {
 
   LocalPdfManager.prototype.ensure =
       function LocalPdfManager_ensure(obj, prop, args) {
-    return new Promise(function (resolve, reject) {
-      try {
-        var value = obj[prop];
-        var result;
-        if (typeof value === 'function') {
-          result = value.apply(obj, args);
-        } else {
-          result = value;
-        }
-        resolve(result);
-      } catch (e) {
-        reject(e);
-      }
-    });
-  };
+        return new Promise((resolve, reject) => {
+          try {
+            const value = obj[prop];
+            let result;
+            if (typeof value === 'function') {
+              result = value.apply(obj, args);
+            } else {
+              result = value;
+            }
+            resolve(result);
+          } catch (e) {
+            reject(e);
+          }
+        });
+      };
 
   LocalPdfManager.prototype.requestRange =
       function LocalPdfManager_requestRange(begin, end) {
-    return Promise.resolve();
-  };
+        return Promise.resolve();
+      };
 
   LocalPdfManager.prototype.requestLoadedStream =
       function LocalPdfManager_requestLoadedStream() {
-  };
+      };
 
   LocalPdfManager.prototype.onLoadedStream =
       function LocalPdfManager_getLoadedStream() {
-    return this._loadedStreamCapability.promise;
-  };
+        return this._loadedStreamCapability.promise;
+      };
 
   LocalPdfManager.prototype.terminate =
       function LocalPdfManager_terminate() {
-    return;
-  };
+        return;
+      };
 
   return LocalPdfManager;
 })();
 
-var NetworkPdfManager = (function NetworkPdfManagerClosure() {
+const NetworkPdfManager = (function NetworkPdfManagerClosure() {
   function NetworkPdfManager(args, msgHandler) {
-
     this.msgHandler = msgHandler;
 
-    var params = {
-      msgHandler: msgHandler,
+    const params = {
+      msgHandler,
       httpHeaders: args.httpHeaders,
       withCredentials: args.withCredentials,
       chunkedViewerLoading: args.chunkedViewerLoading,
       disableAutoFetch: args.disableAutoFetch,
-      initialData: args.initialData
+      initialData: args.initialData,
     };
     this.streamManager = new ChunkedStreamManager(args.length,
-                                                  args.rangeChunkSize,
-                                                  args.url, params);
+        args.rangeChunkSize,
+        args.url, params);
 
     this.pdfDocument = new PDFDocument(this, this.streamManager.getStream(),
-                                    args.password);
+        args.password);
   }
 
   NetworkPdfManager.prototype = Object.create(BasePdfManager.prototype);
@@ -161,57 +160,57 @@ var NetworkPdfManager = (function NetworkPdfManagerClosure() {
 
   NetworkPdfManager.prototype.ensure =
       function NetworkPdfManager_ensure(obj, prop, args) {
-    var pdfManager = this;
+        const pdfManager = this;
 
-    return new Promise(function (resolve, reject) {
-      function ensureHelper() {
-        try {
-          var result;
-          var value = obj[prop];
-          if (typeof value === 'function') {
-            result = value.apply(obj, args);
-          } else {
-            result = value;
+        return new Promise((resolve, reject) => {
+          function ensureHelper() {
+            try {
+              let result;
+              const value = obj[prop];
+              if (typeof value === 'function') {
+                result = value.apply(obj, args);
+              } else {
+                result = value;
+              }
+              resolve(result);
+            } catch (e) {
+              if (!(e instanceof MissingDataException)) {
+                reject(e);
+                return;
+              }
+              pdfManager.streamManager.requestRange(e.begin, e.end)
+                  .then(ensureHelper, reject);
+            }
           }
-          resolve(result);
-        } catch(e) {
-          if (!(e instanceof MissingDataException)) {
-            reject(e);
-            return;
-          }
-          pdfManager.streamManager.requestRange(e.begin, e.end).
-            then(ensureHelper, reject);
-        }
-      }
 
-      ensureHelper();
-    });
-  };
+          ensureHelper();
+        });
+      };
 
   NetworkPdfManager.prototype.requestRange =
       function NetworkPdfManager_requestRange(begin, end) {
-    return this.streamManager.requestRange(begin, end);
-  };
+        return this.streamManager.requestRange(begin, end);
+      };
 
   NetworkPdfManager.prototype.requestLoadedStream =
       function NetworkPdfManager_requestLoadedStream() {
-    this.streamManager.requestAllChunks();
-  };
+        this.streamManager.requestAllChunks();
+      };
 
   NetworkPdfManager.prototype.sendProgressiveData =
       function NetworkPdfManager_sendProgressiveData(chunk) {
-    this.streamManager.onReceiveData({ chunk: chunk });
-  };
+        this.streamManager.onReceiveData({chunk});
+      };
 
   NetworkPdfManager.prototype.onLoadedStream =
       function NetworkPdfManager_getLoadedStream() {
-    return this.streamManager.onLoadedStream();
-  };
+        return this.streamManager.onLoadedStream();
+      };
 
   NetworkPdfManager.prototype.terminate =
       function NetworkPdfManager_terminate() {
-    this.streamManager.abort();
-  };
+        this.streamManager.abort();
+      };
 
   return NetworkPdfManager;
 })();

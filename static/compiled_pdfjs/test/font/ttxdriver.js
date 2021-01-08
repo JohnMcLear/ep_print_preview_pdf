@@ -13,45 +13,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*jslint node: true */
+/* jslint node: true */
 
 'use strict';
 
-var fs = require('fs');
-var path = require('path');
-var spawn = require('child_process').spawn;
+const fs = require('fs');
+const path = require('path');
+const spawn = require('child_process').spawn;
 
-var ttxResourcesHome = path.join(__dirname, '..', 'ttx');
+const ttxResourcesHome = path.join(__dirname, '..', 'ttx');
 
-var nextTTXTaskId = Date.now();
+let nextTTXTaskId = Date.now();
 
 function runTtx(ttxResourcesHome, fontPath, registerOnCancel, callback) {
-  fs.realpath(ttxResourcesHome, function (err, ttxResourcesHome) {
-    var fontToolsHome = path.join(ttxResourcesHome, 'fonttools-code');
-    fs.realpath(fontPath, function (err, fontPath) {
-      var ttxPath = path.join('Tools', 'ttx');
+  fs.realpath(ttxResourcesHome, (err, ttxResourcesHome) => {
+    const fontToolsHome = path.join(ttxResourcesHome, 'fonttools-code');
+    fs.realpath(fontPath, (err, fontPath) => {
+      const ttxPath = path.join('Tools', 'ttx');
       if (!fs.existsSync(path.join(fontToolsHome, ttxPath))) {
         callback('TTX was not found, please checkout PDF.js submodules');
         return;
       }
-      var ttxEnv = {
-        'PYTHONPATH': path.join(fontToolsHome, 'Lib'),
-        'PYTHONDONTWRITEBYTECODE': true
+      const ttxEnv = {
+        PYTHONPATH: path.join(fontToolsHome, 'Lib'),
+        PYTHONDONTWRITEBYTECODE: true,
       };
-      var ttxStdioMode = 'ignore';
-      var ttx = spawn('python', [ttxPath, fontPath],
-        {cwd: fontToolsHome, stdio: ttxStdioMode, env: ttxEnv});
-      var ttxRunError;
-      registerOnCancel(function (reason) {
+      const ttxStdioMode = 'ignore';
+      const ttx = spawn('python', [ttxPath, fontPath],
+          {cwd: fontToolsHome, stdio: ttxStdioMode, env: ttxEnv});
+      let ttxRunError;
+      registerOnCancel((reason) => {
         ttxRunError = reason;
         callback(reason);
         ttx.kill();
       });
-      ttx.on('error', function (err) {
+      ttx.on('error', (err) => {
         ttxRunError = err;
         callback('Unable to execute ttx');
       });
-      ttx.on('close', function (code) {
+      ttx.on('close', (code) => {
         if (ttxRunError) {
           return;
         }
@@ -62,14 +62,14 @@ function runTtx(ttxResourcesHome, fontPath, registerOnCancel, callback) {
 }
 
 exports.translateFont = function translateFont(content, registerOnCancel,
-                                               callback) {
-  var buffer = new Buffer(content, 'base64');
-  var taskId = (nextTTXTaskId++).toString();
-  var fontPath = path.join(ttxResourcesHome, taskId + '.otf');
-  var resultPath = path.join(ttxResourcesHome, taskId + '.ttx');
+    callback) {
+  const buffer = new Buffer(content, 'base64');
+  const taskId = (nextTTXTaskId++).toString();
+  const fontPath = path.join(ttxResourcesHome, `${taskId}.otf`);
+  const resultPath = path.join(ttxResourcesHome, `${taskId}.ttx`);
 
   fs.writeFileSync(fontPath, buffer);
-  runTtx(ttxResourcesHome, fontPath, registerOnCancel, function (err) {
+  runTtx(ttxResourcesHome, fontPath, registerOnCancel, (err) => {
     fs.unlink(fontPath);
     if (err) {
       console.error(err);

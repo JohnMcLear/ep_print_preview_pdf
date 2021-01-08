@@ -22,7 +22,7 @@
  * @class
  * @implements {IPDFLinkService}
  */
-var PDFLinkService = (function () {
+const PDFLinkService = (function () {
   /**
    * @constructs PDFLinkService
    */
@@ -75,14 +75,14 @@ var PDFLinkService = (function () {
      * @param dest - The PDF destination object.
      */
     navigateTo: function PDFLinkService_navigateTo(dest) {
-      var destString = '';
-      var self = this;
+      let destString = '';
+      const self = this;
 
-      var goToDestination = function(destRef) {
+      var goToDestination = function (destRef) {
         // dest array looks like that: <page-ref> </XYZ|FitXXX> <args..>
-        var pageNumber = destRef instanceof Object ?
-          self._pagesRefCache[destRef.num + ' ' + destRef.gen + ' R'] :
-          (destRef + 1);
+        let pageNumber = destRef instanceof Object
+          ? self._pagesRefCache[`${destRef.num} ${destRef.gen} R`]
+          : (destRef + 1);
         if (pageNumber) {
           if (pageNumber > self.pagesCount) {
             pageNumber = self.pagesCount;
@@ -92,29 +92,29 @@ var PDFLinkService = (function () {
           if (self.pdfHistory) {
             // Update the browsing history.
             self.pdfHistory.push({
-              dest: dest,
+              dest,
               hash: destString,
-              page: pageNumber
+              page: pageNumber,
             });
           }
         } else {
-          self.pdfDocument.getPageIndex(destRef).then(function (pageIndex) {
-            var pageNum = pageIndex + 1;
-            var cacheKey = destRef.num + ' ' + destRef.gen + ' R';
+          self.pdfDocument.getPageIndex(destRef).then((pageIndex) => {
+            const pageNum = pageIndex + 1;
+            const cacheKey = `${destRef.num} ${destRef.gen} R`;
             self._pagesRefCache[cacheKey] = pageNum;
             goToDestination(destRef);
           });
         }
       };
 
-      var destinationPromise;
+      let destinationPromise;
       if (typeof dest === 'string') {
         destString = dest;
         destinationPromise = this.pdfDocument.getDestination(dest);
       } else {
         destinationPromise = Promise.resolve(dest);
       }
-      destinationPromise.then(function(destination) {
+      destinationPromise.then((destination) => {
         dest = destination;
         if (!(destination instanceof Array)) {
           return; // invalid destination
@@ -129,26 +129,26 @@ var PDFLinkService = (function () {
      */
     getDestinationHash: function PDFLinkService_getDestinationHash(dest) {
       if (typeof dest === 'string') {
-        return this.getAnchorUrl('#' + escape(dest));
+        return this.getAnchorUrl(`#${escape(dest)}`);
       }
       if (dest instanceof Array) {
-        var destRef = dest[0]; // see navigateTo method for dest format
-        var pageNumber = destRef instanceof Object ?
-          this._pagesRefCache[destRef.num + ' ' + destRef.gen + ' R'] :
-          (destRef + 1);
+        const destRef = dest[0]; // see navigateTo method for dest format
+        const pageNumber = destRef instanceof Object
+          ? this._pagesRefCache[`${destRef.num} ${destRef.gen} R`]
+          : (destRef + 1);
         if (pageNumber) {
-          var pdfOpenParams = this.getAnchorUrl('#page=' + pageNumber);
-          var destKind = dest[1];
+          let pdfOpenParams = this.getAnchorUrl(`#page=${pageNumber}`);
+          const destKind = dest[1];
           if (typeof destKind === 'object' && 'name' in destKind &&
               destKind.name === 'XYZ') {
-            var scale = (dest[4] || this.pdfViewer.currentScaleValue);
-            var scaleNumber = parseFloat(scale);
+            let scale = (dest[4] || this.pdfViewer.currentScaleValue);
+            const scaleNumber = parseFloat(scale);
             if (scaleNumber) {
               scale = scaleNumber * 100;
             }
-            pdfOpenParams += '&zoom=' + scale;
+            pdfOpenParams += `&zoom=${scale}`;
             if (dest[2] || dest[3]) {
-              pdfOpenParams += ',' + (dest[2] || 0) + ',' + (dest[3] || 0);
+              pdfOpenParams += `,${dest[2] || 0},${dest[3] || 0}`;
             }
           }
           return pdfOpenParams;
@@ -172,7 +172,7 @@ var PDFLinkService = (function () {
      */
     setHash: function PDFLinkService_setHash(hash) {
       if (hash.indexOf('=') >= 0) {
-        var params = parseQueryString(hash);
+        const params = parseQueryString(hash);
         // borrowing syntax from "Parameters for Opening PDF Files"
         if ('nameddest' in params) {
           if (this.pdfHistory) {
@@ -181,43 +181,46 @@ var PDFLinkService = (function () {
           this.navigateTo(params.nameddest);
           return;
         }
-        var pageNumber, dest;
+        let pageNumber, dest;
         if ('page' in params) {
           pageNumber = (params.page | 0) || 1;
         }
         if ('zoom' in params) {
           // Build the destination array.
-          var zoomArgs = params.zoom.split(','); // scale,left,top
-          var zoomArg = zoomArgs[0];
-          var zoomArgNumber = parseFloat(zoomArg);
+          const zoomArgs = params.zoom.split(','); // scale,left,top
+          const zoomArg = zoomArgs[0];
+          const zoomArgNumber = parseFloat(zoomArg);
 
           if (zoomArg.indexOf('Fit') === -1) {
             // If the zoomArg is a number, it has to get divided by 100. If it's
             // a string, it should stay as it is.
-            dest = [null, { name: 'XYZ' },
-                    zoomArgs.length > 1 ? (zoomArgs[1] | 0) : null,
-                    zoomArgs.length > 2 ? (zoomArgs[2] | 0) : null,
-                    (zoomArgNumber ? zoomArgNumber / 100 : zoomArg)];
-          } else {
-            if (zoomArg === 'Fit' || zoomArg === 'FitB') {
-              dest = [null, { name: zoomArg }];
-            } else if ((zoomArg === 'FitH' || zoomArg === 'FitBH') ||
+            dest = [null,
+              {name: 'XYZ'},
+              zoomArgs.length > 1 ? (zoomArgs[1] | 0) : null,
+              zoomArgs.length > 2 ? (zoomArgs[2] | 0) : null,
+              (zoomArgNumber ? zoomArgNumber / 100 : zoomArg)];
+          } else if (zoomArg === 'Fit' || zoomArg === 'FitB') {
+            dest = [null, {name: zoomArg}];
+          } else if ((zoomArg === 'FitH' || zoomArg === 'FitBH') ||
                        (zoomArg === 'FitV' || zoomArg === 'FitBV')) {
-              dest = [null, { name: zoomArg },
-                      zoomArgs.length > 1 ? (zoomArgs[1] | 0) : null];
-            } else if (zoomArg === 'FitR') {
-              if (zoomArgs.length !== 5) {
-                console.error('PDFLinkService_setHash: ' +
+            dest = [null,
+              {name: zoomArg},
+              zoomArgs.length > 1 ? (zoomArgs[1] | 0) : null];
+          } else if (zoomArg === 'FitR') {
+            if (zoomArgs.length !== 5) {
+              console.error('PDFLinkService_setHash: ' +
                               'Not enough parameters for \'FitR\'.');
-              } else {
-                dest = [null, { name: zoomArg },
-                        (zoomArgs[1] | 0), (zoomArgs[2] | 0),
-                        (zoomArgs[3] | 0), (zoomArgs[4] | 0)];
-              }
             } else {
-              console.error('PDFLinkService_setHash: \'' + zoomArg +
-                            '\' is not a valid zoom value.');
+              dest = [null,
+                {name: zoomArg},
+                (zoomArgs[1] | 0),
+                (zoomArgs[2] | 0),
+                (zoomArgs[3] | 0),
+                (zoomArgs[4] | 0)];
             }
+          } else {
+            console.error(`PDFLinkService_setHash: '${zoomArg
+            }' is not a valid zoom value.`);
           }
         }
         if (dest) {
@@ -226,7 +229,7 @@ var PDFLinkService = (function () {
           this.page = pageNumber; // simple page
         }
         if ('pagemode' in params) {
-          var event = document.createEvent('CustomEvent');
+          const event = document.createEvent('CustomEvent');
           event.initCustomEvent('pagemode', true, true, {
             mode: params.pagemode,
           });
@@ -280,9 +283,9 @@ var PDFLinkService = (function () {
           break; // No action according to spec
       }
 
-      var event = document.createEvent('CustomEvent');
+      const event = document.createEvent('CustomEvent');
       event.initCustomEvent('namedaction', true, true, {
-        action: action
+        action,
       });
       this.pdfViewer.container.dispatchEvent(event);
     },
@@ -292,9 +295,9 @@ var PDFLinkService = (function () {
      * @param {Object} pageRef - reference to the page.
      */
     cachePageRef: function PDFLinkService_cachePageRef(pageNum, pageRef) {
-      var refStr = pageRef.num + ' ' + pageRef.gen + ' R';
+      const refStr = `${pageRef.num} ${pageRef.gen} R`;
       this._pagesRefCache[refStr] = pageNum;
-    }
+    },
   };
 
   return PDFLinkService;

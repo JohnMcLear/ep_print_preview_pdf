@@ -31,31 +31,31 @@ IPDFLinkService.prototype = {
   /**
    * @param dest - The PDF destination object.
    */
-  navigateTo: function (dest) {},
+  navigateTo(dest) {},
   /**
    * @param dest - The PDF destination object.
    * @returns {string} The hyperlink to the PDF object.
    */
-  getDestinationHash: function (dest) {},
+  getDestinationHash(dest) {},
   /**
    * @param hash - The PDF parameters/hash.
    * @returns {string} The hyperlink to the PDF object.
    */
-  getAnchorUrl: function (hash) {},
+  getAnchorUrl(hash) {},
   /**
    * @param {string} hash
    */
-  setHash: function (hash) {},
+  setHash(hash) {},
   /**
    * @param {string} action
    */
-  executeNamedAction: function (action) {},
+  executeNamedAction(action) {},
 
   /**
    * @param {number} pageNum - page number.
    * @param {Object} pageRef - reference to the page.
    */
-  cachePageRef: function (pageNum, pageRef) {},
+  cachePageRef(pageNum, pageRef) {},
 };
 
 /**
@@ -63,10 +63,10 @@ IPDFLinkService.prototype = {
  */
 function IPDFHistory() {}
 IPDFHistory.prototype = {
-  forward: function () {},
-  back: function () {},
-  push: function (params) {},
-  updateNextHashParam: function (hash) {},
+  forward() {},
+  back() {},
+  push(params) {},
+  updateNextHashParam(hash) {},
 };
 
 /**
@@ -85,8 +85,8 @@ IRenderableView.prototype = {
   /**
    * @returns {Promise} Resolved on draw completion.
    */
-  draw: function () {},
-  resume: function () {},
+  draw() {},
+  resume() {},
 };
 
 /**
@@ -100,7 +100,7 @@ IPDFTextLayerFactory.prototype = {
    * @param {PageViewport} viewport
    * @returns {TextLayerBuilder}
    */
-  createTextLayerBuilder: function (textLayerDiv, pageIndex, viewport) {}
+  createTextLayerBuilder(textLayerDiv, pageIndex, viewport) {},
 };
 
 /**
@@ -113,5 +113,5 @@ IPDFAnnotationsLayerFactory.prototype = {
    * @param {PDFPage} pdfPage
    * @returns {AnnotationsLayerBuilder}
    */
-  createAnnotationsLayerBuilder: function (pageDiv, pdfPage) {}
+  createAnnotationsLayerBuilder(pageDiv, pdfPage) {},
 };

@@ -3,9 +3,9 @@
 
 'use strict';
 
-var fs = require('fs'),
-    path = require('path'),
-    vm = require('vm');
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
 
 /**
  * A simple preprocessor that is based on the Firefox preprocessor
@@ -37,45 +37,45 @@ var fs = require('fs'),
  */
 function preprocess(inFilename, outFilename, defines) {
   // TODO make this really read line by line.
-  var lines = fs.readFileSync(inFilename).toString().split('\n');
-  var totalLines = lines.length;
-  var out = '';
-  var i = 0;
+  const lines = fs.readFileSync(inFilename).toString().split('\n');
+  const totalLines = lines.length;
+  let out = '';
+  let i = 0;
   function readLine() {
     if (i < totalLines) {
       return lines[i++];
     }
     return null;
   }
-  var writeLine = (typeof outFilename === 'function' ? outFilename :
-    function(line) {
-      out += line + '\n';
+  const writeLine = (typeof outFilename === 'function' ? outFilename
+    : function (line) {
+      out += `${line}\n`;
     });
   function evaluateCondition(code) {
     if (!code || !code.trim()) {
-      throw new Error('No JavaScript expression given at ' + loc());
+      throw new Error(`No JavaScript expression given at ${loc()}`);
     }
     try {
       return vm.runInNewContext(code, defines, {displayErrors: false});
     } catch (e) {
-      throw new Error('Could not evaluate "' + code + '" at ' + loc() + '\n' +
-                      e.name + ': ' + e.message);
+      throw new Error(`Could not evaluate "${code}" at ${loc()}\n${
+        e.name}: ${e.message}`);
     }
   }
   function include(file) {
-    var realPath = fs.realpathSync(inFilename);
-    var dir = path.dirname(realPath);
+    const realPath = fs.realpathSync(inFilename);
+    const dir = path.dirname(realPath);
     try {
       preprocess(path.join(dir, file), writeLine, defines);
     } catch (e) {
       if (e.code === 'ENOENT') {
-        throw new Error('Failed to include "' + file + '" at ' + loc());
+        throw new Error(`Failed to include "${file}" at ${loc()}`);
       }
       throw e; // Some other error
     }
   }
   function expand(line) {
-    line = line.replace(/__[\w]+__/g, function(variable) {
+    line = line.replace(/__[\w]+__/g, (variable) => {
       variable = variable.substring(2, variable.length - 2);
       if (variable in defines) {
         return defines[variable];
@@ -86,30 +86,30 @@ function preprocess(inFilename, outFilename, defines) {
   }
 
   // not inside if or else (process lines)
-  var STATE_NONE = 0;
+  const STATE_NONE = 0;
   // inside if, condition false (ignore until #else or #endif)
-  var STATE_IF_FALSE = 1;
+  const STATE_IF_FALSE = 1;
   // inside else, #if was false, so #else is true (process lines until #endif)
-  var STATE_ELSE_TRUE = 2;
+  const STATE_ELSE_TRUE = 2;
   // inside if, condition true (process lines until #else or #endif)
-  var STATE_IF_TRUE = 3;
+  const STATE_IF_TRUE = 3;
   // inside else, #if was true, so #else is false (ignore lines until #endif)
-  var STATE_ELSE_FALSE = 4;
+  const STATE_ELSE_FALSE = 4;
 
-  var line;
-  var state = STATE_NONE;
-  var stack = [];
-  var control =
+  let line;
+  let state = STATE_NONE;
+  const stack = [];
+  const control =
   /* jshint -W101 */
     /^(?:\/\/|<!--)\s*#(if|elif|else|endif|expand|include|error)\b(?:\s+(.*?)(?:-->)?$)?/;
   /* jshint +W101 */
-  var lineNumber = 0;
-  var loc = function() {
-    return fs.realpathSync(inFilename) + ':' + lineNumber;
+  let lineNumber = 0;
+  var loc = function () {
+    return `${fs.realpathSync(inFilename)}:${lineNumber}`;
   };
   while ((line = readLine()) !== null) {
     ++lineNumber;
-    var m = control.exec(line);
+    const m = control.exec(line);
     if (m) {
       switch (m[1]) {
         case 'if':
@@ -122,9 +122,9 @@ function preprocess(inFilename, outFilename, defines) {
           } else if (state === STATE_IF_FALSE) {
             state = evaluateCondition(m[2]) ? STATE_IF_TRUE : STATE_IF_FALSE;
           } else if (state === STATE_ELSE_TRUE || state === STATE_ELSE_FALSE) {
-            throw new Error('Found #elif after #else at ' + loc());
+            throw new Error(`Found #elif after #else at ${loc()}`);
           } else {
-            throw new Error('Found #elif without matching #if at ' + loc());
+            throw new Error(`Found #elif without matching #if at ${loc()}`);
           }
           break;
         case 'else':
@@ -133,12 +133,12 @@ function preprocess(inFilename, outFilename, defines) {
           } else if (state === STATE_IF_FALSE) {
             state = STATE_ELSE_TRUE;
           } else {
-            throw new Error('Found #else without matching #if at ' + loc());
+            throw new Error(`Found #else without matching #if at ${loc()}`);
           }
           break;
         case 'endif':
           if (state === STATE_NONE) {
-            throw new Error('Found #endif without #if at ' + loc());
+            throw new Error(`Found #endif without #if at ${loc()}`);
           }
           state = stack.pop();
           break;
@@ -154,23 +154,21 @@ function preprocess(inFilename, outFilename, defines) {
           break;
         case 'error':
           if (state !== STATE_IF_FALSE && state !== STATE_ELSE_FALSE) {
-            throw new Error('Found #error ' + m[2] + ' at ' + loc());
+            throw new Error(`Found #error ${m[2]} at ${loc()}`);
           }
           break;
       }
-    } else {
-      if (state === STATE_NONE) {
-        writeLine(line);
-      } else if ((state === STATE_IF_TRUE || state === STATE_ELSE_TRUE) &&
+    } else if (state === STATE_NONE) {
+      writeLine(line);
+    } else if ((state === STATE_IF_TRUE || state === STATE_ELSE_TRUE) &&
           stack.indexOf(STATE_IF_FALSE) === -1 &&
           stack.indexOf(STATE_ELSE_FALSE) === -1) {
-        writeLine(line.replace(/^\/\/|^<!--|-->$/g, '  '));
-      }
+      writeLine(line.replace(/^\/\/|^<!--|-->$/g, '  '));
     }
   }
   if (state !== STATE_NONE || stack.length !== 0) {
-    throw new Error('Missing #endif in preprocessor for ' +
-                    fs.realpathSync(inFilename));
+    throw new Error(`Missing #endif in preprocessor for ${
+      fs.realpathSync(inFilename)}`);
   }
   if (typeof outFilename !== 'function') {
     fs.writeFileSync(outFilename, out);
@@ -178,11 +176,11 @@ function preprocess(inFilename, outFilename, defines) {
 }
 exports.preprocess = preprocess;
 
-var deprecatedInMozcentral = new RegExp('(^|\\W)(' + [
-    '-moz-box-sizing',
-    '-moz-grab',
-    '-moz-grabbing'
-  ].join('|') + ')');
+const deprecatedInMozcentral = new RegExp(`(^|\\W)(${[
+  '-moz-box-sizing',
+  '-moz-grab',
+  '-moz-grabbing',
+].join('|')})`);
 
 function preprocessCSS(mode, source, destination) {
   function hasPrefixedFirefox(line) {
@@ -196,27 +194,27 @@ function preprocessCSS(mode, source, destination) {
 
   function expandImports(content, baseUrl) {
     return content.replace(/^\s*@import\s+url\(([^\)]+)\);\s*$/gm,
-        function(all, url) {
-      var file = path.join(path.dirname(baseUrl), url);
-      var imported = fs.readFileSync(file, 'utf8').toString();
-      return expandImports(imported, file);
-    });
+        (all, url) => {
+          const file = path.join(path.dirname(baseUrl), url);
+          const imported = fs.readFileSync(file, 'utf8').toString();
+          return expandImports(imported, file);
+        });
   }
 
   function removePrefixed(content, hasPrefixedFilter) {
-    var lines = content.split(/\r?\n/g);
-    var i = 0;
+    const lines = content.split(/\r?\n/g);
+    let i = 0;
     while (i < lines.length) {
-      var line = lines[i];
+      const line = lines[i];
       if (!hasPrefixedFilter(line)) {
         i++;
         continue;
       }
       if (/\{\s*$/.test(line)) {
-        var bracketLevel = 1;
-        var j = i + 1;
+        let bracketLevel = 1;
+        let j = i + 1;
         while (j < lines.length && bracketLevel > 0) {
-          var checkBracket = /([{}])\s*$/.exec(lines[j]);
+          const checkBracket = /([{}])\s*$/.exec(lines[j]);
           if (checkBracket) {
             if (checkBracket[1] === '{') {
               bracketLevel++;
@@ -252,11 +250,11 @@ function preprocessCSS(mode, source, destination) {
     throw new Error('Invalid CSS preprocessor mode');
   }
 
-  var content = fs.readFileSync(source, 'utf8').toString();
+  let content = fs.readFileSync(source, 'utf8').toString();
   content = expandImports(content, source);
   if (mode === 'mozcentral' || mode === 'firefox') {
-    content = removePrefixed(content, mode === 'mozcentral' ?
-                             hasPrefixedMozcentral : hasPrefixedFirefox);
+    content = removePrefixed(content, mode === 'mozcentral'
+      ? hasPrefixedMozcentral : hasPrefixedFirefox);
   }
   fs.writeFileSync(destination, content);
 }
@@ -271,64 +269,60 @@ exports.preprocessCSS = preprocessCSS;
  *                    run through preprocessor.
  */
 function build(setup) {
-  var defines = setup.defines;
+  const defines = setup.defines;
 
-  setup.copy.forEach(function(option) {
-    var source = option[0];
-    var destination = option[1];
+  setup.copy.forEach((option) => {
+    const source = option[0];
+    const destination = option[1];
     cp('-R', source, destination);
   });
 
-  setup.preprocess.forEach(function(option) {
-    var sources = option[0];
-    var destination = option[1];
+  setup.preprocess.forEach((option) => {
+    let sources = option[0];
+    const destination = option[1];
 
     sources = ls('-R', sources);
-    sources.forEach(function(source) {
+    sources.forEach((source) => {
       // ??? Warn if the source is wildcard and dest is file?
-      var destWithFolder = destination;
+      let destWithFolder = destination;
       if (test('-d', destination)) {
-        destWithFolder += '/' + path.basename(source);
+        destWithFolder += `/${path.basename(source)}`;
       }
       preprocess(source, destWithFolder, defines);
     });
   });
 
-  (setup.preprocessCSS || []).forEach(function(option) {
-    var mode = option[0];
-    var source = option[1];
-    var destination = option[2];
+  (setup.preprocessCSS || []).forEach((option) => {
+    const mode = option[0];
+    const source = option[1];
+    const destination = option[2];
     preprocessCSS(mode, source, destination);
   });
 }
 exports.build = build;
 
 function getWorkerSrcFiles(filePath) {
-  var src = fs.readFileSync(filePath).toString();
-  var reSrcFiles = /var\s+otherFiles\s*=\s*(\[[^\]]*\])/;
-  var match = reSrcFiles.exec(src);
+  const src = fs.readFileSync(filePath).toString();
+  const reSrcFiles = /var\s+otherFiles\s*=\s*(\[[^\]]*\])/;
+  const match = reSrcFiles.exec(src);
   if (!match) {
-    throw new Error('Cannot find otherFiles array in ' + filePath);
+    throw new Error(`Cannot find otherFiles array in ${filePath}`);
   }
 
-  var files = match[1].replace(/'/g, '"').replace(/^\s*\/\/.*/gm, '')
-    .replace(/,\s*]$/, ']');
+  let files = match[1].replace(/'/g, '"').replace(/^\s*\/\/.*/gm, '')
+      .replace(/,\s*]$/, ']');
   try {
     files = JSON.parse(files);
   } catch (e) {
-    throw new Error('Failed to parse otherFiles in ' + filePath + ' as JSON, ' +
-                    e);
+    throw new Error(`Failed to parse otherFiles in ${filePath} as JSON, ${
+      e}`);
   }
 
-  var srcFiles = files.filter(function(name) {
-    return name.indexOf('external') === -1;
-  });
-  var externalSrcFiles = files.filter(function(name) {
-    return name.indexOf('external') > -1;
-  });
+  const srcFiles = files.filter((name) => name.indexOf('external') === -1);
+  const externalSrcFiles = files.filter((name) => name.indexOf('external') > -1);
   return {
-    srcFiles: srcFiles,
-    externalSrcFiles: externalSrcFiles
+    srcFiles,
+    externalSrcFiles,
   };
 }
 exports.getWorkerSrcFiles = getWorkerSrcFiles;
@@ -338,7 +332,7 @@ exports.getWorkerSrcFiles = getWorkerSrcFiles;
  * the first.
  */
 function merge(defaults, defines) {
-  var ret = {};
+  const ret = {};
   for (var key in defaults) {
     ret[key] = defaults[key];
   }

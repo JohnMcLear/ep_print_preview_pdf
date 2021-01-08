@@ -1,8 +1,8 @@
-/*jslint node: true */
+/* jslint node: true */
 
 'use strict';
 
-var fs = require('fs');
+const fs = require('fs');
 
 try {
   var ttest = require('ttest');
@@ -11,18 +11,18 @@ try {
   console.log('Continuing without significance test...\n');
 }
 
-var VALID_GROUP_BYS = ['browser', 'pdf', 'page', 'round', 'stat'];
+const VALID_GROUP_BYS = ['browser', 'pdf', 'page', 'round', 'stat'];
 
 function parseOptions() {
-  var yargs = require('yargs')
-    .usage('Compare the results of two stats files.\n' +
+  const yargs = require('yargs')
+      .usage('Compare the results of two stats files.\n' +
            'Usage:\n  $0 <BASELINE> <CURRENT> [options]')
-    .demand(2)
-    .string(['groupBy'])
-    .describe('groupBy', 'How statistics should grouped. Valid options: ' +
-              VALID_GROUP_BYS.join(' '))
-    .default('groupBy', 'browser,stat');
-  var result = yargs.argv;
+      .demand(2)
+      .string(['groupBy'])
+      .describe('groupBy', `How statistics should grouped. Valid options: ${
+        VALID_GROUP_BYS.join(' ')}`)
+      .default('groupBy', 'browser,stat');
+  const result = yargs.argv;
   result.baseline = result._[0];
   result.current = result._[1];
   if (result.groupBy) {
@@ -32,18 +32,18 @@ function parseOptions() {
 }
 
 function group(stats, groupBy) {
-  var vals = [];
-  for (var i = 0; i < stats.length; i++) {
-    var stat = stats[i];
-    var keyArr = [];
-    for (var j = 0; j < groupBy.length; j++) {
+  const vals = [];
+  for (let i = 0; i < stats.length; i++) {
+    const stat = stats[i];
+    const keyArr = [];
+    for (let j = 0; j < groupBy.length; j++) {
       keyArr.push(stat[groupBy[j]]);
     }
-    var key = keyArr.join(',');
+    const key = keyArr.join(',');
     if (vals[key] === undefined) {
       vals[key] = [];
     }
-    vals[key].push(stat['time']);
+    vals[key].push(stat.time);
   }
   return vals;
 }
@@ -53,29 +53,29 @@ function group(stats, groupBy) {
  * Also, if results are not grouped by 'stat', keep only 'Overall' results.
  */
 function flatten(stats) {
-  var rows = [];
-  stats.forEach(function(stat) {
-    stat['stats'].forEach(function(s) {
+  let rows = [];
+  stats.forEach((stat) => {
+    stat.stats.forEach((s) => {
       rows.push({
-        browser: stat['browser'],
-        page: stat['page'],
-        pdf: stat['pdf'],
-        round: stat['round'],
-        stat: s['name'],
-        time: s['end'] - s['start']
+        browser: stat.browser,
+        page: stat.page,
+        pdf: stat.pdf,
+        round: stat.round,
+        stat: s.name,
+        time: s.end - s.start,
       });
     });
   });
   // Use only overall results if not grouped by 'stat'
   if (options.groupBy.indexOf('stat') < 0) {
-    rows = rows.filter(function(s) { return s.stat === 'Overall'; });
+    rows = rows.filter((s) => s.stat === 'Overall');
   }
   return rows;
 }
 
 function pad(s, length, dir /* default: 'right' */) {
-  s = '' + s;
-  var spaces = new Array(Math.max(0, length - s.length + 1)).join(' ');
+  s = `${s}`;
+  const spaces = new Array(Math.max(0, length - s.length + 1)).join(' ');
   return dir === 'left' ? spaces + s : s + spaces;
 }
 
@@ -90,11 +90,11 @@ function mean(array) {
 function compareRow(a, b) {
   a = a.split(',');
   b = b.split(',');
-  for (var i = 0; i < Math.min(a.length, b.length); i++) {
-    var intA = parseInt(a[i], 10);
-    var intB = parseInt(b[i], 10);
-    var ai = isNaN(intA) ? a[i] : intA;
-    var bi = isNaN(intB) ? b[i] : intB;
+  for (let i = 0; i < Math.min(a.length, b.length); i++) {
+    const intA = parseInt(a[i], 10);
+    const intB = parseInt(b[i], 10);
+    const ai = isNaN(intA) ? a[i] : intA;
+    const bi = isNaN(intB) ? b[i] : intB;
     if (ai < bi) {
       return -1;
     }
@@ -118,34 +118,35 @@ function compareRow(a, b) {
  * be implied.
  */
 function stat(baseline, current) {
-  var baselineGroup = group(baseline, options.groupBy);
-  var currentGroup = group(current, options.groupBy);
+  const baselineGroup = group(baseline, options.groupBy);
+  const currentGroup = group(current, options.groupBy);
 
-  var keys = Object.keys(baselineGroup);
+  const keys = Object.keys(baselineGroup);
   keys.sort(compareRow);
 
-  var labels = options.groupBy.slice(0);
+  const labels = options.groupBy.slice(0);
   labels.push('Count', 'Baseline(ms)', 'Current(ms)', '+/-', '% ');
   if (ttest) {
     labels.push('Result(P<.05)');
   }
-  var i, row, rows = [];
+  let i; let row; const
+    rows = [];
   // collect rows and measure column widths
-  var width = labels.map(function(s) { return s.length; });
+  const width = labels.map((s) => s.length);
   rows.push(labels);
-  for (var k = 0; k < keys.length; k++) {
-    var key = keys[k];
-    var baselineMean = mean(baselineGroup[key]);
-    var currentMean = mean(currentGroup[key]);
+  for (let k = 0; k < keys.length; k++) {
+    const key = keys[k];
+    const baselineMean = mean(baselineGroup[key]);
+    const currentMean = mean(currentGroup[key]);
     row = key.split(',');
-    row.push('' + baselineGroup[key].length,
-             '' + Math.round(baselineMean),
-             '' + Math.round(currentMean),
-             '' + Math.round(currentMean - baselineMean),
-             (100 * (currentMean - baselineMean) / baselineMean).toFixed(2));
+    row.push(`${baselineGroup[key].length}`,
+        `${Math.round(baselineMean)}`,
+        `${Math.round(currentMean)}`,
+        `${Math.round(currentMean - baselineMean)}`,
+        (100 * (currentMean - baselineMean) / baselineMean).toFixed(2));
     if (ttest) {
-      var p = (baselineGroup[key].length < 2) ? 1 :
-               ttest(baselineGroup[key], currentGroup[key]).pValue();
+      const p = (baselineGroup[key].length < 2) ? 1
+        : ttest(baselineGroup[key], currentGroup[key]).pValue();
       if (p < 0.05) {
         row.push(currentMean < baselineMean ? 'faster' : 'slower');
       } else {
@@ -159,13 +160,13 @@ function stat(baseline, current) {
   }
 
   // add horizontal line
-  var hline = width.map(function(w) { return new Array(w+1).join('-'); });
+  const hline = width.map((w) => new Array(w + 1).join('-'));
   rows.splice(1, 0, hline);
 
   // print output
-  console.log('-- Grouped By ' + options.groupBy.join(', ') + ' --');
-  var groupCount = options.groupBy.length;
-  for (var r = 0; r < rows.length; r++) {
+  console.log(`-- Grouped By ${options.groupBy.join(', ')} --`);
+  const groupCount = options.groupBy.length;
+  for (let r = 0; r < rows.length; r++) {
     row = rows[r];
     for (i = 0; i < row.length; i++) {
       row[i] = pad(row[i], width[i], (i < groupCount) ? 'right' : 'left');
@@ -175,19 +176,19 @@ function stat(baseline, current) {
 }
 
 function main() {
-  var baseline, current;
+  let baseline, current;
   try {
-    var baselineFile = fs.readFileSync(options.baseline).toString();
+    const baselineFile = fs.readFileSync(options.baseline).toString();
     baseline = flatten(JSON.parse(baselineFile));
-  } catch(e) {
-    console.log('Error reading file "' + options.baseline + '": ' + e);
+  } catch (e) {
+    console.log(`Error reading file "${options.baseline}": ${e}`);
     process.exit(0);
   }
   try {
-    var currentFile = fs.readFileSync(options.current).toString();
+    const currentFile = fs.readFileSync(options.current).toString();
     current = flatten(JSON.parse(currentFile));
-  } catch(e) {
-    console.log('Error reading file "' + options.current + '": ' + e);
+  } catch (e) {
+    console.log(`Error reading file "${options.current}": ${e}`);
     process.exit(0);
   }
   stat(baseline, current);

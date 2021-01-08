@@ -16,7 +16,7 @@
 
 'use strict';
 
-var DEFAULT_VIEW_HISTORY_CACHE_SIZE = 20;
+const DEFAULT_VIEW_HISTORY_CACHE_SIZE = 20;
 
 /**
  * View History - This is a utility for saving various view parameters for
@@ -27,64 +27,64 @@ var DEFAULT_VIEW_HISTORY_CACHE_SIZE = 20;
  *  - FIREFOX or MOZCENTRAL - uses sessionStorage.
  *  - GENERIC or CHROME     - uses localStorage, if it is available.
  */
-var ViewHistory = (function ViewHistoryClosure() {
+const ViewHistory = (function ViewHistoryClosure() {
   function ViewHistory(fingerprint, cacheSize) {
     this.fingerprint = fingerprint;
     this.cacheSize = cacheSize || DEFAULT_VIEW_HISTORY_CACHE_SIZE;
     this.isInitializedPromiseResolved = false;
     this.initializedPromise =
-        this._readFromStorage().then(function (databaseStr) {
-      this.isInitializedPromiseResolved = true;
+        this._readFromStorage().then((databaseStr) => {
+          this.isInitializedPromiseResolved = true;
 
-      var database = JSON.parse(databaseStr || '{}');
-      if (!('files' in database)) {
-        database.files = [];
-      }
-      if (database.files.length >= this.cacheSize) {
-        database.files.shift();
-      }
-      var index;
-      for (var i = 0, length = database.files.length; i < length; i++) {
-        var branch = database.files[i];
-        if (branch.fingerprint === this.fingerprint) {
-          index = i;
-          break;
-        }
-      }
-      if (typeof index !== 'number') {
-        index = database.files.push({fingerprint: this.fingerprint}) - 1;
-      }
-      this.file = database.files[index];
-      this.database = database;
-    }.bind(this));
+          const database = JSON.parse(databaseStr || '{}');
+          if (!('files' in database)) {
+            database.files = [];
+          }
+          if (database.files.length >= this.cacheSize) {
+            database.files.shift();
+          }
+          let index;
+          for (let i = 0, length = database.files.length; i < length; i++) {
+            const branch = database.files[i];
+            if (branch.fingerprint === this.fingerprint) {
+              index = i;
+              break;
+            }
+          }
+          if (typeof index !== 'number') {
+            index = database.files.push({fingerprint: this.fingerprint}) - 1;
+          }
+          this.file = database.files[index];
+          this.database = database;
+        });
   }
 
   ViewHistory.prototype = {
     _writeToStorage: function ViewHistory_writeToStorage() {
-      return new Promise(function (resolve) {
-        var databaseStr = JSON.stringify(this.database);
+      return new Promise((resolve) => {
+        const databaseStr = JSON.stringify(this.database);
 
-//#if FIREFOX || MOZCENTRAL
-//      sessionStorage.setItem('pdfjsHistory', databaseStr);
-//      resolve();
-//#endif
+        // #if FIREFOX || MOZCENTRAL
+        //      sessionStorage.setItem('pdfjsHistory', databaseStr);
+        //      resolve();
+        // #endif
 
-//#if !(FIREFOX || MOZCENTRAL)
+        // #if !(FIREFOX || MOZCENTRAL)
         localStorage.setItem('database', databaseStr);
         resolve();
-//#endif
-      }.bind(this));
+        // #endif
+      });
     },
 
     _readFromStorage: function ViewHistory_readFromStorage() {
-      return new Promise(function (resolve) {
-//#if FIREFOX || MOZCENTRAL
-//      resolve(sessionStorage.getItem('pdfjsHistory'));
-//#endif
+      return new Promise((resolve) => {
+        // #if FIREFOX || MOZCENTRAL
+        //      resolve(sessionStorage.getItem('pdfjsHistory'));
+        // #endif
 
-//#if !(FIREFOX || MOZCENTRAL)
+        // #if !(FIREFOX || MOZCENTRAL)
         resolve(localStorage.getItem('database'));
-//#endif
+        // #endif
       });
     },
 
@@ -100,7 +100,7 @@ var ViewHistory = (function ViewHistoryClosure() {
       if (!this.isInitializedPromiseResolved) {
         return;
       }
-      for (var name in properties) {
+      for (const name in properties) {
         this.file[name] = properties[name];
       }
       return this._writeToStorage();
@@ -111,7 +111,7 @@ var ViewHistory = (function ViewHistoryClosure() {
         return defaultValue;
       }
       return this.file[name] || defaultValue;
-    }
+    },
   };
 
   return ViewHistory;

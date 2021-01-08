@@ -1,6 +1,6 @@
 'use strict';
-var a;
+let a;
 
-var b;
+let b;
 
-var d;
+let d;

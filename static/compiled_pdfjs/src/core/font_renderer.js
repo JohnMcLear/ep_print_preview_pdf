@@ -17,7 +17,7 @@
 
 'use strict';
 
-var FontRendererFactory = (function FontRendererFactoryClosure() {
+const FontRendererFactory = (function FontRendererFactoryClosure() {
   function getLong(data, offset) {
     return (data[offset] << 24) | (data[offset + 1] << 16) |
            (data[offset + 2] << 8) | data[offset + 3];
@@ -28,13 +28,13 @@ var FontRendererFactory = (function FontRendererFactoryClosure() {
   }
 
   function parseCmap(data, start, end) {
-    var offset = (getUshort(data, start + 2) === 1 ?
-                  getLong(data, start + 8) : getLong(data, start + 16));
-    var format = getUshort(data, start + offset);
-    var length, ranges, p, i;
+    const offset = (getUshort(data, start + 2) === 1
+      ? getLong(data, start + 8) : getLong(data, start + 16));
+    const format = getUshort(data, start + offset);
+    let length, ranges, p, i;
     if (format === 4) {
       length = getUshort(data, start + offset + 2);
-      var segCount = getUshort(data, start + offset + 6) >> 1;
+      const segCount = getUshort(data, start + offset + 6) >> 1;
       p = start + offset + 14;
       ranges = [];
       for (i = 0; i < segCount; i++, p += 2) {
@@ -48,12 +48,12 @@ var FontRendererFactory = (function FontRendererFactoryClosure() {
         ranges[i].idDelta = getUshort(data, p);
       }
       for (i = 0; i < segCount; i++, p += 2) {
-        var idOffset = getUshort(data, p);
+        let idOffset = getUshort(data, p);
         if (idOffset === 0) {
           continue;
         }
         ranges[i].ids = [];
-        for (var j = 0, jj = ranges[i].end - ranges[i].start + 1; j < jj; j++) {
+        for (let j = 0, jj = ranges[i].end - ranges[i].start + 1; j < jj; j++) {
           ranges[i].ids[j] = getUshort(data, p + idOffset);
           idOffset += 2;
         }
@@ -61,37 +61,37 @@ var FontRendererFactory = (function FontRendererFactoryClosure() {
       return ranges;
     } else if (format === 12) {
       length = getLong(data, start + offset + 4);
-      var groups = getLong(data, start + offset + 12);
+      const groups = getLong(data, start + offset + 12);
       p = start + offset + 16;
       ranges = [];
       for (i = 0; i < groups; i++) {
         ranges.push({
           start: getLong(data, p),
           end: getLong(data, p + 4),
-          idDelta: getLong(data, p + 8) - getLong(data, p)
+          idDelta: getLong(data, p + 8) - getLong(data, p),
         });
         p += 12;
       }
       return ranges;
     }
-    error('not supported cmap: ' + format);
+    error(`not supported cmap: ${format}`);
   }
 
   function parseCff(data, start, end) {
-    var properties = {};
-    var parser = new CFFParser(new Stream(data, start, end - start),
-                               properties);
-    var cff = parser.parse();
+    const properties = {};
+    const parser = new CFFParser(new Stream(data, start, end - start),
+        properties);
+    const cff = parser.parse();
     return {
       glyphs: cff.charStrings.objects,
       subrs: (cff.topDict.privateDict && cff.topDict.privateDict.subrsIndex &&
               cff.topDict.privateDict.subrsIndex.objects),
-      gsubrs: cff.globalSubrIndex && cff.globalSubrIndex.objects
+      gsubrs: cff.globalSubrIndex && cff.globalSubrIndex.objects,
     };
   }
 
   function parseGlyfTable(glyf, loca, isGlyphLocationsLong) {
-    var itemSize, itemDecode;
+    let itemSize, itemDecode;
     if (isGlyphLocationsLong) {
       itemSize = 4;
       itemDecode = function fontItemDecodeLong(data, offset) {
@@ -104,10 +104,10 @@ var FontRendererFactory = (function FontRendererFactoryClosure() {
         return (data[offset] << 9) | (data[offset + 1] << 1);
       };
     }
-    var glyphs = [];
-    var startOffset = itemDecode(loca, 0);
-    for (var j = itemSize; j < loca.length; j += itemSize) {
-      var endOffset = itemDecode(loca, j);
+    const glyphs = [];
+    let startOffset = itemDecode(loca, 0);
+    for (let j = itemSize; j < loca.length; j += itemSize) {
+      const endOffset = itemDecode(loca, j);
       glyphs.push(glyf.subarray(startOffset, endOffset));
       startOffset = endOffset;
     }
@@ -115,10 +115,11 @@ var FontRendererFactory = (function FontRendererFactoryClosure() {
   }
 
   function lookupCmap(ranges, unicode) {
-    var code = unicode.charCodeAt(0);
-    var l = 0, r = ranges.length - 1;
+    const code = unicode.charCodeAt(0);
+    let l = 0; let
+      r = ranges.length - 1;
     while (l < r) {
-      var c = (l + r + 1) >> 1;
+      const c = (l + r + 1) >> 1;
       if (code < ranges[c].start) {
         r = c - 1;
       } else {
@@ -126,8 +127,8 @@ var FontRendererFactory = (function FontRendererFactoryClosure() {
       }
     }
     if (ranges[l].start <= code && code <= ranges[l].end) {
-      return (ranges[l].idDelta + (ranges[l].ids ?
-        ranges[l].ids[code - ranges[l].start] : code)) & 0xFFFF;
+      return (ranges[l].idDelta + (ranges[l].ids
+        ? ranges[l].ids[code - ranges[l].start] : code)) & 0xFFFF;
     }
     return 0;
   }
@@ -143,16 +144,17 @@ var FontRendererFactory = (function FontRendererFactoryClosure() {
       cmds.push({cmd: 'quadraticCurveTo', args: [xa, ya, x, y]});
     }
 
-    var i = 0;
-    var numberOfContours = ((code[i] << 24) | (code[i + 1] << 16)) >> 16;
-    var flags;
-    var x = 0, y = 0;
+    let i = 0;
+    const numberOfContours = ((code[i] << 24) | (code[i + 1] << 16)) >> 16;
+    let flags;
+    let x = 0; let
+      y = 0;
     i += 10;
     if (numberOfContours < 0) {
       // composite glyph
       do {
         flags = (code[i] << 8) | code[i + 1];
-        var glyphIndex = (code[i + 2] << 8) | code[i + 3];
+        const glyphIndex = (code[i + 2] << 8) | code[i + 3];
         i += 4;
         var arg1, arg2;
         if ((flags & 0x01)) {
@@ -163,12 +165,13 @@ var FontRendererFactory = (function FontRendererFactoryClosure() {
           arg1 = code[i++]; arg2 = code[i++];
         }
         if ((flags & 0x02)) {
-           x = arg1;
-           y = arg2;
+          x = arg1;
+          y = arg2;
         } else {
-           x = 0; y = 0; // TODO "they are points" ?
+          x = 0; y = 0; // TODO "they are points" ?
         }
-        var scaleX = 1, scaleY = 1, scale01 = 0, scale10 = 0;
+        let scaleX = 1; let scaleY = 1; let scale01 = 0; let
+          scale10 = 0;
         if ((flags & 0x08)) {
           scaleX =
           scaleY = ((code[i] << 24) | (code[i + 1] << 16)) / 1073741824;
@@ -184,35 +187,35 @@ var FontRendererFactory = (function FontRendererFactoryClosure() {
           scaleY = ((code[i + 6] << 24) | (code[i + 7] << 16)) / 1073741824;
           i += 8;
         }
-        var subglyph = font.glyphs[glyphIndex];
+        const subglyph = font.glyphs[glyphIndex];
         if (subglyph) {
           cmds.push({cmd: 'save'});
           cmds.push({cmd: 'transform',
-                     args: [scaleX, scale01, scale10, scaleY, x, y]});
+            args: [scaleX, scale01, scale10, scaleY, x, y]});
           compileGlyf(subglyph, cmds, font);
           cmds.push({cmd: 'restore'});
         }
       } while ((flags & 0x20));
     } else {
       // simple glyph
-      var endPtsOfContours = [];
-      var j, jj;
+      const endPtsOfContours = [];
+      let j, jj;
       for (j = 0; j < numberOfContours; j++) {
         endPtsOfContours.push((code[i] << 8) | code[i + 1]);
         i += 2;
       }
-      var instructionLength = (code[i] << 8) | code[i + 1];
+      const instructionLength = (code[i] << 8) | code[i + 1];
       i += 2 + instructionLength; // skipping the instructions
-      var numberOfPoints = endPtsOfContours[endPtsOfContours.length - 1] + 1;
-      var points = [];
+      const numberOfPoints = endPtsOfContours[endPtsOfContours.length - 1] + 1;
+      const points = [];
       while (points.length < numberOfPoints) {
         flags = code[i++];
-        var repeat = 1;
+        let repeat = 1;
         if ((flags & 0x08)) {
           repeat += code[i++];
         }
         while (repeat-- > 0) {
-          points.push({flags: flags});
+          points.push({flags});
         }
       }
       for (j = 0; j < numberOfPoints; j++) {
@@ -246,12 +249,12 @@ var FontRendererFactory = (function FontRendererFactoryClosure() {
         points[j].y = y;
       }
 
-      var startPoint = 0;
+      let startPoint = 0;
       for (i = 0; i < numberOfContours; i++) {
-        var endPoint = endPtsOfContours[i];
+        const endPoint = endPtsOfContours[i];
         // contours might have implicit points, which is located in the middle
         // between two neighboring off-curve points
-        var contour = points.slice(startPoint, endPoint + 1);
+        const contour = points.slice(startPoint, endPoint + 1);
         if ((contour[0].flags & 1)) {
           contour.push(contour[0]); // using start point at the contour end
         } else if ((contour[contour.length - 1].flags & 1)) {
@@ -259,10 +262,10 @@ var FontRendererFactory = (function FontRendererFactoryClosure() {
           contour.unshift(contour[contour.length - 1]);
         } else {
           // start and end are off-curve points, creating implicit one
-          var p = {
+          const p = {
             flags: 1,
             x: (contour[0].x + contour[contour.length - 1].x) / 2,
-            y: (contour[0].y + contour[contour.length - 1].y) / 2
+            y: (contour[0].y + contour[contour.length - 1].y) / 2,
           };
           contour.unshift(p);
           contour.push(p);
@@ -271,14 +274,14 @@ var FontRendererFactory = (function FontRendererFactoryClosure() {
         for (j = 1, jj = contour.length; j < jj; j++) {
           if ((contour[j].flags & 1)) {
             lineTo(contour[j].x, contour[j].y);
-          } else if ((contour[j + 1].flags & 1)){
+          } else if ((contour[j + 1].flags & 1)) {
             quadraticCurveTo(contour[j].x, contour[j].y,
-                             contour[j + 1].x, contour[j + 1].y);
+                contour[j + 1].x, contour[j + 1].y);
             j++;
           } else {
             quadraticCurveTo(contour[j].x, contour[j].y,
-              (contour[j].x + contour[j + 1].x) / 2,
-              (contour[j].y + contour[j + 1].y) / 2);
+                (contour[j].x + contour[j + 1].x) / 2,
+                (contour[j].y + contour[j + 1].y) / 2);
           }
         }
         startPoint = endPoint + 1;
@@ -287,9 +290,10 @@ var FontRendererFactory = (function FontRendererFactoryClosure() {
   }
 
   function compileCharString(code, cmds, font) {
-    var stack = [];
-    var x = 0, y = 0;
-    var stems = 0;
+    const stack = [];
+    let x = 0; let
+      y = 0;
+    let stems = 0;
 
     function moveTo(x, y) {
       cmds.push({cmd: 'moveTo', args: [x, y]});
@@ -302,10 +306,10 @@ var FontRendererFactory = (function FontRendererFactoryClosure() {
     }
 
     function parse(code) {
-      var i = 0;
+      let i = 0;
       while (i < code.length) {
-        var stackClean = false;
-        var v = code[i++];
+        let stackClean = false;
+        let v = code[i++];
         var xa, xb, ya, yb, y1, y2, y3, n, subrCode;
         switch (v) {
           case 1: // hstem
@@ -402,7 +406,8 @@ var FontRendererFactory = (function FontRendererFactoryClosure() {
                 bezierCurveTo(xa, y2, xb, y3, x, y);
                 break;
               case 37: // flex1
-                var x0 = x, y0 = y;
+                var x0 = x; var
+                  y0 = y;
                 xa = x + stack.shift(); ya = y + stack.shift();
                 xb = xa + stack.shift(); yb = ya + stack.shift();
                 x = xb + stack.shift(); y = yb + stack.shift();
@@ -412,30 +417,30 @@ var FontRendererFactory = (function FontRendererFactoryClosure() {
                 x = xb; y = yb;
                 if (Math.abs(x - x0) > Math.abs(y - y0)) {
                   x += stack.shift();
-                } else  {
+                } else {
                   y += stack.shift();
                 }
                 bezierCurveTo(xa, ya, xb, yb, x, y);
                 break;
               default:
-                error('unknown operator: 12 ' + v);
+                error(`unknown operator: 12 ${v}`);
             }
             break;
           case 14: // endchar
             if (stack.length >= 4) {
-              var achar = stack.pop();
-              var bchar = stack.pop();
+              const achar = stack.pop();
+              const bchar = stack.pop();
               y = stack.pop();
               x = stack.pop();
               cmds.push({cmd: 'save'});
               cmds.push({cmd: 'translate', args: [x, y]});
-              var gid = lookupCmap(font.cmap, String.fromCharCode(
-                font.glyphNameMap[Encodings.StandardEncoding[achar]]));
+              let gid = lookupCmap(font.cmap, String.fromCharCode(
+                  font.glyphNameMap[Encodings.StandardEncoding[achar]]));
               compileCharString(font.glyphs[gid], cmds, font);
               cmds.push({cmd: 'restore'});
 
               gid = lookupCmap(font.cmap, String.fromCharCode(
-                font.glyphNameMap[Encodings.StandardEncoding[bchar]]));
+                  font.glyphNameMap[Encodings.StandardEncoding[bchar]]));
               compileCharString(font.glyphs[gid], cmds, font);
             }
             return;
@@ -561,7 +566,7 @@ var FontRendererFactory = (function FontRendererFactoryClosure() {
             break;
           default:
             if (v < 32) {
-              error('unknown operator: ' + v);
+              error(`unknown operator: ${v}`);
             }
             if (v < 247) {
               stack.push(v - 139);
@@ -584,28 +589,28 @@ var FontRendererFactory = (function FontRendererFactoryClosure() {
     parse(code);
   }
 
-  var noop = '';
+  const noop = '';
 
   function CompiledFont(fontMatrix) {
     this.compiledGlyphs = {};
     this.fontMatrix = fontMatrix;
   }
   CompiledFont.prototype = {
-    getPathJs: function (unicode) {
-      var gid = lookupCmap(this.cmap, unicode);
-      var fn = this.compiledGlyphs[gid];
+    getPathJs(unicode) {
+      const gid = lookupCmap(this.cmap, unicode);
+      let fn = this.compiledGlyphs[gid];
       if (!fn) {
         this.compiledGlyphs[gid] = fn = this.compileGlyph(this.glyphs[gid]);
       }
       return fn;
     },
 
-    compileGlyph: function (code) {
+    compileGlyph(code) {
       if (!code || code.length === 0 || code[0] === 14) {
         return noop;
       }
 
-      var cmds = [];
+      const cmds = [];
       cmds.push({cmd: 'save'});
       cmds.push({cmd: 'transform', args: this.fontMatrix.slice()});
       cmds.push({cmd: 'scale', args: ['size', '-size']});
@@ -617,14 +622,14 @@ var FontRendererFactory = (function FontRendererFactoryClosure() {
       return cmds;
     },
 
-    compileGlyphImpl: function () {
+    compileGlyphImpl() {
       error('Children classes should implement this.');
     },
 
-    hasBuiltPath: function (unicode) {
-      var gid = lookupCmap(this.cmap, unicode);
+    hasBuiltPath(unicode) {
+      const gid = lookupCmap(this.cmap, unicode);
       return gid in this.compiledGlyphs;
-    }
+    },
   };
 
   function TrueTypeCompiled(glyphs, cmap, fontMatrix) {
@@ -638,9 +643,9 @@ var FontRendererFactory = (function FontRendererFactoryClosure() {
   }
 
   Util.inherit(TrueTypeCompiled, CompiledFont, {
-    compileGlyphImpl: function (code, cmds) {
+    compileGlyphImpl(code, cmds) {
       compileGlyf(code, cmds, this);
-    }
+    },
   });
 
   function Type2Compiled(cffInfo, cmap, fontMatrix, glyphNameMap) {
@@ -653,28 +658,28 @@ var FontRendererFactory = (function FontRendererFactoryClosure() {
     this.glyphNameMap = glyphNameMap || GlyphsUnicode;
 
     this.compiledGlyphs = [];
-    this.gsubrsBias = (this.gsubrs.length < 1240 ?
-                       107 : (this.gsubrs.length < 33900 ? 1131 : 32768));
-    this.subrsBias = (this.subrs.length < 1240 ?
-                      107 : (this.subrs.length < 33900 ? 1131 : 32768));
+    this.gsubrsBias = (this.gsubrs.length < 1240
+      ? 107 : (this.gsubrs.length < 33900 ? 1131 : 32768));
+    this.subrsBias = (this.subrs.length < 1240
+      ? 107 : (this.subrs.length < 33900 ? 1131 : 32768));
   }
 
   Util.inherit(Type2Compiled, CompiledFont, {
-    compileGlyphImpl: function (code, cmds) {
+    compileGlyphImpl(code, cmds) {
       compileCharString(code, cmds, this);
-    }
+    },
   });
 
 
   return {
     create: function FontRendererFactory_create(font) {
-      var data = new Uint8Array(font.data);
-      var cmap, glyf, loca, cff, indexToLocFormat, unitsPerEm;
-      var numTables = getUshort(data, 4);
-      for (var i = 0, p = 12; i < numTables; i++, p += 16) {
-        var tag = bytesToString(data.subarray(p, p + 4));
-        var offset = getLong(data, p + 8);
-        var length = getLong(data, p + 12);
+      const data = new Uint8Array(font.data);
+      let cmap, glyf, loca, cff, indexToLocFormat, unitsPerEm;
+      const numTables = getUshort(data, 4);
+      for (let i = 0, p = 12; i < numTables; i++, p += 16) {
+        const tag = bytesToString(data.subarray(p, p + 4));
+        const offset = getLong(data, p + 8);
+        const length = getLong(data, p + 12);
         switch (tag) {
           case 'cmap':
             cmap = parseCmap(data, offset, offset + length);
@@ -696,13 +701,13 @@ var FontRendererFactory = (function FontRendererFactoryClosure() {
       }
 
       if (glyf) {
-        var fontMatrix = (!unitsPerEm ? font.fontMatrix :
-                          [1 / unitsPerEm, 0, 0, 1 / unitsPerEm, 0, 0]);
+        const fontMatrix = (!unitsPerEm ? font.fontMatrix
+          : [1 / unitsPerEm, 0, 0, 1 / unitsPerEm, 0, 0]);
         return new TrueTypeCompiled(
-          parseGlyfTable(glyf, loca, indexToLocFormat), cmap, fontMatrix);
+            parseGlyfTable(glyf, loca, indexToLocFormat), cmap, fontMatrix);
       } else {
         return new Type2Compiled(cff, cmap, font.fontMatrix, font.glyphNameMap);
       }
-    }
+    },
   };
 })();

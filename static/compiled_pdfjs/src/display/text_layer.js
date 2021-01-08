@@ -31,38 +31,38 @@
  * @property {number} timeout - (optional) Delay in milliseconds before
  *   rendering of the text  runs occurs.
  */
-var renderTextLayer = (function renderTextLayerClosure() {
-  var MAX_TEXT_DIVS_TO_RENDER = 100000;
+const renderTextLayer = (function renderTextLayerClosure() {
+  const MAX_TEXT_DIVS_TO_RENDER = 100000;
 
-  var NonWhitespaceRegexp = /\S/;
+  const NonWhitespaceRegexp = /\S/;
 
   function isAllWhitespace(str) {
     return !NonWhitespaceRegexp.test(str);
   }
 
   function appendText(textDivs, viewport, geom, styles) {
-    var style = styles[geom.fontName];
-    var textDiv = document.createElement('div');
+    const style = styles[geom.fontName];
+    const textDiv = document.createElement('div');
     textDivs.push(textDiv);
     if (isAllWhitespace(geom.str)) {
       textDiv.dataset.isWhitespace = true;
       return;
     }
-    var tx = PDFJS.Util.transform(viewport.transform, geom.transform);
-    var angle = Math.atan2(tx[1], tx[0]);
+    const tx = PDFJS.Util.transform(viewport.transform, geom.transform);
+    let angle = Math.atan2(tx[1], tx[0]);
     if (style.vertical) {
       angle += Math.PI / 2;
     }
-    var fontHeight = Math.sqrt((tx[2] * tx[2]) + (tx[3] * tx[3]));
-    var fontAscent = fontHeight;
+    const fontHeight = Math.sqrt((tx[2] * tx[2]) + (tx[3] * tx[3]));
+    let fontAscent = fontHeight;
     if (style.ascent) {
       fontAscent = style.ascent * fontAscent;
     } else if (style.descent) {
       fontAscent = (1 + style.descent) * fontAscent;
     }
 
-    var left;
-    var top;
+    let left;
+    let top;
     if (angle === 0) {
       left = tx[4];
       top = tx[5] - fontAscent;
@@ -70,9 +70,9 @@ var renderTextLayer = (function renderTextLayerClosure() {
       left = tx[4] + (fontAscent * Math.sin(angle));
       top = tx[5] - (fontAscent * Math.cos(angle));
     }
-    textDiv.style.left = left + 'px';
-    textDiv.style.top = top + 'px';
-    textDiv.style.fontSize = fontHeight + 'px';
+    textDiv.style.left = `${left}px`;
+    textDiv.style.top = `${top}px`;
+    textDiv.style.fontSize = `${fontHeight}px`;
     textDiv.style.fontFamily = style.fontFamily;
 
     textDiv.textContent = geom.str;
@@ -102,10 +102,10 @@ var renderTextLayer = (function renderTextLayerClosure() {
     if (task._canceled) {
       return;
     }
-    var textLayerFrag = task._container;
-    var textDivs = task._textDivs;
-    var capability = task._capability;
-    var textDivsLength = textDivs.length;
+    const textLayerFrag = task._container;
+    const textDivs = task._textDivs;
+    const capability = task._capability;
+    const textDivsLength = textDivs.length;
 
     // No point in rendering many divs as it would make the browser
     // unusable even after the divs are rendered.
@@ -114,47 +114,47 @@ var renderTextLayer = (function renderTextLayerClosure() {
       return;
     }
 
-    var canvas = document.createElement('canvas');
-//#if MOZCENTRAL || FIREFOX || GENERIC
+    const canvas = document.createElement('canvas');
+    // #if MOZCENTRAL || FIREFOX || GENERIC
     canvas.mozOpaque = true;
-//#endif
-    var ctx = canvas.getContext('2d', {alpha: false});
+    // #endif
+    const ctx = canvas.getContext('2d', {alpha: false});
 
-    var lastFontSize;
-    var lastFontFamily;
-    for (var i = 0; i < textDivsLength; i++) {
-      var textDiv = textDivs[i];
+    let lastFontSize;
+    let lastFontFamily;
+    for (let i = 0; i < textDivsLength; i++) {
+      const textDiv = textDivs[i];
       if (textDiv.dataset.isWhitespace !== undefined) {
         continue;
       }
 
-      var fontSize = textDiv.style.fontSize;
-      var fontFamily = textDiv.style.fontFamily;
+      const fontSize = textDiv.style.fontSize;
+      const fontFamily = textDiv.style.fontFamily;
 
       // Only build font string and set to context if different from last.
       if (fontSize !== lastFontSize || fontFamily !== lastFontFamily) {
-        ctx.font = fontSize + ' ' + fontFamily;
+        ctx.font = `${fontSize} ${fontFamily}`;
         lastFontSize = fontSize;
         lastFontFamily = fontFamily;
       }
 
-      var width = ctx.measureText(textDiv.textContent).width;
+      const width = ctx.measureText(textDiv.textContent).width;
       if (width > 0) {
         textLayerFrag.appendChild(textDiv);
         var transform;
         if (textDiv.dataset.canvasWidth !== undefined) {
           // Dataset values come of type string.
-          var textScale = textDiv.dataset.canvasWidth / width;
-          transform = 'scaleX(' + textScale + ')';
+          const textScale = textDiv.dataset.canvasWidth / width;
+          transform = `scaleX(${textScale})`;
         } else {
           transform = '';
         }
-        var rotation = textDiv.dataset.angle;
+        const rotation = textDiv.dataset.angle;
         if (rotation) {
-          transform = 'rotate(' + rotation + 'deg) ' + transform;
+          transform = `rotate(${rotation}deg) ${transform}`;
         }
         if (transform) {
-          PDFJS.CustomStyle.setProp('transform' , textDiv, transform);
+          PDFJS.CustomStyle.setProp('transform', textDiv, transform);
         }
       }
     }
@@ -195,24 +195,24 @@ var renderTextLayer = (function renderTextLayerClosure() {
     },
 
     _render: function TextLayer_render(timeout) {
-      var textItems = this._textContent.items;
-      var styles = this._textContent.styles;
-      var textDivs = this._textDivs;
-      var viewport = this._viewport;
-      for (var i = 0, len = textItems.length; i < len; i++) {
+      const textItems = this._textContent.items;
+      const styles = this._textContent.styles;
+      const textDivs = this._textDivs;
+      const viewport = this._viewport;
+      for (let i = 0, len = textItems.length; i < len; i++) {
         appendText(textDivs, viewport, textItems[i], styles);
       }
 
       if (!timeout) { // Render right away
         render(this);
       } else { // Schedule
-        var self = this;
-        this._renderTimer = setTimeout(function() {
+        const self = this;
+        this._renderTimer = setTimeout(() => {
           render(self);
           self._renderTimer = null;
         }, timeout);
       }
-    }
+    },
   };
 
 
@@ -223,10 +223,10 @@ var renderTextLayer = (function renderTextLayerClosure() {
    * @returns {TextLayerRenderTask}
    */
   function renderTextLayer(renderParameters) {
-    var task = new TextLayerRenderTask(renderParameters.textContent,
-                                       renderParameters.container,
-                                       renderParameters.viewport,
-                                       renderParameters.textDivs);
+    const task = new TextLayerRenderTask(renderParameters.textContent,
+        renderParameters.container,
+        renderParameters.viewport,
+        renderParameters.textDivs);
     task._render(renderParameters.timeout);
     return task;
   }

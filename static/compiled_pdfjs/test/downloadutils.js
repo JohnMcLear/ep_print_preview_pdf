@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*jslint node: true */
+/* jslint node: true */
 
 'use strict';
 
-var fs = require('fs');
-var crypto = require('crypto');
-var http = require('http');
-var https = require('https');
+const fs = require('fs');
+const crypto = require('crypto');
+const http = require('http');
+const https = require('https');
 
 function downloadFile(file, url, callback, redirects) {
-  var completed = false;
-  var protocol = /^https:\/\//.test(url) ? https : http;
-  protocol.get(url, function (response) {
-    var redirectTo;
+  let completed = false;
+  const protocol = /^https:\/\//.test(url) ? https : http;
+  protocol.get(url, (response) => {
+    let redirectTo;
     if (response.statusCode === 301 || response.statusCode === 302 ||
         response.statusCode === 307 || response.statusCode === 308) {
       if (redirects > 10) {
@@ -39,7 +39,7 @@ function downloadFile(file, url, callback, redirects) {
     }
     if (response.statusCode === 404 && url.indexOf('web.archive.org') < 0) {
       // trying waybackmachine
-      redirectTo = 'http://web.archive.org/web/' + url;
+      redirectTo = `http://web.archive.org/web/${url}`;
       downloadFile(file, redirectTo, callback, (redirects || 0) + 1);
       return;
     }
@@ -47,31 +47,31 @@ function downloadFile(file, url, callback, redirects) {
     if (response.statusCode !== 200) {
       if (!completed) {
         completed = true;
-        callback('HTTP ' + response.statusCode);
+        callback(`HTTP ${response.statusCode}`);
       }
       return;
     }
-    var stream = fs.createWriteStream(file);
-    stream.on('error', function (err) {
+    const stream = fs.createWriteStream(file);
+    stream.on('error', (err) => {
       if (!completed) {
         completed = true;
         callback(err);
       }
     });
     response.pipe(stream);
-    stream.on('finish', function() {
+    stream.on('finish', () => {
       stream.close();
       if (!completed) {
         completed = true;
         callback();
       }
     });
-  }).on('error', function (err) {
+  }).on('error', (err) => {
     if (!completed) {
       if (typeof err === 'object' && err.errno === 'ENOTFOUND' &&
           url.indexOf('web.archive.org') < 0) {
         // trying waybackmachine
-        var redirectTo = 'http://web.archive.org/web/' + url;
+        const redirectTo = `http://web.archive.org/web/${url}`;
         downloadFile(file, redirectTo, callback, (redirects || 0) + 1);
         return;
       }
@@ -87,28 +87,26 @@ function downloadManifestFiles(manifest, callback) {
       callback();
       return;
     }
-    var file = links[i].file;
-    var url = links[i].url;
-    console.log('Downloading ' + url + ' to ' + file + '...');
-    downloadFile(file, url, function (err) {
+    const file = links[i].file;
+    const url = links[i].url;
+    console.log(`Downloading ${url} to ${file}...`);
+    downloadFile(file, url, (err) => {
       if (err) {
-        console.error('Error during downloading of ' + url + ': ' + err);
+        console.error(`Error during downloading of ${url}: ${err}`);
         fs.writeFileSync(file, ''); // making it empty file
-        fs.writeFileSync(file + '.error', err);
+        fs.writeFileSync(`${file}.error`, err);
       }
       i++;
       downloadNext();
     });
   }
 
-  var links = manifest.filter(function (item) {
-    return item.link && !fs.existsSync(item.file);
-  }).map(function (item) {
-    var file = item.file;
-    var linkfile = file + '.link';
-    var url = fs.readFileSync(linkfile).toString();
+  var links = manifest.filter((item) => item.link && !fs.existsSync(item.file)).map((item) => {
+    const file = item.file;
+    const linkfile = `${file}.link`;
+    let url = fs.readFileSync(linkfile).toString();
     url = url.replace(/\s+$/, '');
-    return {file: file, url: url};
+    return {file, url};
   });
 
   var i = 0;
@@ -116,16 +114,16 @@ function downloadManifestFiles(manifest, callback) {
 }
 
 function calculateMD5(file, callback) {
-  var hash = crypto.createHash('md5');
-  var stream = fs.createReadStream(file);
-  stream.on('data', function (data) {
+  const hash = crypto.createHash('md5');
+  const stream = fs.createReadStream(file);
+  stream.on('data', (data) => {
     hash.update(data);
   });
-  stream.on('error', function (err) {
+  stream.on('error', (err) => {
     callback(err);
   });
-  stream.on('end', function() {
-    var result = hash.digest('hex');
+  stream.on('end', () => {
+    const result = hash.digest('hex');
     callback(null, result);
   });
 }
@@ -136,27 +134,27 @@ function verifyManifestFiles(manifest, callback) {
       callback(error);
       return;
     }
-    var item = manifest[i];
-    if (fs.existsSync(item.file + '.error')) {
-      console.error('WARNING: File was not downloaded. See "' +
-                    item.file + '.error" file.');
+    const item = manifest[i];
+    if (fs.existsSync(`${item.file}.error`)) {
+      console.error(`WARNING: File was not downloaded. See "${
+        item.file}.error" file.`);
       error = true;
       i++;
       verifyNext();
       return;
     }
-    calculateMD5(item.file, function (err, md5) {
+    calculateMD5(item.file, (err, md5) => {
       if (err) {
-        console.log('WARNING: Unable to open file for reading "' + err + '".');
+        console.log(`WARNING: Unable to open file for reading "${err}".`);
         error = true;
       } else if (!item.md5) {
-        console.error('WARNING: Missing md5 for file "' + item.file + '". ' +
-                      'Hash for current file is "' + md5 + '"');
+        console.error(`WARNING: Missing md5 for file "${item.file}". ` +
+                      `Hash for current file is "${md5}"`);
         error = true;
       } else if (md5 !== item.md5) {
-        console.error('WARNING: MD5 of file "' + item.file +
-                      '" does not match file. Expected "' +
-                      item.md5 + '" computed "' + md5 + '"');
+        console.error(`WARNING: MD5 of file "${item.file
+        }" does not match file. Expected "${
+          item.md5}" computed "${md5}"`);
         error = true;
       }
       i++;

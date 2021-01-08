@@ -21,9 +21,8 @@
 
 'use strict';
 
-var Page = (function PageClosure() {
-
-  var LETTER_SIZE_MEDIABOX = [0, 0, 612, 792];
+const Page = (function PageClosure() {
+  const LETTER_SIZE_MEDIABOX = [0, 0, 612, 792];
 
   function Page(pdfManager, xref, pageIndex, pageDict, ref, fontCache) {
     this.pdfManager = pdfManager;
@@ -33,7 +32,7 @@ var Page = (function PageClosure() {
     this.ref = ref;
     this.fontCache = fontCache;
     this.idCounters = {
-      obj: 0
+      obj: 0,
     };
     this.resourcesPromise = null;
   }
@@ -44,12 +43,13 @@ var Page = (function PageClosure() {
     },
 
     getInheritedPageProp: function Page_getInheritedPageProp(key) {
-      var dict = this.pageDict, valueArray = null, loopCount = 0;
-      var MAX_LOOP_COUNT = 100;
+      let dict = this.pageDict; let valueArray = null; let
+        loopCount = 0;
+      const MAX_LOOP_COUNT = 100;
       // Always walk up the entire parent chain, to be able to find
       // e.g. \Resources placed on multiple levels of the tree.
       while (dict) {
-        var value = dict.get(key);
+        const value = dict.get(key);
         if (value) {
           if (!valueArray) {
             valueArray = [];
@@ -84,7 +84,7 @@ var Page = (function PageClosure() {
     },
 
     get mediaBox() {
-      var obj = this.getInheritedPageProp('MediaBox');
+      let obj = this.getInheritedPageProp('MediaBox');
       // Reset invalid media box to letter size.
       if (!isArray(obj) || obj.length !== 4) {
         obj = LETTER_SIZE_MEDIABOX;
@@ -93,8 +93,8 @@ var Page = (function PageClosure() {
     },
 
     get view() {
-      var mediaBox = this.mediaBox;
-      var cropBox = this.getInheritedPageProp('CropBox');
+      const mediaBox = this.mediaBox;
+      let cropBox = this.getInheritedPageProp('CropBox');
       if (!isArray(cropBox) || cropBox.length !== 4) {
         return shadow(this, 'view', mediaBox);
       }
@@ -111,12 +111,12 @@ var Page = (function PageClosure() {
     },
 
     get rotate() {
-      var rotate = this.getInheritedPageProp('Rotate') || 0;
+      let rotate = this.getInheritedPageProp('Rotate') || 0;
       // Normalize rotation so it's a multiple of 90 and between 0 and 270
       if (rotate % 90 !== 0) {
         rotate = 0;
       } else if (rotate >= 360) {
-        rotate = rotate % 360;
+        rotate %= 360;
       } else if (rotate < 0) {
         // The spec doesn't cover negatives, assume its counterclockwise
         // rotation. The following is the other implementation of modulo.
@@ -126,13 +126,14 @@ var Page = (function PageClosure() {
     },
 
     getContentStream: function Page_getContentStream() {
-      var content = this.content;
-      var stream;
+      const content = this.content;
+      let stream;
       if (isArray(content)) {
         // fetching items
-        var xref = this.xref;
-        var i, n = content.length;
-        var streams = [];
+        const xref = this.xref;
+        let i; const
+          n = content.length;
+        const streams = [];
         for (i = 0; i < n; ++i) {
           streams.push(xref.fetchIfRef(content[i]));
         }
@@ -151,111 +152,109 @@ var Page = (function PageClosure() {
         // TODO: add async getInheritedPageProp and remove this.
         this.resourcesPromise = this.pdfManager.ensure(this, 'resources');
       }
-      return this.resourcesPromise.then(function resourceSuccess() {
-        var objectLoader = new ObjectLoader(this.resources.map,
-                                            keys,
-                                            this.xref);
+      return this.resourcesPromise.then(() => {
+        const objectLoader = new ObjectLoader(this.resources.map,
+            keys,
+            this.xref);
         return objectLoader.load();
-      }.bind(this));
+      });
     },
 
     getOperatorList: function Page_getOperatorList(handler, task, intent) {
-      var self = this;
+      const self = this;
 
-      var pdfManager = this.pdfManager;
-      var contentStreamPromise = pdfManager.ensure(this, 'getContentStream',
-                                                   []);
-      var resourcesPromise = this.loadResources([
+      const pdfManager = this.pdfManager;
+      const contentStreamPromise = pdfManager.ensure(this, 'getContentStream',
+          []);
+      const resourcesPromise = this.loadResources([
         'ExtGState',
         'ColorSpace',
         'Pattern',
         'Shading',
         'XObject',
-        'Font'
+        'Font',
         // ProcSet
         // Properties
       ]);
 
-      var partialEvaluator = new PartialEvaluator(pdfManager, this.xref,
-                                                  handler, this.pageIndex,
-                                                  'p' + this.pageIndex + '_',
-                                                  this.idCounters,
-                                                  this.fontCache);
+      const partialEvaluator = new PartialEvaluator(pdfManager, this.xref,
+          handler, this.pageIndex,
+          `p${this.pageIndex}_`,
+          this.idCounters,
+          this.fontCache);
 
-      var dataPromises = Promise.all([contentStreamPromise, resourcesPromise]);
-      var pageListPromise = dataPromises.then(function(data) {
-        var contentStream = data[0];
-        var opList = new OperatorList(intent, handler, self.pageIndex);
+      const dataPromises = Promise.all([contentStreamPromise, resourcesPromise]);
+      const pageListPromise = dataPromises.then((data) => {
+        const contentStream = data[0];
+        const opList = new OperatorList(intent, handler, self.pageIndex);
 
         handler.send('StartRenderPage', {
           transparency: partialEvaluator.hasBlendModes(self.resources),
           pageIndex: self.pageIndex,
-          intent: intent
+          intent,
         });
         return partialEvaluator.getOperatorList(contentStream, task,
-          self.resources, opList).then(function () {
-            return opList;
-          });
+            self.resources, opList).then(() => opList);
       });
 
-      var annotationsPromise = pdfManager.ensure(this, 'annotations');
+      const annotationsPromise = pdfManager.ensure(this, 'annotations');
       return Promise.all([pageListPromise, annotationsPromise]).then(
-          function(datas) {
-        var pageOpList = datas[0];
-        var annotations = datas[1];
+          (datas) => {
+            const pageOpList = datas[0];
+            const annotations = datas[1];
 
-        if (annotations.length === 0) {
-          pageOpList.flush(true);
-          return pageOpList;
-        }
+            if (annotations.length === 0) {
+              pageOpList.flush(true);
+              return pageOpList;
+            }
 
-        var annotationsReadyPromise = Annotation.appendToOperatorList(
-          annotations, pageOpList, pdfManager, partialEvaluator, task, intent);
-        return annotationsReadyPromise.then(function () {
-          pageOpList.flush(true);
-          return pageOpList;
-        });
-      });
+            const annotationsReadyPromise = Annotation.appendToOperatorList(
+                annotations, pageOpList, pdfManager, partialEvaluator, task, intent);
+            return annotationsReadyPromise.then(() => {
+              pageOpList.flush(true);
+              return pageOpList;
+            });
+          });
     },
 
     extractTextContent: function Page_extractTextContent(task) {
-      var handler = {
+      const handler = {
         on: function nullHandlerOn() {},
-        send: function nullHandlerSend() {}
+        send: function nullHandlerSend() {},
       };
 
-      var self = this;
+      const self = this;
 
-      var pdfManager = this.pdfManager;
-      var contentStreamPromise = pdfManager.ensure(this, 'getContentStream',
-                                                   []);
+      const pdfManager = this.pdfManager;
+      const contentStreamPromise = pdfManager.ensure(this, 'getContentStream',
+          []);
 
-      var resourcesPromise = this.loadResources([
+      const resourcesPromise = this.loadResources([
         'ExtGState',
         'XObject',
-        'Font'
+        'Font',
       ]);
 
-      var dataPromises = Promise.all([contentStreamPromise,
-                                      resourcesPromise]);
-      return dataPromises.then(function(data) {
-        var contentStream = data[0];
-        var partialEvaluator = new PartialEvaluator(pdfManager, self.xref,
-                                                    handler, self.pageIndex,
-                                                    'p' + self.pageIndex + '_',
-                                                    self.idCounters,
-                                                    self.fontCache);
+      const dataPromises = Promise.all([contentStreamPromise,
+        resourcesPromise]);
+      return dataPromises.then((data) => {
+        const contentStream = data[0];
+        const partialEvaluator = new PartialEvaluator(pdfManager, self.xref,
+            handler, self.pageIndex,
+            `p${self.pageIndex}_`,
+            self.idCounters,
+            self.fontCache);
 
         return partialEvaluator.getTextContent(contentStream,
-                                               task,
-                                               self.resources);
+            task,
+            self.resources);
       });
     },
 
     getAnnotationsData: function Page_getAnnotationsData(intent) {
-      var annotations = this.annotations;
-      var annotationsData = [];
-      for (var i = 0, n = annotations.length; i < n; ++i) {
+      const annotations = this.annotations;
+      const annotationsData = [];
+      for (let i = 0, n = annotations.length; i < n; ++i) {
         if (intent) {
           if (!(intent === 'display' && annotations[i].viewable) &&
               !(intent === 'print' && annotations[i].printable)) {
@@ -268,18 +267,18 @@ var Page = (function PageClosure() {
     },
 
     get annotations() {
-      var annotations = [];
-      var annotationRefs = this.getInheritedPageProp('Annots') || [];
-      var annotationFactory = new AnnotationFactory();
-      for (var i = 0, n = annotationRefs.length; i < n; ++i) {
-        var annotationRef = annotationRefs[i];
-        var annotation = annotationFactory.create(this.xref, annotationRef);
+      const annotations = [];
+      const annotationRefs = this.getInheritedPageProp('Annots') || [];
+      const annotationFactory = new AnnotationFactory();
+      for (let i = 0, n = annotationRefs.length; i < n; ++i) {
+        const annotationRef = annotationRefs[i];
+        const annotation = annotationFactory.create(this.xref, annotationRef);
         if (annotation) {
           annotations.push(annotation);
         }
       }
       return shadow(this, 'annotations', annotations);
-    }
+    },
   };
 
   return Page;
@@ -292,9 +291,9 @@ var Page = (function PageClosure() {
  * for each worker. If there is no worker support enabled, there are two
  * `PDFDocument` objects on the main thread created.
  */
-var PDFDocument = (function PDFDocumentClosure() {
-  var FINGERPRINT_FIRST_BYTES = 1024;
-  var EMPTY_FINGERPRINT = '\x00\x00\x00\x00\x00\x00\x00' +
+const PDFDocument = (function PDFDocumentClosure() {
+  const FINGERPRINT_FIRST_BYTES = 1024;
+  const EMPTY_FINGERPRINT = '\x00\x00\x00\x00\x00\x00\x00' +
     '\x00\x00\x00\x00\x00\x00\x00\x00\x00';
 
   function PDFDocument(pdfManager, arg, password) {
@@ -311,23 +310,23 @@ var PDFDocument = (function PDFDocumentClosure() {
     assert(stream.length > 0, 'stream must have data');
     this.pdfManager = pdfManager;
     this.stream = stream;
-    var xref = new XRef(this.stream, password, pdfManager);
+    const xref = new XRef(this.stream, password, pdfManager);
     this.xref = xref;
   }
 
   function find(stream, needle, limit, backwards) {
-    var pos = stream.pos;
-    var end = stream.end;
-    var strBuf = [];
+    const pos = stream.pos;
+    const end = stream.end;
+    const strBuf = [];
     if (pos + limit > end) {
       limit = end - pos;
     }
-    for (var n = 0; n < limit; ++n) {
+    for (let n = 0; n < limit; ++n) {
       strBuf.push(String.fromCharCode(stream.getByte()));
     }
-    var str = strBuf.join('');
+    const str = strBuf.join('');
     stream.pos = pos;
-    var index = backwards ? str.lastIndexOf(needle) : str.indexOf(needle);
+    const index = backwards ? str.lastIndexOf(needle) : str.indexOf(needle);
     if (index === -1) {
       return false; /* not found */
     }
@@ -335,7 +334,7 @@ var PDFDocument = (function PDFDocumentClosure() {
     return true; /* found */
   }
 
-  var DocumentInfoValidators = {
+  const DocumentInfoValidators = {
     get entries() {
       // Lazily build this since all the validation functions below are not
       // defined until after this file loads.
@@ -348,15 +347,15 @@ var PDFDocument = (function PDFDocumentClosure() {
         Producer: isString,
         CreationDate: isString,
         ModDate: isString,
-        Trapped: isName
+        Trapped: isName,
       });
-    }
+    },
   };
 
   PDFDocument.prototype = {
     parse: function PDFDocument_parse(recoveryMode) {
       this.setup(recoveryMode);
-      var version = this.catalog.catDict.get('Version');
+      const version = this.catalog.catDict.get('Version');
       if (isName(version)) {
         this.pdfFormatVersion = version.name;
       }
@@ -365,7 +364,7 @@ var PDFDocument = (function PDFDocumentClosure() {
         this.acroForm = this.catalog.catDict.get('AcroForm');
         if (this.acroForm) {
           this.xfa = this.acroForm.get('XFA');
-          var fields = this.acroForm.get('Fields');
+          const fields = this.acroForm.get('Fields');
           if ((!fields || !isArray(fields) || fields.length === 0) &&
               !this.xfa) {
             // no fields and no XFA -- not a form (?)
@@ -379,7 +378,7 @@ var PDFDocument = (function PDFDocumentClosure() {
     },
 
     get linearization() {
-      var linearization = null;
+      let linearization = null;
       if (this.stream.length) {
         try {
           linearization = Linearization.create(this.stream);
@@ -394,9 +393,9 @@ var PDFDocument = (function PDFDocumentClosure() {
       return shadow(this, 'linearization', linearization);
     },
     get startXRef() {
-      var stream = this.stream;
-      var startXRef = 0;
-      var linearization = this.linearization;
+      const stream = this.stream;
+      let startXRef = 0;
+      const linearization = this.linearization;
       if (linearization) {
         // Find end of first obj.
         stream.reset();
@@ -405,8 +404,9 @@ var PDFDocument = (function PDFDocumentClosure() {
         }
       } else {
         // Find startxref by jumping backward from the end of the file.
-        var step = 1024;
-        var found = false, pos = stream.end;
+        const step = 1024;
+        let found = false; let
+          pos = stream.end;
         while (!found && pos > 0) {
           pos -= step - 'startxref'.length;
           if (pos < 0) {
@@ -417,11 +417,11 @@ var PDFDocument = (function PDFDocumentClosure() {
         }
         if (found) {
           stream.skip(9);
-          var ch;
+          let ch;
           do {
             ch = stream.getByte();
           } while (Lexer.isSpace(ch));
-          var str = '';
+          let str = '';
           while (ch >= 0x20 && ch <= 0x39) { // < '9'
             str += String.fromCharCode(ch);
             ch = stream.getByte();
@@ -436,8 +436,8 @@ var PDFDocument = (function PDFDocumentClosure() {
       return shadow(this, 'startXRef', startXRef);
     },
     get mainXRefEntriesOffset() {
-      var mainXRefEntriesOffset = 0;
-      var linearization = this.linearization;
+      let mainXRefEntriesOffset = 0;
+      const linearization = this.linearization;
       if (linearization) {
         mainXRefEntriesOffset = linearization.mainXRefEntriesOffset;
       }
@@ -447,14 +447,15 @@ var PDFDocument = (function PDFDocumentClosure() {
     // Find the header, remove leading garbage and setup the stream
     // starting from the header.
     checkHeader: function PDFDocument_checkHeader() {
-      var stream = this.stream;
+      const stream = this.stream;
       stream.reset();
       if (find(stream, '%PDF-', 1024)) {
         // Found the header, trim off any garbage before it.
         stream.moveStart();
         // Reading file format version
-        var MAX_VERSION_LENGTH = 12;
-        var version = '', ch;
+        const MAX_VERSION_LENGTH = 12;
+        let version = ''; let
+          ch;
         while ((ch = stream.getByte()) > 0x20) { // SPACE
           if (version.length >= MAX_VERSION_LENGTH) {
             break;
@@ -470,7 +471,7 @@ var PDFDocument = (function PDFDocumentClosure() {
       // May not be a PDF file, continue anyway.
     },
     parseStartXRef: function PDFDocument_parseStartXRef() {
-      var startXRef = this.startXRef;
+      const startXRef = this.startXRef;
       this.xref.setStartXRef(startXRef);
     },
     setup: function PDFDocument_setup(recoveryMode) {
@@ -478,35 +479,35 @@ var PDFDocument = (function PDFDocumentClosure() {
       this.catalog = new Catalog(this.pdfManager, this.xref);
     },
     get numPages() {
-      var linearization = this.linearization;
-      var num = linearization ? linearization.numPages : this.catalog.numPages;
+      const linearization = this.linearization;
+      const num = linearization ? linearization.numPages : this.catalog.numPages;
       // shadow the prototype getter
       return shadow(this, 'numPages', num);
     },
     get documentInfo() {
-      var docInfo = {
+      const docInfo = {
         PDFFormatVersion: this.pdfFormatVersion,
         IsAcroFormPresent: !!this.acroForm,
-        IsXFAPresent: !!this.xfa
+        IsXFAPresent: !!this.xfa,
       };
-      var infoDict;
+      let infoDict;
       try {
         infoDict = this.xref.trailer.get('Info');
       } catch (err) {
         info('The document information dictionary is invalid.');
       }
       if (infoDict) {
-        var validEntries = DocumentInfoValidators.entries;
+        const validEntries = DocumentInfoValidators.entries;
         // Only fill the document info with valid entries from the spec.
-        for (var key in validEntries) {
+        for (const key in validEntries) {
           if (infoDict.has(key)) {
-            var value = infoDict.get(key);
+            const value = infoDict.get(key);
             // Make sure the value conforms to the spec.
             if (validEntries[key](value)) {
-              docInfo[key] = (typeof value !== 'string' ?
-                              value : stringToPDFString(value));
+              docInfo[key] = (typeof value !== 'string'
+                ? value : stringToPDFString(value));
             } else {
-              info('Bad value in document info for "' + key + '"');
+              info(`Bad value in document info for "${key}"`);
             }
           }
         }
@@ -514,8 +515,9 @@ var PDFDocument = (function PDFDocumentClosure() {
       return shadow(this, 'documentInfo', docInfo);
     },
     get fingerprint() {
-      var xref = this.xref, hash, fileID = '';
-      var idArray = xref.trailer.get('ID');
+      const xref = this.xref; let hash; let
+        fileID = '';
+      const idArray = xref.trailer.get('ID');
 
       if (idArray && isArray(idArray) && idArray[0] && isString(idArray[0]) &&
           idArray[0] !== EMPTY_FINGERPRINT) {
@@ -523,15 +525,15 @@ var PDFDocument = (function PDFDocumentClosure() {
       } else {
         if (this.stream.ensureRange) {
           this.stream.ensureRange(0,
-            Math.min(FINGERPRINT_FIRST_BYTES, this.stream.end));
+              Math.min(FINGERPRINT_FIRST_BYTES, this.stream.end));
         }
         hash = calculateMD5(this.stream.bytes.subarray(0,
-          FINGERPRINT_FIRST_BYTES), 0, FINGERPRINT_FIRST_BYTES);
+            FINGERPRINT_FIRST_BYTES), 0, FINGERPRINT_FIRST_BYTES);
       }
 
-      for (var i = 0, n = hash.length; i < n; i++) {
-        var hex = hash[i].toString(16);
-        fileID += hex.length === 1 ? '0' + hex : hex;
+      for (let i = 0, n = hash.length; i < n; i++) {
+        const hex = hash[i].toString(16);
+        fileID += hex.length === 1 ? `0${hex}` : hex;
       }
 
       return shadow(this, 'fingerprint', fileID);
@@ -543,7 +545,7 @@ var PDFDocument = (function PDFDocumentClosure() {
 
     cleanup: function PDFDocument_cleanup() {
       return this.catalog.cleanup();
-    }
+    },
   };
 
   return PDFDocument;

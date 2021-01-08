@@ -23,9 +23,9 @@
  * The arithmetic decoder is used in conjunction with context models to decode
  * JPEG2000 and JBIG2 streams.
  */
-var ArithmeticDecoder = (function ArithmeticDecoderClosure() {
+const ArithmeticDecoder = (function ArithmeticDecoderClosure() {
   // Table C-2
-  var QeTable = [
+  const QeTable = [
     {qe: 0x5601, nmps: 1, nlps: 1, switchFlag: 1},
     {qe: 0x3401, nmps: 2, nlps: 6, switchFlag: 0},
     {qe: 0x1801, nmps: 3, nlps: 9, switchFlag: 0},
@@ -72,7 +72,7 @@ var ArithmeticDecoder = (function ArithmeticDecoderClosure() {
     {qe: 0x0009, nmps: 44, nlps: 41, switchFlag: 0},
     {qe: 0x0005, nmps: 45, nlps: 42, switchFlag: 0},
     {qe: 0x0001, nmps: 45, nlps: 43, switchFlag: 0},
-    {qe: 0x5601, nmps: 46, nlps: 46, switchFlag: 0}
+    {qe: 0x5601, nmps: 46, nlps: 46, switchFlag: 0},
   ];
 
   // C.3.5 Initialisation of the decoder (INITDEC)
@@ -95,10 +95,10 @@ var ArithmeticDecoder = (function ArithmeticDecoderClosure() {
   ArithmeticDecoder.prototype = {
     // C.3.4 Compressed data input (BYTEIN)
     byteIn: function ArithmeticDecoder_byteIn() {
-      var data = this.data;
-      var bp = this.bp;
+      const data = this.data;
+      let bp = this.bp;
       if (data[bp] === 0xFF) {
-        var b1 = data[bp + 1];
+        const b1 = data[bp + 1];
         if (b1 > 0x8F) {
           this.clow += 0xFF00;
           this.ct = 8;
@@ -123,11 +123,12 @@ var ArithmeticDecoder = (function ArithmeticDecoderClosure() {
     readBit: function ArithmeticDecoder_readBit(contexts, pos) {
       // contexts are packed into 1 byte:
       // highest 7 bits carry cx.index, lowest bit carries cx.mps
-      var cx_index = contexts[pos] >> 1, cx_mps = contexts[pos] & 1;
-      var qeTableIcx = QeTable[cx_index];
-      var qeIcx = qeTableIcx.qe;
-      var d;
-      var a = this.a - qeIcx;
+      let cx_index = contexts[pos] >> 1; let
+        cx_mps = contexts[pos] & 1;
+      const qeTableIcx = QeTable[cx_index];
+      const qeIcx = qeTableIcx.qe;
+      let d;
+      let a = this.a - qeIcx;
 
       if (this.chigh < qeIcx) {
         // exchangeLps
@@ -176,7 +177,7 @@ var ArithmeticDecoder = (function ArithmeticDecoderClosure() {
 
       contexts[pos] = cx_index << 1 | cx_mps;
       return d;
-    }
+    },
   };
 
   return ArithmeticDecoder;

@@ -1,6 +1,6 @@
 'use strict';
-//#if TRUE
-////var a;
-//var b;
-var c;
-//#endif
+// #if TRUE
+// //var a;
+// var b;
+let c;
+// #endif

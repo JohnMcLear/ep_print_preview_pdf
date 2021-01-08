@@ -1,19 +1,20 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
-var sheet = {
+const sheet = {
   cssRules: [],
-  insertRule: function(rule) {
+  insertRule(rule) {
     this.cssRules.push(rule);
   },
 };
 
-var style = {
-  sheet: sheet,
+const style = {
+  sheet,
 };
 
-function xmlEncode(s){
-  var i = 0, ch;
+function xmlEncode(s) {
+  let i = 0; let
+    ch;
   s = String(s);
   while (i < s.length && (ch = s[i]) !== '&' && ch !== '<' &&
          ch !== '\"' && ch !== '\n' && ch !== '\r' && ch !== '\t') {
@@ -22,7 +23,7 @@ function xmlEncode(s){
   if (i >= s.length) {
     return s;
   }
-  var buf = s.substring(0, i);
+  let buf = s.substring(0, i);
   while (i < s.length) {
     ch = s[i++];
     switch (ch) {
@@ -53,20 +54,21 @@ function xmlEncode(s){
 }
 
 global.btoa = function btoa(chars) {
-  var digits =
+  const digits =
   'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
-  var buffer = '';
-    var i, n;
-    for (i = 0, n = chars.length; i < n; i += 3) {
-      var b1 = chars.charCodeAt(i) & 0xFF;
-      var b2 = chars.charCodeAt(i + 1) & 0xFF;
-      var b3 = chars.charCodeAt(i + 2) & 0xFF;
-      var d1 = b1 >> 2, d2 = ((b1 & 3) << 4) | (b2 >> 4);
-      var d3 = i + 1 < n ? ((b2 & 0xF) << 2) | (b3 >> 6) : 64;
-      var d4 = i + 2 < n ? (b3 & 0x3F) : 64;
-      buffer += (digits.charAt(d1) + digits.charAt(d2) +
+  let buffer = '';
+  let i, n;
+  for (i = 0, n = chars.length; i < n; i += 3) {
+    const b1 = chars.charCodeAt(i) & 0xFF;
+    const b2 = chars.charCodeAt(i + 1) & 0xFF;
+    const b3 = chars.charCodeAt(i + 2) & 0xFF;
+    const d1 = b1 >> 2; const
+      d2 = ((b1 & 3) << 4) | (b2 >> 4);
+    const d3 = i + 1 < n ? ((b2 & 0xF) << 2) | (b3 >> 6) : 64;
+    const d4 = i + 2 < n ? (b3 & 0x3F) : 64;
+    buffer += (digits.charAt(d1) + digits.charAt(d2) +
       digits.charAt(d3) + digits.charAt(d4));
-    }
+  }
   return buffer;
 };
 
@@ -86,53 +88,53 @@ DOMElement.prototype = {
   },
 
   appendChild: function DOMElement_appendChild(element) {
-    var childNodes = this.childNodes;
+    const childNodes = this.childNodes;
     if (childNodes.indexOf(element) === -1) {
       childNodes.push(element);
     }
   },
 
   toString: function DOMElement_toString() {
-    var attrList = [];
+    const attrList = [];
     for (i in this.attributes) {
-      attrList.push(i + '="' + xmlEncode(this.attributes[i]) + '"');
+      attrList.push(`${i}="${xmlEncode(this.attributes[i])}"`);
     }
 
     if (this.nodeName === 'svg:tspan' || this.nodeName === 'svg:style') {
-      var encText = xmlEncode(this.textContent);
-      return '<' + this.nodeName + ' ' + attrList.join(' ') + '>' +
-             encText + '</' + this.nodeName + '>';
+      const encText = xmlEncode(this.textContent);
+      return `<${this.nodeName} ${attrList.join(' ')}>${
+        encText}</${this.nodeName}>`;
     } else if (this.nodeName === 'svg:svg') {
-      var ns = 'xmlns:xlink="http://www.w3.org/1999/xlink" ' +
-               'xmlns:svg="http://www.w3.org/2000/svg"'
-      return '<' + this.nodeName + ' ' + ns + ' ' + attrList.join(' ') + '>' +
-             this.childNodes.join('') + '</' + this.nodeName + '>';
+      const ns = 'xmlns:xlink="http://www.w3.org/1999/xlink" ' +
+               'xmlns:svg="http://www.w3.org/2000/svg"';
+      return `<${this.nodeName} ${ns} ${attrList.join(' ')}>${
+        this.childNodes.join('')}</${this.nodeName}>`;
     } else {
-      return '<' + this.nodeName + ' ' + attrList.join(' ') + '>' +
-             this.childNodes.join('') + '</' + this.nodeName + '>';
+      return `<${this.nodeName} ${attrList.join(' ')}>${
+        this.childNodes.join('')}</${this.nodeName}>`;
     }
   },
 
   cloneNode: function DOMElement_cloneNode() {
-    var newNode = new DOMElement(this.nodeName);
+    const newNode = new DOMElement(this.nodeName);
     newNode.childNodes = this.childNodes;
     newNode.attributes = this.attributes;
     newNode.textContent = this.textContent;
     return newNode;
   },
-}
+};
 
 global.document = {
-  childNodes : [],
+  childNodes: [],
 
-  getElementById: function (id) {
+  getElementById(id) {
     if (id === 'PDFJS_FONT_STYLE_TAG') {
       return style;
     }
   },
 
-  createElementNS: function (NS, element) {
-    var elObject = new DOMElement(element);
+  createElementNS(NS, element) {
+    const elObject = new DOMElement(element);
     return elObject;
   },
 };

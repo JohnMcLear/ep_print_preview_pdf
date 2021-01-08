@@ -13,29 +13,30 @@
  * limitations under the License.
  */
 
-var fs = require('fs');
-var path = require('path');
-var parseAdobeCMap = require('./parse.js').parseAdobeCMap;
-var optimizeCMap = require('./optimize.js').optimizeCMap;
+const fs = require('fs');
+const path = require('path');
+const parseAdobeCMap = require('./parse.js').parseAdobeCMap;
+const optimizeCMap = require('./optimize.js').optimizeCMap;
 
 function compressCmap(srcPath, destPath, verify) {
-  var content = fs.readFileSync(srcPath).toString();
-  var inputData = parseAdobeCMap(content);
+  const content = fs.readFileSync(srcPath).toString();
+  const inputData = parseAdobeCMap(content);
   optimizeCMap(inputData);
 
-  var out = writeByte((inputData.type << 1) | inputData.wmode);
+  let out = writeByte((inputData.type << 1) | inputData.wmode);
   if (inputData.comment) {
     out += writeByte(0xE0) + writeString(inputData.comment);
   }
   if (inputData.usecmap) {
     out += writeByte(0xE1) + writeString(inputData.usecmap);
   }
-  var i = 0;
+  let i = 0;
   while (i < inputData.body.length) {
-    var item = inputData.body[i++], subitems = item.items;
-    var first = item.items[0];
-    var sequence = item.sequence === true;
-    var flags = (item.type << 5) | (sequence ? 0x10 : 0);
+    const item = inputData.body[i++]; const
+      subitems = item.items;
+    const first = item.items[0];
+    const sequence = item.sequence === true;
+    const flags = (item.type << 5) | (sequence ? 0x10 : 0);
     var nextStart, nextCode;
     switch (item.type) {
       case 0:
@@ -105,15 +106,14 @@ function compressCmap(srcPath, destPath, verify) {
           nextStart = incHex(subitems[j].end);
         }
         break;
-
     }
   }
 
   fs.writeFileSync(destPath, new Buffer(out, 'hex'));
 
   if (verify) {
-    var result2 = parseCMap(out);
-    var isGood = JSON.stringify(inputData) == JSON.stringify(result2);
+    const result2 = parseCMap(out);
+    const isGood = JSON.stringify(inputData) == JSON.stringify(result2);
     if (!isGood) {
       throw new Error('Extracted data does not match the expected result');
     }
@@ -121,53 +121,54 @@ function compressCmap(srcPath, destPath, verify) {
 
   return {
     orig: fs.statSync(srcPath).size,
-    packed: out.length >> 1
+    packed: out.length >> 1,
   };
 }
 
 function parseCMap(binaryData) {
-  var reader = {
+  const reader = {
     buffer: binaryData,
     pos: 0,
     end: binaryData.length,
-    readByte: function () {
+    readByte() {
       if (this.pos >= this.end) {
         return -1;
       }
-      var d1 = fromHexDigit(this.buffer[this.pos]);
-      var d2 = fromHexDigit(this.buffer[this.pos + 1]);
+      const d1 = fromHexDigit(this.buffer[this.pos]);
+      const d2 = fromHexDigit(this.buffer[this.pos + 1]);
       this.pos += 2;
       return (d1 << 4) | d2;
     },
-    readNumber: function () {
-      var n = 0;
-      var last;
+    readNumber() {
+      let n = 0;
+      let last;
       do {
-        var b = this.readByte();
+        const b = this.readByte();
         last = !(b & 0x80);
         n = (n << 7) | (b & 0x7F);
       } while (!last);
       return n;
     },
-    readSigned: function () {
-      var n = this.readNumber();
+    readSigned() {
+      const n = this.readNumber();
       return (n & 1) ? -(n >>> 1) - 1 : n >>> 1;
     },
-    readHex: function (size) {
-      var lengthInChars = (size + 1) << 1;
-      var s = this.buffer.substr(this.pos, lengthInChars);
+    readHex(size) {
+      const lengthInChars = (size + 1) << 1;
+      const s = this.buffer.substr(this.pos, lengthInChars);
       this.pos += lengthInChars;
       return s;
     },
-    readHexNumber: function (size) {
-      var lengthInChars = (size + 1) << 1;
-      var stack = [];
+    readHexNumber(size) {
+      const lengthInChars = (size + 1) << 1;
+      const stack = [];
       do {
-        var b = this.readByte();
+        const b = this.readByte();
         last = !(b & 0x80);
         stack.push(b & 0x7F);
       } while (!last);
-      var s = '', buffer = 0, bufferSize = 0;
+      let s = ''; let buffer = 0; let
+        bufferSize = 0;
       while (s.length < lengthInChars) {
         while (bufferSize < 4 && stack.length > 0) {
           buffer = (stack.pop() << bufferSize) | buffer;
@@ -179,40 +180,40 @@ function parseCMap(binaryData) {
       }
       return s;
     },
-    readHexSigned: function (size) {
-      var num = this.readHexNumber(size);
-      var sign = fromHexDigit(num[num.length - 1]) & 1 ? 15 : 0;
-      var c = 0;
-      var result = '';
-      for (var i = 0; i < num.length; i++) {
+    readHexSigned(size) {
+      const num = this.readHexNumber(size);
+      const sign = fromHexDigit(num[num.length - 1]) & 1 ? 15 : 0;
+      let c = 0;
+      let result = '';
+      for (let i = 0; i < num.length; i++) {
         c = (c << 4) | fromHexDigit(num[i]);
         result += toHexDigit(sign ? (c >> 1) ^ sign : (c >> 1));
         c &= 1;
       }
       return result;
     },
-    readString: function () {
-      var len = this.readNumber();
-      var s = '';
-      for (var i = 0; i < len; i++) {
+    readString() {
+      const len = this.readNumber();
+      let s = '';
+      for (let i = 0; i < len; i++) {
         s += String.fromCharCode(this.readNumber());
       }
       return s;
-    }
+    },
   };
 
-  var header = reader.readByte();
-  var result = {
+  const header = reader.readByte();
+  const result = {
     type: header >> 1,
     wmode: header & 1,
     comment: null,
     usecmap: null,
-    body: []
+    body: [],
   };
 
-  var b;
+  let b;
   while ((b = reader.readByte()) >= 0) {
-    var type = b >> 5;
+    const type = b >> 5;
     if (type === 7) {
       switch (b & 0x1F) {
         case 0:
@@ -224,88 +225,88 @@ function parseCMap(binaryData) {
       }
       continue;
     }
-    var sequence = !!(b & 0x10);
-    var dataSize = b & 15;
-    var subitems = [];
-    var item = {
-      type: type,
-      items: subitems
+    const sequence = !!(b & 0x10);
+    const dataSize = b & 15;
+    const subitems = [];
+    const item = {
+      type,
+      items: subitems,
     };
     if (sequence) {
       item.sequence = true;
     }
-    var ucs2DataSize = 1;
-    var subitemsCount = reader.readNumber();
+    const ucs2DataSize = 1;
+    const subitemsCount = reader.readNumber();
     var start, end, code, char;
     switch (type) {
       case 0:
         start = reader.readHex(dataSize);
         end = addHex(reader.readHexNumber(dataSize), start);
-        subitems.push({start: start, end: end});
+        subitems.push({start, end});
         for (var i = 1; i < subitemsCount; i++) {
           start = addHex(reader.readHexNumber(dataSize), incHex(end));
           end = addHex(reader.readHexNumber(dataSize), start);
-          subitems.push({start: start, end: end});
+          subitems.push({start, end});
         }
         break;
       case 1:
         start = reader.readHex(dataSize);
         end = addHex(reader.readHexNumber(dataSize), start);
         code = reader.readNumber();
-        subitems.push({start: start, end: end, code: code});
+        subitems.push({start, end, code});
         for (var i = 1; i < subitemsCount; i++) {
           start = addHex(reader.readHexNumber(dataSize), incHex(end));
           end = addHex(reader.readHexNumber(dataSize), start);
           code = reader.readNumber();
-          subitems.push({start: start, end: end, code: code});
+          subitems.push({start, end, code});
         }
         break;
       case 2:
         char = reader.readHex(dataSize);
         code = reader.readNumber();
-        subitems.push({char: char, code: code});
+        subitems.push({char, code});
         for (var i = 1; i < subitemsCount; i++) {
           char = sequence ? incHex(char) : addHex(reader.readHexNumber(dataSize), incHex(char));
           code = reader.readSigned() + (code + 1);
-          subitems.push({char: char, code: code});
+          subitems.push({char, code});
         }
         break;
       case 3:
         start = reader.readHex(dataSize);
         end = addHex(reader.readHexNumber(dataSize), start);
         code = reader.readNumber();
-        subitems.push({start: start, end: end, code: code});
+        subitems.push({start, end, code});
         for (var i = 1; i < subitemsCount; i++) {
           start = sequence ? incHex(end) : addHex(reader.readHexNumber(dataSize), incHex(end));
           end = addHex(reader.readHexNumber(dataSize), start);
           code = reader.readNumber();
-          subitems.push({start: start, end: end, code: code});
+          subitems.push({start, end, code});
         }
         break;
       case 4:
         char = reader.readHex(ucs2DataSize);
         code = reader.readHex(dataSize);
-        subitems.push({char: char, code: code});
+        subitems.push({char, code});
         for (var i = 1; i < subitemsCount; i++) {
           char = sequence ? incHex(char) : addHex(reader.readHexNumber(ucs2DataSize), incHex(char));
           code = addHex(reader.readHexSigned(dataSize), incHex(code));
-          subitems.push({char: char, code: code});
+          subitems.push({char, code});
         }
         break;
       case 5:
         start = reader.readHex(ucs2DataSize);
         end = addHex(reader.readHexNumber(ucs2DataSize), start);
         code = reader.readHex(dataSize);
-        subitems.push({start: start, end: end, code: code});
+        subitems.push({start, end, code});
         for (var i = 1; i < subitemsCount; i++) {
           start = sequence ? incHex(end) : addHex(reader.readHexNumber(ucs2DataSize), incHex(end));
           end = addHex(reader.readHexNumber(ucs2DataSize), start);
           code = reader.readHex(dataSize);
-          subitems.push({start: start, end: end, code: code});
+          subitems.push({start, end, code});
         }
         break;
       default:
-        throw new Error('Unknown type: ' + type)
+        throw new Error(`Unknown type: ${type}`);
     }
     result.body.push(item);
   }
@@ -327,8 +328,9 @@ function writeByte(b) {
 }
 function writeNumber(n) {
   if (typeof n === 'string') {
-    var s = '', buffer = 0, bufferSize = 0;
-    var i = n.length;
+    var s = ''; let buffer = 0; let
+      bufferSize = 0;
+    let i = n.length;
     while (i > 0) {
       --i;
       buffer = (fromHexDigit(n[i]) << bufferSize) | buffer;
@@ -358,15 +360,15 @@ function writeNumber(n) {
 }
 function writeSigned(n) {
   if (typeof n === 'string') {
-    var t = '';
-    var c = fromHexDigit(n[0]);
-    var neg = c >= 8;
+    let t = '';
+    let c = fromHexDigit(n[0]);
+    const neg = c >= 8;
     c = neg ? (c ^ 15) : c;
-    for (var i = 1; i < n.length; i++) {
-      var d = fromHexDigit(n[i]);
+    for (let i = 1; i < n.length; i++) {
+      const d = fromHexDigit(n[i]);
       c = (c << 4) | (neg ? (d ^ 15) : d);
       t += toHexDigit(c >> 3);
-      c = c & 7;
+      c &= 7;
     }
     t += toHexDigit((c << 1) | (neg ? 1 : 0));
     return writeNumber(t);
@@ -374,15 +376,16 @@ function writeSigned(n) {
   return n < 0 ? writeNumber(-2 * n - 1) : writeNumber(2 * n);
 }
 function writeString(s) {
-  var t = writeNumber(s.length);
-  for (var i = 0; i < s.length; i++) {
+  let t = writeNumber(s.length);
+  for (let i = 0; i < s.length; i++) {
     t += writeNumber(s.charCodeAt(i));
   }
   return t;
 }
 function addHex(a, b) {
-  var c = 0, s = '';
-  for (var i = a.length - 1; i >= 0; i--) {
+  let c = 0; let
+    s = '';
+  for (let i = a.length - 1; i >= 0; i--) {
     c += fromHexDigit(a[i]) + fromHexDigit(b[i]);
     if (c >= 16) {
       s = toHexDigit(c - 16) + s;
@@ -395,8 +398,9 @@ function addHex(a, b) {
   return s;
 }
 function subHex(a, b) {
-  var c = 0, s = '';
-  for (var i = a.length - 1; i >= 0; i--) {
+  let c = 0; let
+    s = '';
+  for (let i = a.length - 1; i >= 0; i--) {
     c += fromHexDigit(a[i]) - fromHexDigit(b[i]);
     if (c < 0) {
       s = toHexDigit(c + 16) + s;
@@ -409,8 +413,9 @@ function subHex(a, b) {
   return s;
 }
 function incHex(a) {
-  var c = 1, s = '';
-  for (var i = a.length - 1; i >= 0; i--) {
+  let c = 1; let
+    s = '';
+  for (let i = a.length - 1; i >= 0; i--) {
     c += fromHexDigit(a[i]);
     if (c >= 16) {
       s = toHexDigit(c - 16) + s;
@@ -424,14 +429,13 @@ function incHex(a) {
 }
 
 exports.compressCmaps = function (src, dest, verify) {
-  var files = fs.readdirSync(src).filter(function (fn) {
-    return fn.indexOf('.') < 0; // skipping files with the extension
-  });
-  files.forEach(function (fn) {
-    var srcPath = path.join(src, fn);
-    var destPath = path.join(dest, fn + '.bcmap');
-    var stats = compressCmap(srcPath, destPath, verify);
-    console.log('Compressing ' + fn + ': ' + stats.orig + ' vs ' + stats.packed +
-      ' ' + (stats.packed / stats.orig * 100).toFixed(1) + '%');
+  const files = fs.readdirSync(src).filter((fn) => fn.indexOf('.') < 0 // skipping files with the extension
+  );
+  files.forEach((fn) => {
+    const srcPath = path.join(src, fn);
+    const destPath = path.join(dest, `${fn}.bcmap`);
+    const stats = compressCmap(srcPath, destPath, verify);
+    console.log(`Compressing ${fn}: ${stats.orig} vs ${stats.packed
+    } ${(stats.packed / stats.orig * 100).toFixed(1)}%`);
   });
 };

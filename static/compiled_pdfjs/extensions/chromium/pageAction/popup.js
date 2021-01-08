@@ -15,7 +15,7 @@
 
 'use strict';
 
-var url = location.search.match(/[&?]file=([^&]+)/i);
+let url = location.search.match(/[&?]file=([^&]+)/i);
 if (url) {
   url = decodeURIComponent(url[1]);
   document.body.textContent = url;

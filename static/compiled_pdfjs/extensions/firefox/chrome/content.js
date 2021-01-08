@@ -30,10 +30,10 @@
   Cu.import('resource://gre/modules/XPCOMUtils.jsm');
   Cu.import('resource://gre/modules/Services.jsm');
 
-  var isRemote = Services.appinfo.processType ===
+  const isRemote = Services.appinfo.processType ===
     Services.appinfo.PROCESS_TYPE_CONTENT;
 
-// Factory that registers/unregisters a constructor as a component.
+  // Factory that registers/unregisters a constructor as a component.
   function Factory() {
   }
 
@@ -43,15 +43,15 @@
 
     register: function register(targetConstructor) {
       this._targetConstructor = targetConstructor;
-      var proto = targetConstructor.prototype;
-      var registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
+      const proto = targetConstructor.prototype;
+      const registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
       registrar.registerFactory(proto.classID, proto.classDescription,
-        proto.contractID, this);
+          proto.contractID, this);
     },
 
     unregister: function unregister() {
-      var proto = this._targetConstructor.prototype;
-      var registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
+      const proto = this._targetConstructor.prototype;
+      const registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
       registrar.unregisterFactory(proto.classID, this);
       this._targetConstructor = null;
     },
@@ -68,10 +68,10 @@
     lockFactory: function lockFactory(lock) {
       // No longer used as of gecko 1.7.
       throw Cr.NS_ERROR_NOT_IMPLEMENTED;
-    }
+    },
   };
 
-  var pdfStreamConverterFactory = new Factory();
+  const pdfStreamConverterFactory = new Factory();
 
   function startup() {
     Cu.import('resource://pdf.js/PdfjsContentUtils.jsm');
@@ -94,7 +94,7 @@
   if (isRemote) {
     startup();
 
-    addMessageListener('PDFJS:Child:shutdown', function (e) {
+    addMessageListener('PDFJS:Child:shutdown', (e) => {
       shutdown();
     });
   }

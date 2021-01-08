@@ -16,13 +16,13 @@
 
 'use strict';
 
-//#include grab_to_pan.js
-var HandTool = {
+// #include grab_to_pan.js
+const HandTool = {
   initialize: function handToolInitialize(options) {
-    var toggleHandTool = options.toggleHandTool;
+    const toggleHandTool = options.toggleHandTool;
     this.handTool = new GrabToPan({
       element: options.container,
-      onActiveChanged: function(isActive) {
+      onActiveChanged(isActive) {
         if (!toggleHandTool) {
           return;
         }
@@ -37,20 +37,20 @@ var HandTool = {
           toggleHandTool.firstElementChild.textContent =
             mozL10n.get('hand_tool_enable_label', null, 'Enable hand tool');
         }
-      }
+      },
     });
     if (toggleHandTool) {
       toggleHandTool.addEventListener('click', this.toggle.bind(this), false);
 
-      window.addEventListener('localized', function (evt) {
-        Preferences.get('enableHandToolOnLoad').then(function resolved(value) {
+      window.addEventListener('localized', (evt) => {
+        Preferences.get('enableHandToolOnLoad').then((value) => {
           if (value) {
             this.handTool.activate();
           }
-        }.bind(this), function rejected(reason) {});
-      }.bind(this));
+        }, (reason) => {});
+      });
 
-      window.addEventListener('presentationmodechanged', function (evt) {
+      window.addEventListener('presentationmodechanged', (evt) => {
         if (evt.detail.switchInProgress) {
           return;
         }
@@ -59,7 +59,7 @@ var HandTool = {
         } else {
           this.exitPresentationMode();
         }
-      }.bind(this));
+      });
     }
   },
 
@@ -80,5 +80,5 @@ var HandTool = {
       this.wasActive = null;
       this.handTool.activate();
     }
-  }
+  },
 };

@@ -16,7 +16,7 @@
 
 'use strict';
 
-var GrabToPan = (function GrabToPanClosure() {
+const GrabToPan = (function GrabToPanClosure() {
   /**
    * Construct a GrabToPan instance for a given HTML element.
    * @param options.element {Element}
@@ -44,7 +44,7 @@ var GrabToPan = (function GrabToPanClosure() {
 
     // This overlay will be inserted in the document when the mouse moves during
     // a grab operation, to ensure that the cursor has the desired appearance.
-    var overlay = this.overlay = document.createElement('div');
+    const overlay = this.overlay = document.createElement('div');
     overlay.className = 'grab-to-pan-grabbing';
   }
   GrabToPan.prototype = {
@@ -101,7 +101,7 @@ var GrabToPan = (function GrabToPanClosure() {
       // Use matchesSelector to check whether the clicked element
       // is (a child of) an input element / link
       return node[matchesSelector](
-        'a[href], a[href] *, input, textarea, button, button *, select, option'
+          'a[href], a[href] *, input, textarea, button, button *, select, option'
       );
     },
 
@@ -136,7 +136,7 @@ var GrabToPan = (function GrabToPanClosure() {
       event.stopPropagation();
       this.document.documentElement.classList.add(this.CSS_CLASS_GRABBING);
 
-      var focusedElement = document.activeElement;
+      const focusedElement = document.activeElement;
       if (focusedElement && !focusedElement.contains(event.target)) {
         focusedElement.blur();
       }
@@ -151,8 +151,8 @@ var GrabToPan = (function GrabToPanClosure() {
         this._endPan();
         return;
       }
-      var xDiff = event.clientX - this.clientXStart;
-      var yDiff = event.clientY - this.clientYStart;
+      const xDiff = event.clientX - this.clientXStart;
+      const yDiff = event.clientY - this.clientYStart;
       this.element.scrollTop = this.scrollTopStart - yDiff;
       this.element.scrollLeft = this.scrollLeftStart - xDiff;
       if (!this.overlay.parentNode) {
@@ -170,13 +170,13 @@ var GrabToPan = (function GrabToPanClosure() {
       if (this.overlay.parentNode) {
         this.overlay.parentNode.removeChild(this.overlay);
       }
-    }
+    },
   };
 
   // Get the correct (vendor-prefixed) name of the matches method.
-  var matchesSelector;
-  ['webkitM', 'mozM', 'msM', 'oM', 'm'].some(function(prefix) {
-    var name = prefix + 'atches';
+  let matchesSelector;
+  ['webkitM', 'mozM', 'msM', 'oM', 'm'].some((prefix) => {
+    let name = `${prefix}atches`;
     if (name in document.documentElement) {
       matchesSelector = name;
     }
@@ -189,11 +189,11 @@ var GrabToPan = (function GrabToPanClosure() {
 
   // Browser sniffing because it's impossible to feature-detect
   // whether event.which for onmousemove is reliable
-  var isNotIEorIsIE10plus = !document.documentMode || document.documentMode > 9;
-  var chrome = window.chrome;
-  var isChrome15OrOpera15plus = chrome && (chrome.webstore || chrome.app);
+  const isNotIEorIsIE10plus = !document.documentMode || document.documentMode > 9;
+  const chrome = window.chrome;
+  const isChrome15OrOpera15plus = chrome && (chrome.webstore || chrome.app);
   //                                       ^ Chrome 15+       ^ Opera 15+
-  var isSafari6plus = /Apple/.test(navigator.vendor) &&
+  const isSafari6plus = /Apple/.test(navigator.vendor) &&
                       /Version\/([6-9]\d*|[1-5]\d+)/.test(navigator.userAgent);
 
   /**
